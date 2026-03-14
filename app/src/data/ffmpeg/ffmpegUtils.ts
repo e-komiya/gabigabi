@@ -1,6 +1,6 @@
 import { FFmpegSession } from 'ffmpeg-kit-react-native';
 import { Paths } from 'expo-file-system';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 
 /**
  * ユニークなファイル名サフィックスを生成する。

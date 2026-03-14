@@ -1,5 +1,5 @@
 import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir } from './ffmpegUtils';
 
 export type ImageFormat = 'jpeg' | 'png' | 'webp' | 'bmp' | 'gif';

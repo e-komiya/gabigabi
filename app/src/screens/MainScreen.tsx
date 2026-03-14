@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import Share from 'react-native-share';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import * as ExpoImagePicker from 'expo-image-picker';
 import { Svg, Rect, Path, G } from 'react-native-svg';
 import ImagePickerComponent from '../components/ImagePicker';
