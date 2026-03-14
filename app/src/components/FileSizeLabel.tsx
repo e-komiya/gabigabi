@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
+import { getFileSizeBytes } from '../data/ffmpeg/ffmpegUtils';
 
 interface FileSizeLabelProps {
   label: string;
@@ -32,12 +33,7 @@ const FileSizeLabel: React.FC<FileSizeLabelProps> = ({label, uri}) => {
     const fileUri = uri.startsWith('file://') ? uri : `file://${uri}`;
     FileSystem.getInfoAsync(fileUri, { size: true })
       .then(info => {
-        if (info.exists) {
-          const bytes = (info as FileSystem.FileInfo & { size: number }).size ?? 0;
-          setSize(formatBytes(bytes));
-        } else {
-          setSize('—');
-        }
+        setSize(formatBytes(getFileSizeBytes(info)));
       })
       .catch(() => {
         setSize('—');

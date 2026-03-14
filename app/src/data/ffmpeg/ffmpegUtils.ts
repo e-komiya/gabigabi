@@ -82,3 +82,12 @@ export async function cleanupCachedTempFiles(): Promise<void> {
     // クリーンアップ失敗は無視して処理を続行する
   }
 }
+
+/**
+ * expo-file-system の getInfoAsync 結果からファイルサイズを安全に取得する。
+ * ファイルが存在しない場合や size プロパティがない場合は 0 を返す。
+ */
+export function getFileSizeBytes(info: FileSystem.FileInfo): number {
+  if (!info.exists) return 0;
+  return (info as FileSystem.FileInfo & { size: number }).size ?? 0;
+}

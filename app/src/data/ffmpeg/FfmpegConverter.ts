@@ -1,6 +1,6 @@
 import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
-import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir } from './ffmpegUtils';
+import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getFileSizeBytes } from './ffmpegUtils';
 
 export type ImageFormat = 'jpeg' | 'png' | 'webp' | 'bmp' | 'gif';
 
@@ -30,7 +30,7 @@ export async function convertImage(
   if (!inputInfo.exists) {
     throw new Error('入力ファイルが存在しません');
   }
-  const inputBytes = (inputInfo as FileSystem.FileInfo & { size: number }).size ?? 0;
+  const inputBytes = getFileSizeBytes(inputInfo);
   if (inputBytes === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
@@ -147,6 +147,6 @@ export async function convertImage(
   }
   return {
     outputUri,
-    outputBytes: (info as FileSystem.FileInfo & { size: number }).size ?? 0,
+    outputBytes: getFileSizeBytes(info),
   };
 }

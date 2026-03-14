@@ -1,6 +1,6 @@
 import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
-import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir } from './ffmpegUtils';
+import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getFileSizeBytes } from './ffmpegUtils';
 import { VideoFormat } from '../../state/store';
 
 export interface FfmpegProcessResult {
@@ -93,7 +93,7 @@ export async function processVideoWithFfmpeg(
   if (!inputInfo.exists) {
     throw new Error('入力ファイルが存在しません');
   }
-  const inputBytes = (inputInfo as FileSystem.FileInfo & { size: number }).size ?? 0;
+  const inputBytes = getFileSizeBytes(inputInfo);
   if (inputBytes === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
@@ -156,7 +156,7 @@ export async function processVideoWithFfmpeg(
   }
   return {
     outputUri,
-    outputBytes: (info as FileSystem.FileInfo & { size: number }).size ?? 0,
+    outputBytes: getFileSizeBytes(info),
   };
 }
 
@@ -192,7 +192,7 @@ export async function processWithFfmpeg(
   if (!inputInfo.exists) {
     throw new Error('入力ファイルが存在しません');
   }
-  const inputBytes = (inputInfo as FileSystem.FileInfo & { size: number }).size ?? 0;
+  const inputBytes = getFileSizeBytes(inputInfo);
   if (inputBytes === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
@@ -316,6 +316,6 @@ export async function processWithFfmpeg(
   }
   return {
     outputUri,
-    outputBytes: (info as FileSystem.FileInfo & { size: number }).size ?? 0,
+    outputBytes: getFileSizeBytes(info),
   };
 }

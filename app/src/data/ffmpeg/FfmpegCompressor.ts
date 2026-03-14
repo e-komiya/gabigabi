@@ -1,6 +1,6 @@
 import { FFmpegKit, FFprobeKit, ReturnCode } from 'ffmpeg-kit-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
-import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getPasslogConfig } from './ffmpegUtils';
+import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getPasslogConfig, getFileSizeBytes } from './ffmpegUtils';
 
 export interface CompressResult {
   outputUri: string;
@@ -51,7 +51,7 @@ async function compressImageToTarget(
   if (!inputInfo.exists) {
     throw new Error('入力ファイルが存在しません');
   }
-  const originalBytes = (inputInfo as FileSystem.FileInfo & { size: number }).size ?? 0;
+  const originalBytes = getFileSizeBytes(inputInfo);
   if (originalBytes === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
@@ -99,7 +99,7 @@ async function compressImageToTarget(
     }
 
     const outInfo = await FileSystem.getInfoAsync(outputUri, { size: true });
-    const outBytes = (outInfo as FileSystem.FileInfo & { size: number }).size ?? 0;
+  const outBytes = getFileSizeBytes(outInfo);
 
     if (outBytes <= targetBytes) {
       bestQv = mid;
@@ -127,7 +127,7 @@ async function compressImageToTarget(
       throw new Error('FFmpeg画像圧縮（スケールダウン）に失敗しました');
     }
     const outInfo = await FileSystem.getInfoAsync(outputUri, { size: true });
-    bestBytes = (outInfo as FileSystem.FileInfo & { size: number }).size ?? 0;
+    bestBytes = getFileSizeBytes(outInfo);
   }
 
   // リトライ後も目標サイズを超えている場合はエラーを投げる (#290)
@@ -161,7 +161,7 @@ async function compressVideoToTarget(
   if (!inputInfo.exists) {
     throw new Error('入力ファイルが存在しません');
   }
-  const originalBytes = (inputInfo as FileSystem.FileInfo & { size: number }).size ?? 0;
+  const originalBytes = getFileSizeBytes(inputInfo);
   if (originalBytes === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
@@ -243,7 +243,7 @@ async function compressVideoToTarget(
     const crfRc = await crfSession.getReturnCode();
     if (ReturnCode.isSuccess(crfRc)) {
       const crfInfo = await FileSystem.getInfoAsync(outputUri, { size: true });
-      const crfBytes = (crfInfo as FileSystem.FileInfo & { size: number }).size ?? 0;
+      const crfBytes = getFileSizeBytes(crfInfo);
       if (crfBytes > 0 && crfBytes <= targetBytes) {
         useTwoPass = false;
       }
@@ -304,7 +304,7 @@ async function compressVideoToTarget(
   }
 
   let outInfo = await FileSystem.getInfoAsync(outputUri, { size: true });
-  let outputBytes = (outInfo as FileSystem.FileInfo & { size: number }).size ?? 0;
+  let outputBytes = getFileSizeBytes(outInfo);
   let currentOutputUri = outputUri;
 
   // 出力サイズ検証: 目標を超えていたらビットレートを下げてリトライ（最大10回）
@@ -363,7 +363,7 @@ async function compressVideoToTarget(
     }
 
     const retryInfo = await FileSystem.getInfoAsync(retryOutputUri, { size: true });
-    const retryBytes = (retryInfo as FileSystem.FileInfo & { size: number }).size ?? 0;
+    const retryBytes = getFileSizeBytes(retryInfo);
     if (retryBytes > 0) {
       outputBytes = retryBytes;
       outInfo = retryInfo;

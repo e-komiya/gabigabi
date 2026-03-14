@@ -35,7 +35,7 @@ import {compressForDiscord, compressToTargetSize} from '../domain/useDiscordComp
 import {convertImage, formatBytes, ImageFormat} from '../domain/convertImage';
 import {FFmpegKit, FFprobeKit} from 'ffmpeg-kit-react-native';
 import {processVideoWithFfmpeg} from '../data/ffmpeg/FfmpegProcessor';
-import {cleanupCachedTempFiles} from '../data/ffmpeg/ffmpegUtils';
+import {cleanupCachedTempFiles, getFileSizeBytes} from '../data/ffmpeg/ffmpegUtils';
 
 const FORMAT_OPTIONS: {label: string; value: ImageFormat}[] = [
   {label: 'JPEG', value: 'jpeg'},
@@ -333,7 +333,7 @@ const MainScreen = () => {
     (async () => {
       try {
         const info = await FileSystem.getInfoAsync(selectedImage, {size: true});
-        const bytes = info.exists ? (info as FileSystem.FileInfo & {size: number}).size ?? 0 : 0;
+        const bytes = getFileSizeBytes(info);
         const sizeStr = bytes >= 1024 * 1024
           ? `${(bytes / (1024 * 1024)).toFixed(2)} MB`
           : `${(bytes / 1024).toFixed(1)} KB`;
@@ -510,10 +510,10 @@ const MainScreen = () => {
         resultUri = result.outputUri;
         resultBytes = result.outputBytes;
       } else {
-      const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
-      const inputBytes = inputInfo.exists ? (inputInfo as FileSystem.FileInfo & {size: number}).size ?? 0 : 0;
+        const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
+        const inputBytes = getFileSizeBytes(inputInfo);
 
-      // ガビガビレベル0 かつ フォーマット変換が必要な場合はフォーマット変換のみ
+        // ガビガビレベル0 かつ フォーマット変換が必要な場合はフォーマット変換のみ
       // ガビガビレベル1以上の場合はガビガビ化（リサイズ+品質劣化）
       // 両方の設定を1回の「変換」で適用する
 
