@@ -1,0 +1,9 @@
+rust_core\target\*
+rust_core/target/
+
+# Build artifacts
+app/android/app/src/main/assets/index.android.bundle
+app/android/app/src/main/res/drawable-*/node_modules_*
+app/android/app/src/main/res/raw/keep.xml
+app/dist/
+app/.expo/
