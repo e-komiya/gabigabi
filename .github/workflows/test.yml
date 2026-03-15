@@ -1,0 +1,32 @@
+name: Jest Integration Tests
+
+on:
+  push:
+    branches: [master, main, 'feature/**', 'fix/**']
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Run Jest tests
+        working-directory: app
+        run: npx jest --ci src/__tests__/integration.test.ts

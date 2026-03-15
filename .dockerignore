@@ -1,0 +1,35 @@
+node_modules
+npm-debug.log
+yarn-error.log
+.git
+.gitignore
+README.md
+.env
+.nyc_output
+coverage
+.nyc_output
+.cache
+dist
+.next
+
+# React Native
+.expo
+.expo-shared
+*.log
+ios/build
+android/build
+android/.gradle
+
+# Rust
+rust_core/target
+Cargo.lock
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db 
