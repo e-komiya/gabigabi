@@ -34,7 +34,7 @@
 
 ## ソースコード
 
-- GitHub: https://github.com/eisei-komiya/convert2gabigabi
+- GitHub: https://github.com/e-komiya/gabigabi
 - ライセンス: GPL v3（リポジトリルートの `LICENSE` 参照）
 
 ---

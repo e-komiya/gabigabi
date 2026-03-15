@@ -19,7 +19,7 @@
 
 ```bash
 # 1. リポジトリクローン
-git clone https://github.com/eisei-komiya/convert2gabigabi.git
+git clone https://github.com/e-komiya/gabigabi.git
 cd convert2gabigabi/app
 
 # 2. 依存インストール

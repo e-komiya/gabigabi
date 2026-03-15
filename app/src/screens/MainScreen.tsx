@@ -711,7 +711,7 @@ const MainScreen = () => {
             <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>画像・動画の変換・圧縮・ガビガビ化ツール</Text>
             <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>ライセンス: GPL v3</Text>
             <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>FFmpeg / FFmpegKit を使用しています</Text>
-            <TouchableOpacity onPress={() => { Linking.openURL('https://github.com/eisei-komiya/convert2gabigabi'); }}>
+            <TouchableOpacity onPress={() => { Linking.openURL('https://github.com/e-komiya/gabigabi'); }}>
               <Text style={{color: '#4da6ff', fontSize: 14, marginBottom: 16}}>GitHub でソースコードを見る</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setAboutVisible(false)} style={{backgroundColor: '#333', borderRadius: 8, padding: 12, alignItems: 'center'}}>
