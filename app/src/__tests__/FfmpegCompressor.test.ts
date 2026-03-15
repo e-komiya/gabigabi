@@ -79,10 +79,11 @@ function setupImageFileInfo({
 }
 
 /**
- * Video compressor call order:
+ * Video compressor call order (2パス導入後):
  *   1. getInfoAsync(inputUri)   — input check
  *   2. getInfoAsync(cacheDir)   — cleanupCachedTempFiles
- *   3. getInfoAsync(outputUri)  — after compress
+ *   3. getInfoAsync(outputUri)  — CRF試行後のサイズ確認
+ *   4. getInfoAsync(outputUri)  — 2パス完了後のサイズ確認
  */
 function setupVideoFileInfo({
   inputSize = 20 * 1024 * 1024,
@@ -97,7 +98,8 @@ function setupVideoFileInfo({
   mockGetInfoAsync
     .mockResolvedValueOnce({ exists: true, size: inputSize }) // 1. input
     .mockResolvedValueOnce({ exists: true })                  // 2. cache dir
-    .mockResolvedValueOnce({ exists: true, size: outputSize });// 3. output
+    .mockResolvedValueOnce({ exists: true, size: outputSize * 2 }) // 3. CRF output (target超過で2パスへ)
+    .mockResolvedValueOnce({ exists: true, size: outputSize });     // 4. 2パス後 output
 }
 
 // ---------------------------------------------------------------------------
@@ -181,19 +183,20 @@ describe('compressForDiscord (video)', () => {
     expect(result.compressionRatio).toBe(1);
   });
 
-  it('uses -b:v bitrate flag in video compress command', async () => {
+  it('uses two-pass options in video compress command', async () => {
     setupVideoFileInfo();
     await compressForDiscord('file:///videos/clip.mp4');
-    const cmd = capturedCmd();
-    expect(cmd).toContain('-b:v');
-    expect(cmd).toContain('-maxrate');
-    expect(cmd).toContain('-bufsize');
+    const pass1Cmd = capturedCmd(1);
+    const pass2Cmd = capturedCmd(2);
+    expect(pass1Cmd).toContain('-pass 1');
+    expect(pass2Cmd).toContain('-pass 2');
+    expect(pass2Cmd).toContain('-b:v');
   });
 
-  it('uses AAC audio codec in video compress command', async () => {
+  it('uses AAC audio codec in pass2 command', async () => {
     setupVideoFileInfo();
     await compressForDiscord('file:///videos/clip.mp4');
-    const cmd = capturedCmd();
+    const cmd = capturedCmd(2);
     expect(cmd).toContain('aac');
     expect(cmd).toContain('-b:a 64k');
   });
