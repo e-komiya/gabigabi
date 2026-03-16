@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import { getFileSizeBytes } from '../data/ffmpeg/ffmpegUtils';
 
 interface FileSizeLabelProps {
