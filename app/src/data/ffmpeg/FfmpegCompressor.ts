@@ -1,6 +1,7 @@
 import { FFmpegKit, FFprobeKit, ReturnCode } from 'ffmpeg-kit-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getPasslogConfig, getFileSizeBytes } from './ffmpegUtils';
+import { DISCORD_MAX_BYTES } from '../../constants/limits';
 
 export interface CompressResult {
   outputUri: string;
@@ -8,7 +9,6 @@ export interface CompressResult {
   compressionRatio: number;
 }
 
-const DISCORD_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
 /**
  * ファイルの拡張子から動画かどうかを判定する。
