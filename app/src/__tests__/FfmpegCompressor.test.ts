@@ -40,6 +40,12 @@ jest.mock('expo-file-system/legacy', () => ({
 jest.mock('../data/ffmpeg/ffmpegUtils', () => ({
   generateUniqueFileSuffix: jest.fn().mockReturnValue('12345_abc'),
   extractErrorFromLogs: jest.fn().mockResolvedValue(''),
+  getCacheDir: jest.fn().mockReturnValue('file:///cache/'),
+  getPasslogConfig: jest.fn().mockImplementation((stem: string, suffix: string) => ({
+    uri: `file:///cache/${stem}_${suffix}`,
+    path: `/cache/${stem}_${suffix}`,
+  })),
+  getFileSizeBytes: jest.fn().mockImplementation((info: { size?: number }) => info?.size ?? 0),
 }));
 
 // ---------------------------------------------------------------------------
@@ -54,11 +60,21 @@ function capturedCmd(callIndex = -1): string {
 
 function setupSuccessSession() {
   const { ReturnCode } = jest.requireMock('ffmpeg-kit-react-native');
+  const ffmpegUtils = jest.requireMock('../data/ffmpeg/ffmpegUtils');
+  ffmpegUtils.generateUniqueFileSuffix.mockReturnValue('12345_abc');
+  ffmpegUtils.extractErrorFromLogs.mockResolvedValue('');
+  ffmpegUtils.getCacheDir.mockReturnValue('file:///cache/');
+  ffmpegUtils.getPasslogConfig.mockImplementation((stem: string, suffix: string) => ({
+    uri: `file:///cache/${stem}_${suffix}`,
+    path: `/cache/${stem}_${suffix}`,
+  }));
+  ffmpegUtils.getFileSizeBytes.mockImplementation((info: { size?: number }) => info?.size ?? 0);
   ReturnCode.isSuccess.mockReturnValue(true);
   mockGetReturnCode.mockResolvedValue({});
   mockExecute.mockResolvedValue({
     getReturnCode: mockGetReturnCode,
     getAllLogsAsString: mockGetAllLogsAsString,
+    getOutput: jest.fn().mockResolvedValue(''),
   });
 }
 
@@ -186,8 +202,8 @@ describe('compressForDiscord (video)', () => {
   it('uses two-pass options in video compress command', async () => {
     setupVideoFileInfo();
     await compressForDiscord('file:///videos/clip.mp4');
-    const pass1Cmd = capturedCmd(1);
-    const pass2Cmd = capturedCmd(2);
+    const pass1Cmd = capturedCmd(2);
+    const pass2Cmd = capturedCmd(3);
     expect(pass1Cmd).toContain('-pass 1');
     expect(pass2Cmd).toContain('-pass 2');
     expect(pass2Cmd).toContain('-b:v');
@@ -196,7 +212,7 @@ describe('compressForDiscord (video)', () => {
   it('uses AAC audio codec in pass2 command', async () => {
     setupVideoFileInfo();
     await compressForDiscord('file:///videos/clip.mp4');
-    const cmd = capturedCmd(2);
+    const cmd = capturedCmd(3);
     expect(cmd).toContain('aac');
     expect(cmd).toContain('-b:a 64k');
   });
@@ -217,6 +233,31 @@ describe('compressForDiscord (video)', () => {
     setupVideoFileInfo();
     const result = await compressForDiscord('file:///videos/clip.mp4');
     expect(result.outputUri).toContain('_compressed_');
+  });
+
+  it('applies scale-down retry filter after repeated oversized outputs', async () => {
+    const target = 10 * 1024 * 1024;
+    mockProbeExecute.mockResolvedValue({
+      getMediaInformation: jest.fn().mockResolvedValue({
+        getDuration: jest.fn().mockReturnValue('30'),
+      }),
+    });
+
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 50 * 1024 * 1024 })
+      .mockResolvedValueOnce({ exists: true })
+      .mockResolvedValueOnce({ exists: true, size: 20 * 1024 * 1024 })
+      .mockResolvedValueOnce({ exists: true, size: 18 * 1024 * 1024 })
+      .mockResolvedValueOnce({ exists: true, size: 17 * 1024 * 1024 })
+      .mockResolvedValueOnce({ exists: true, size: 16 * 1024 * 1024 })
+      .mockResolvedValueOnce({ exists: true, size: 15 * 1024 * 1024 })
+      .mockResolvedValueOnce({ exists: true, size: 8 * 1024 * 1024 });
+
+    const result = await compressToTargetSize('file:///videos/clip.mp4', target);
+
+    const executed = mockExecute.mock.calls.map(c => c[0] as string).join('\n');
+    expect(executed).toContain('scale=iw*0.75:ih*0.75');
+    expect(result.outputBytes).toBeLessThanOrEqual(target);
   });
 
   it('throws when input does not exist', async () => {
@@ -265,16 +306,14 @@ describe('compressToTargetSize', () => {
   });
 
   it('falls back to scale-down when quality-only compression is insufficient', async () => {
-    // Binary search: output always exceeds target → bestBytes = 0 → fallback cmd with scale
     const hugeOutput = 15 * 1024 * 1024;
     const target = 5 * 1024 * 1024;
     mockGetInfoAsync
-      .mockResolvedValueOnce({ exists: true, size: 20 * 1024 * 1024 }) // 1. input
-      .mockResolvedValueOnce({ exists: true })                          // 2. cache dir
-      .mockResolvedValue({ exists: true, size: hugeOutput });           // 3+. all outputs oversized
+      .mockResolvedValueOnce({ exists: true, size: 20 * 1024 * 1024 })
+      .mockResolvedValueOnce({ exists: true })
+      .mockResolvedValue({ exists: true, size: hugeOutput });
 
-    await compressToTargetSize('file:///photos/img.jpg', target);
-    // The final (fallback) command should contain scale=iw*0.5:ih*0.5 and -q:v 31
+    await expect(compressToTargetSize('file:///photos/img.jpg', target)).rejects.toThrow('圧縮できませんでした');
     const lastCmd = capturedCmd();
     expect(lastCmd).toContain('scale=iw*0.5:ih*0.5');
     expect(lastCmd).toContain('-q:v 31');
