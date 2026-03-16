@@ -84,6 +84,8 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
           </View>
           <CustomSlider
             style={styles.slider}
+            accessibilityLabel="リサイズ倍率スライダー"
+            accessibilityHint="1%から100%の範囲で画像サイズを変更します"
             minimumValue={1}
             maximumValue={100}
             step={1}
