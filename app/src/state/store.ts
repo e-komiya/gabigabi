@@ -7,6 +7,7 @@ export type SizeUnit = 'KB' | 'MB' | 'GB';
 
 interface AppState {
   selectedImage: string | null;
+  selectedMediaType: 'image' | 'video' | null;
   resizePercent: number;
   processedImage: string | null;
   isProcessing: boolean;
@@ -24,6 +25,7 @@ interface AppState {
   targetSizeUnit: SizeUnit;
   
   setSelectedImage: (image: string | null) => void;
+  setSelectedMediaType: (mediaType: 'image' | 'video' | null) => void;
   setResizePercent: (percent: number) => void;
   setProcessedImage: (image: string | null) => void;
   setIsProcessing: (processing: boolean) => void;
@@ -43,6 +45,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>(set => ({
   selectedImage: null,
+  selectedMediaType: null,
   resizePercent: 100,
   processedImage: null,
   isProcessing: false,
@@ -59,6 +62,7 @@ export const useAppStore = create<AppState>(set => ({
   targetSizeUnit: 'MB',
   
   setSelectedImage: image => set({selectedImage: image}),
+  setSelectedMediaType: mediaType => set({selectedMediaType: mediaType}),
   setResizePercent: percent => set({resizePercent: percent}),
   setProcessedImage: image => set({processedImage: image}),
   setIsProcessing: processing => set({isProcessing: processing}),
