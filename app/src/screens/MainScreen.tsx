@@ -249,6 +249,7 @@ const MainScreen = () => {
   const insets = useSafeAreaInsets();
   const {
     selectedImage,
+    selectedMediaType,
     resizePercent,
     isProcessing,
     processedImage,
@@ -264,6 +265,7 @@ const MainScreen = () => {
     targetSizeValue,
     targetSizeUnit,
     setSelectedImage,
+    setSelectedMediaType,
     setResizePercent,
     setProcessedImage,
     setIsProcessing,
@@ -287,9 +289,6 @@ const MainScreen = () => {
   });
 
   const [processingAction, setProcessingAction] = useState<'gabigabi' | 'convert' | 'targetSize' | null>(null);
-
-  // #80: selected media type
-  const [selectedMediaType, setSelectedMediaType] = useState<'image' | 'video' | null>(null);
 
   // #77: fullscreen modal state
   const [fullscreenUri, setFullscreenUri] = useState<string | null>(null);
