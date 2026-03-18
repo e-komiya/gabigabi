@@ -866,7 +866,9 @@ const MainScreen = () => {
                           styles.formatButton,
                           outputFormat === opt.value && styles.formatButtonActive,
                         ]}
-                        onPress={() => setOutputFormat(opt.value)}>
+                        onPress={() => setOutputFormat(opt.value)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`出力フォーマット ${opt.label}`}>
                         <Text
                           style={[
                             styles.formatButtonText,
@@ -893,6 +895,8 @@ const MainScreen = () => {
                     step={1}
                     value={compressionRate}
                     onValueChange={(v: number) => handleQualityChange(Math.round(v))}
+                    accessibilityLabel="画像圧縮率スライダー"
+                    accessibilityHint="0%から99%の範囲で圧縮率を変更します"
                     minimumTrackTintColor={ACCENT2}
                     maximumTrackTintColor={BORDER}
                     thumbTintColor={ACCENT2}
@@ -929,6 +933,8 @@ const MainScreen = () => {
                     step={1}
                     value={shrinkExpandRate}
                     onValueChange={handleShrinkExpandRateChange}
+                    accessibilityLabel="縮小率スライダー"
+                    accessibilityHint="10%から90%の範囲で縮小率を変更します"
                     minimumTrackTintColor={ACCENT}
                     maximumTrackTintColor={BORDER}
                     thumbTintColor={ACCENT}
@@ -965,6 +971,8 @@ const MainScreen = () => {
                     step={1}
                     value={multiCompressCount}
                     onValueChange={handleMultiCompressCountChange}
+                    accessibilityLabel="多重圧縮回数スライダー"
+                    accessibilityHint="1回から10回の範囲で圧縮回数を変更します"
                     minimumTrackTintColor={ACCENT}
                     maximumTrackTintColor={BORDER}
                     thumbTintColor={ACCENT}
@@ -1049,14 +1057,18 @@ const MainScreen = () => {
             <TouchableOpacity
               style={[styles.saveButton]}
               onPress={handleSave}
-              activeOpacity={0.8}>
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="カメラロールに保存">
               <Text style={styles.buttonText}>カメラロールに保存</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.shareButton]}
               onPress={handleShare}
-              activeOpacity={0.8}>
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="共有">
               <Text style={styles.buttonText}>🔗 共有</Text>
             </TouchableOpacity>
           </View>
@@ -1068,7 +1080,9 @@ const MainScreen = () => {
             style={[styles.processButton, (!selectedImage || isProcessing) && styles.disabledButton]}
             onPress={handleProcess}
             disabled={!selectedImage || isProcessing}
-            activeOpacity={0.8}>
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="ガビガビ化を実行">
             {isProcessing && processingAction === 'gabigabi' ? (
               <View style={styles.processingRow}>
                 <ActivityIndicator color="#fff" size="small" />
@@ -1083,7 +1097,9 @@ const MainScreen = () => {
             style={[styles.targetSizeProcessButton, (!selectedImage || isProcessing) && styles.disabledButton]}
             onPress={handleTargetSizeProcess}
             disabled={!selectedImage || isProcessing}
-            activeOpacity={0.8}>
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="指定サイズ以下に圧縮">
             {isProcessing && processingAction === 'targetSize' ? (
               <View style={styles.processingRow}>
                 <ActivityIndicator color="#fff" size="small" />

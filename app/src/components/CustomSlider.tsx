@@ -11,6 +11,8 @@ interface CustomSliderProps {
   maximumTrackTintColor?: string;
   thumbTintColor?: string;
   style?: ViewStyle;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 const CustomSlider: React.FC<CustomSliderProps> = ({
@@ -23,6 +25,8 @@ const CustomSlider: React.FC<CustomSliderProps> = ({
   maximumTrackTintColor = '#2a2a2a',
   thumbTintColor = '#ff4e50',
   style,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const trackWidth = useRef(0);
   const trackX = useRef(0);
@@ -74,7 +78,15 @@ const CustomSlider: React.FC<CustomSliderProps> = ({
   const ratio = isNaN(rawRatio) ? 0 : Math.min(1, Math.max(0, rawRatio));
 
   return (
-    <View ref={trackRef} style={[styles.container, style]} onLayout={onLayout} {...panResponder.panHandlers}>
+    <View
+      ref={trackRef}
+      style={[styles.container, style]}
+      onLayout={onLayout}
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      {...panResponder.panHandlers}>
       <View style={styles.track}>
         <View style={[styles.trackFill, {flex: ratio, backgroundColor: minimumTrackTintColor}]} />
         <View style={[styles.trackEmpty, {flex: 1 - ratio, backgroundColor: maximumTrackTintColor}]} />
