@@ -1,5 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {create} from 'zustand';
-import { ImageFormat } from '../domain/convertImage';
+import {createJSONStorage, persist} from 'zustand/middleware';
+import {ImageFormat} from '../domain/convertImage';
 
 export type VideoFormat = 'mp4' | 'mov' | 'mkv' | 'webm';
 export type ConvertMethod = 'parameters' | 'targetSize';
@@ -22,7 +24,7 @@ interface AppState {
   convertMethod: ConvertMethod;
   targetSizeValue: string;
   targetSizeUnit: SizeUnit;
-  
+
   setSelectedImage: (image: string | null) => void;
   setResizePercent: (percent: number) => void;
   setProcessedImage: (image: string | null) => void;
@@ -41,36 +43,61 @@ interface AppState {
   setTargetSizeUnit: (unit: SizeUnit) => void;
 }
 
-export const useAppStore = create<AppState>(set => ({
+const initialState = {
   selectedImage: null,
   resizePercent: 100,
   processedImage: null,
   isProcessing: false,
-  outputFormat: 'jpeg',
+  outputFormat: 'jpeg' as ImageFormat,
   compressionRate: 0,
   gabigabiLevel: null,
-  videoOutputFormat: 'mp4',
+  videoOutputFormat: 'mp4' as VideoFormat,
   shrinkExpandEnabled: false,
   shrinkExpandRate: 50,
   multiCompressEnabled: false,
   multiCompressCount: 3,
-  convertMethod: 'parameters',
+  convertMethod: 'parameters' as ConvertMethod,
   targetSizeValue: '10',
-  targetSizeUnit: 'MB',
-  
-  setSelectedImage: image => set({selectedImage: image}),
-  setResizePercent: percent => set({resizePercent: percent}),
-  setProcessedImage: image => set({processedImage: image}),
-  setIsProcessing: processing => set({isProcessing: processing}),
-  setOutputFormat: format => set({outputFormat: format}),
-  setCompressionRate: rate => set({compressionRate: rate}),
-  setGabigabiLevel: level => set({gabigabiLevel: level}),
-  setVideoOutputFormat: format => set({videoOutputFormat: format}),
-  setShrinkExpandEnabled: enabled => set({shrinkExpandEnabled: enabled}),
-  setShrinkExpandRate: rate => set({shrinkExpandRate: rate}),
-  setMultiCompressEnabled: enabled => set({multiCompressEnabled: enabled}),
-  setMultiCompressCount: count => set({multiCompressCount: count}),
-  setConvertMethod: method => set({convertMethod: method}),
-  setTargetSizeValue: value => set({targetSizeValue: value}),
-  setTargetSizeUnit: unit => set({targetSizeUnit: unit}),
-}));
+  targetSizeUnit: 'MB' as SizeUnit,
+};
+
+export const useAppStore = create<AppState>()(
+  persist(
+    set => ({
+      ...initialState,
+
+      setSelectedImage: image => set({selectedImage: image}),
+      setResizePercent: percent => set({resizePercent: percent}),
+      setProcessedImage: image => set({processedImage: image}),
+      setIsProcessing: processing => set({isProcessing: processing}),
+      setOutputFormat: format => set({outputFormat: format}),
+      setCompressionRate: rate => set({compressionRate: rate}),
+      setGabigabiLevel: level => set({gabigabiLevel: level}),
+      setVideoOutputFormat: format => set({videoOutputFormat: format}),
+      setShrinkExpandEnabled: enabled => set({shrinkExpandEnabled: enabled}),
+      setShrinkExpandRate: rate => set({shrinkExpandRate: rate}),
+      setMultiCompressEnabled: enabled => set({multiCompressEnabled: enabled}),
+      setMultiCompressCount: count => set({multiCompressCount: count}),
+      setConvertMethod: method => set({convertMethod: method}),
+      setTargetSizeValue: value => set({targetSizeValue: value}),
+      setTargetSizeUnit: unit => set({targetSizeUnit: unit}),
+    }),
+    {
+      name: 'gabigabi-app-store',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: state => ({
+        outputFormat: state.outputFormat,
+        compressionRate: state.compressionRate,
+        gabigabiLevel: state.gabigabiLevel,
+        videoOutputFormat: state.videoOutputFormat,
+        shrinkExpandEnabled: state.shrinkExpandEnabled,
+        shrinkExpandRate: state.shrinkExpandRate,
+        multiCompressEnabled: state.multiCompressEnabled,
+        multiCompressCount: state.multiCompressCount,
+        convertMethod: state.convertMethod,
+        targetSizeValue: state.targetSizeValue,
+        targetSizeUnit: state.targetSizeUnit,
+      }),
+    },
+  ),
+);
