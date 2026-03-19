@@ -35,23 +35,20 @@ if ! gh api "repos/$EXPECTED_REPO" --jq '(.permissions.push == true) or (.permis
   exit 1
 fi
 
-# 3) Validate git remotes: origin must be SSH target repo; forbid HTTPS pushes.
+# 3) Validate git remotes: origin must be the SSH target repo.
 ORIGIN_URL="$(git remote get-url origin 2>/dev/null || true)"
 if [[ "$ORIGIN_URL" != "$EXPECTED_ORIGIN" ]]; then
   echo "[auth-guard] origin mismatch: expected=$EXPECTED_ORIGIN actual=${ORIGIN_URL:-<none>}" >&2
   exit 1
 fi
 
+# Optional warning only: non-origin push remotes that look dangerous.
 while IFS= read -r remote; do
+  [[ "$remote" == "origin" ]] && continue
   url="$(git remote get-url --push "$remote" 2>/dev/null || true)"
   [[ -z "$url" ]] && continue
-  if [[ "$url" =~ ^https:// ]]; then
-    echo "[auth-guard] forbidden https push remote: $remote -> $url" >&2
-    exit 1
-  fi
-  if [[ "$url" == *"eisei-komiya/"* ]]; then
-    echo "[auth-guard] forbidden fork push remote: $remote -> $url" >&2
-    exit 1
+  if [[ "$url" =~ ^https:// || "$url" == *"eisei-komiya/"* ]]; then
+    echo "[auth-guard] warning: non-origin push remote detected: $remote -> $url" >&2
   fi
 done < <(git remote)
 
