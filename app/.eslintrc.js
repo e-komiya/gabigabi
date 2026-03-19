@@ -1,4 +1,12 @@
 module.exports = {
   root: true,
-  extends: '@react-native',
+  extends: ['universe/native'],
+  overrides: [
+    {
+      files: ['*.js'],
+      env: {
+        node: true,
+      },
+    },
+  ],
 };
