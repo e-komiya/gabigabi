@@ -91,6 +91,11 @@ describe('convertImage', () => {
     await expect(convertImage('file:///photos/in.jpg', { outputFormat: 'webp' })).rejects.toThrow('入力ファイルが存在しません');
   });
 
+  it('入力ファイルが0バイトの場合はエラー', async () => {
+    mockGetInfoAsync.mockResolvedValueOnce({ exists: true, size: 0 });
+    await expect(convertImage('file:///photos/in.jpg', { outputFormat: 'webp' })).rejects.toThrow('入力ファイルが空（0バイト）です');
+  });
+
   it('FFmpeg失敗時に出力を削除してエラー', async () => {
     const { ReturnCode } = jest.requireMock('ffmpeg-kit-react-native');
     ReturnCode.isSuccess.mockReturnValue(false);
