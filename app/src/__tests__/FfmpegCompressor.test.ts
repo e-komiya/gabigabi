@@ -260,6 +260,27 @@ describe('compressForDiscord (video)', () => {
     expect(result.outputBytes).toBeLessThanOrEqual(target);
   });
 
+  it('出力サイズ比率に応じてリトライビットレートを再計算する', async () => {
+    const target = 10 * 1024 * 1024;
+    mockProbeExecute.mockResolvedValue({
+      getMediaInformation: jest.fn().mockResolvedValue({
+        getDuration: jest.fn().mockReturnValue('30'),
+      }),
+    });
+
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 50 * 1024 * 1024 })
+      .mockResolvedValueOnce({ exists: true })
+      .mockResolvedValueOnce({ exists: true, size: 20 * 1024 * 1024 })
+      .mockResolvedValueOnce({ exists: true, size: 18 * 1024 * 1024 })
+      .mockResolvedValueOnce({ exists: true, size: 9 * 1024 * 1024 });
+
+    await compressToTargetSize('file:///videos/clip.mp4', target);
+
+    const executed = mockExecute.mock.calls.map(c => c[0] as string).join('\n');
+    expect(executed).toContain('-b:v 1253k');
+  });
+
   it('throws when input does not exist', async () => {
     mockGetInfoAsync.mockResolvedValueOnce({ exists: false }); // 1. input
     await expect(compressForDiscord('file:///videos/clip.mp4')).rejects.toThrow('入力ファイルが存在しません');
