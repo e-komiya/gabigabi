@@ -80,10 +80,24 @@ describe('convertImage', () => {
     const result = await convertImage('file:///photos/in.mp4', { outputFormat: 'gif' });
 
     expect(mockExecute).toHaveBeenCalledTimes(2);
+    expect(mockExecute.mock.calls[0][0]).toContain('fps=10');
     expect(mockExecute.mock.calls[0][0]).toContain('palettegen');
     expect(mockExecute.mock.calls[1][0]).toContain('paletteuse');
     expect(mockDeleteAsync).toHaveBeenCalledWith('file:///cache/in_converted_12345_abc.gif.palette.png', { idempotent: true });
     expect(result.outputUri).toMatch(/\.gif$/);
+  });
+
+  it('GIF変換時にfpsとscaleオプションを反映する', async () => {
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 1000 })
+      .mockResolvedValueOnce({ exists: true, size: 650 });
+
+    await convertImage('file:///photos/in.mp4', { outputFormat: 'gif', gifFps: 15, gifScale: 50 });
+
+    expect(mockExecute.mock.calls[0][0]).toContain('fps=15');
+    expect(mockExecute.mock.calls[0][0]).toContain('iw*50/100');
+    expect(mockExecute.mock.calls[1][0]).toContain('fps=15');
+    expect(mockExecute.mock.calls[1][0]).toContain('iw*50/100');
   });
 
   it('入力ファイルが存在しない場合はエラー', async () => {

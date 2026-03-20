@@ -7,6 +7,8 @@ export type ImageFormat = 'jpeg' | 'png' | 'webp' | 'bmp' | 'gif';
 export interface ConvertOptions {
   outputFormat: ImageFormat;
   quality?: number; // compressionRate 0-99 for jpeg/webp (ignored for png)
+  gifFps?: number; // GIF出力フレームレート（デフォルト10）
+  gifScale?: number; // GIFスケール率（1-100, デフォルト100）
 }
 
 export interface FfmpegConvertResult {
@@ -36,7 +38,7 @@ export async function convertImage(
   }
 
   // 前回の一時ファイルをクリーンアップ（#214: アプリ起動時に移動したため削除）
-  const { outputFormat, quality = 0 } = options;
+  const { outputFormat, quality = 0, gifFps = 10, gifScale = 100 } = options;
 
   const inputPath = inputUri.replace('file://', '');
   const fileName = inputPath.split('/').pop() ?? 'image';
@@ -89,12 +91,19 @@ export async function convertImage(
   let rc;
 
   if (outputFormat === 'gif') {
+    const fps = Math.max(1, Math.min(30, Math.round(gifFps)));
+    const scalePercent = Math.max(1, Math.min(100, Math.round(gifScale)));
+    const scaleFilter = scalePercent === 100
+      ? 'scale=iw:ih:flags=lanczos'
+      : `scale=trunc(iw*${scalePercent}/100/2)*2:trunc(ih*${scalePercent}/100/2)*2:flags=lanczos`;
+    const paletteFilter = `fps=${fps},${scaleFilter},palettegen`;
+    const renderFilter = `fps=${fps},${scaleFilter} [x]; [x][1:v] paletteuse`;
     // GIF はパレット生成の2パス方式でアニメーションを保持する
     const palettePath = `${outputPath}.palette.png`;
     const pass1 = [
       '-y',
       '-i', `"${inputPath}"`,
-      '-vf', '"fps=10,palettegen"',
+      '-vf', `"${paletteFilter}"`,
       `"${palettePath}"`,
     ].join(' ');
 
@@ -111,7 +120,7 @@ export async function convertImage(
         '-y',
         '-i', `"${inputPath}"`,
         '-i', `"${palettePath}"`,
-        '-lavfi', '"fps=10 [x]; [x][1:v] paletteuse"',
+        '-lavfi', `"${renderFilter}"`,
         `"${outputPath}"`,
       ].join(' ');
 
