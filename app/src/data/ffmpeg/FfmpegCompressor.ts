@@ -311,7 +311,8 @@ async function compressVideoToTarget(
   let retryBitrate = videoBitrateKbps;
   let scaleFactor = 1.0;
   for (let attempt = 0; attempt < 10 && outputBytes > targetBytes; attempt++) {
-    retryBitrate = Math.floor(retryBitrate * 0.80);
+    const actualRatio = targetBytes / outputBytes;
+    retryBitrate = Math.floor(retryBitrate * actualRatio * 0.92);
     if (retryBitrate < 50) break;
 
     // 3回リトライしてもダメな場合は段階的にリサイズ (0.75x) を適用
