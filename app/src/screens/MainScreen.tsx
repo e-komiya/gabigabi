@@ -400,7 +400,7 @@ const MainScreen = () => {
       return;
     }
     const result = await ExpoImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
+      mediaTypes: resolvePickerMediaTypes(selectedMediaType),
       allowsEditing: false,
       quality: 1,
     });
