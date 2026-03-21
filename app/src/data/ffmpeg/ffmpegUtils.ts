@@ -87,7 +87,11 @@ export async function cleanupCachedTempFiles(): Promise<void> {
  * expo-file-system の getInfoAsync 結果からファイルサイズを安全に取得する。
  * ファイルが存在しない場合や size プロパティがない場合は 0 を返す。
  */
+function hasNumericSize(info: FileSystem.FileInfo): info is FileSystem.FileInfo & { size: number } {
+  return 'size' in info && typeof info.size === 'number';
+}
+
 export function getFileSizeBytes(info: FileSystem.FileInfo): number {
   if (!info.exists) return 0;
-  return (info as FileSystem.FileInfo & { size: number }).size ?? 0;
+  return hasNumericSize(info) ? info.size : 0;
 }
