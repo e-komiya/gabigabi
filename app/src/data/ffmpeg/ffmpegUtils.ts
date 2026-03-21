@@ -95,3 +95,15 @@ export function getFileSizeBytes(info: FileSystem.FileInfo): number {
   if (!info.exists) return 0;
   return hasNumericSize(info) ? info.size : 0;
 }
+
+
+/**
+ * FFmpeg コマンド配列を安全に連結する。
+ * null/undefined/空文字は除外して 1 つの文字列コマンドを返す。
+ */
+export function buildFfmpegCommand(parts: Array<string | number | null | undefined>): string {
+  return parts
+    .filter((part): part is string | number => part !== null && part !== undefined && String(part).trim() !== '')
+    .map(part => String(part))
+    .join(' ');
+}

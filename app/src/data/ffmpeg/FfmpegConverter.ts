@@ -1,6 +1,6 @@
 import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
-import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getFileSizeBytes } from './ffmpegUtils';
+import { buildFfmpegCommand, generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getFileSizeBytes } from './ffmpegUtils';
 
 export type ImageFormat = 'jpeg' | 'png' | 'webp' | 'bmp' | 'gif';
 
@@ -100,12 +100,12 @@ export async function convertImage(
     const renderFilter = `fps=${fps},${scaleFilter} [x]; [x][1:v] paletteuse`;
     // GIF はパレット生成の2パス方式でアニメーションを保持する
     const palettePath = `${outputPath}.palette.png`;
-    const pass1 = [
+    const pass1 = buildFfmpegCommand([
       '-y',
       '-i', `"${inputPath}"`,
       '-vf', `"${paletteFilter}"`,
       `"${palettePath}"`,
-    ].join(' ');
+    ]);
 
     try {
       const pass1Session = await FFmpegKit.execute(pass1);
@@ -116,13 +116,13 @@ export async function convertImage(
         throw new Error(`GIF パレット生成に失敗しました: ${logs}`);
       }
 
-      const pass2 = [
+      const pass2 = buildFfmpegCommand([
         '-y',
         '-i', `"${inputPath}"`,
         '-i', `"${palettePath}"`,
         '-lavfi', `"${renderFilter}"`,
         `"${outputPath}"`,
-      ].join(' ');
+      ]);
 
       session = await FFmpegKit.execute(pass2);
       rc = await session.getReturnCode();
@@ -131,14 +131,14 @@ export async function convertImage(
       await FileSystem.deleteAsync(`file://${palettePath}`, { idempotent: true });
     }
   } else {
-    const cmd = [
+    const cmd = buildFfmpegCommand([
       '-y',
       '-i', `"${inputPath}"`,
       qualityArgs,
       '-update', '1',
       '-frames:v', '1',
       `"${outputPath}"`,
-    ].join(' ');
+    ]);
 
     session = await FFmpegKit.execute(cmd);
     rc = await session.getReturnCode();
