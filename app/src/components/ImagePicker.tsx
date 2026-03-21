@@ -8,6 +8,12 @@ interface ImagePickerProps {
   selectedMediaType?: 'image' | 'video';
 }
 
+const resolvePickerMediaTypes = (selectedMediaType?: 'image' | 'video') => {
+  if (selectedMediaType === 'video') return ['videos'] as const;
+  if (selectedMediaType === 'image') return ['images'] as const;
+  return ['images', 'videos'] as const;
+};
+
 const ACCENT = '#ff4e50';
 const CARD_BG = '#1a1a1a';
 const BORDER = '#2a2a2a';
@@ -25,7 +31,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
       return;
     }
     const result = await ExpoImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images', 'videos'],
+      mediaTypes: resolvePickerMediaTypes(selectedMediaType),
       allowsEditing: false,
       quality: 1,
     });
