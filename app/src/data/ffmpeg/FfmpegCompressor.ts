@@ -1,6 +1,6 @@
 import { FFmpegKit, FFprobeKit, ReturnCode } from 'ffmpeg-kit-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
-import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getPasslogConfig, getFileSizeBytes } from './ffmpegUtils';
+import { buildFfmpegCommand, generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getPasslogConfig, getFileSizeBytes } from './ffmpegUtils';
 import { DISCORD_MAX_BYTES } from '../../constants/limits';
 
 export interface CompressResult {
@@ -83,14 +83,14 @@ async function compressImageToTarget(
   // バイナリサーチで targetBytes 以下に収まる最高品質を探す
   while (lo <= hi) {
     const mid = Math.floor((lo + hi) / 2);
-    const cmd = [
+    const cmd = buildFfmpegCommand([
       '-y',
       '-i', `"${inputPath}"`,
       '-q:v', String(mid),
       '-update', '1',
       '-frames:v', '1',
       `"${outputPath}"`,
-    ].join(' ');
+    ]);
 
     const session = await FFmpegKit.execute(cmd);
     const rc = await session.getReturnCode();
@@ -112,7 +112,7 @@ async function compressImageToTarget(
 
   if (bestBytes === 0) {
     // 最低品質でも超えてしまう場合はスケールダウンも加える
-    const cmd = [
+    const cmd = buildFfmpegCommand([
       '-y',
       '-i', `"${inputPath}"`,
       '-vf', '"scale=iw*0.5:ih*0.5"',
@@ -120,7 +120,7 @@ async function compressImageToTarget(
       '-update', '1',
       '-frames:v', '1',
       `"${outputPath}"`,
-    ].join(' ');
+    ]);
     const session = await FFmpegKit.execute(cmd);
     const rc = await session.getReturnCode();
     if (!ReturnCode.isSuccess(rc)) {
@@ -226,7 +226,7 @@ async function compressVideoToTarget(
   const preset = (vcodec === 'libx264') ? ['-preset', 'superfast'] : [];
 
   // 1パス目: CRFモードで高速圧縮を試行 (CRF=28をデフォルトとする)
-  const crfCmd = [
+  const crfCmd = buildFfmpegCommand([
     '-y',
     '-i', `"${inputPath}"`,
     '-c:v', vcodec,
@@ -235,7 +235,7 @@ async function compressVideoToTarget(
     '-c:a', acodec,
     '-b:a', '64k',
     `"${outputPath}"`,
-  ].join(' ');
+  ]);
 
   let useTwoPass = true;
   try {
@@ -254,7 +254,7 @@ async function compressVideoToTarget(
 
   if (useTwoPass) {
     // 2パスエンコードで精度の高いビットレート制御
-    const pass1Cmd = [
+    const pass1Cmd = buildFfmpegCommand([
       '-y',
       '-i', `"${inputPath}"`,
       '-c:v', vcodec,
@@ -264,9 +264,9 @@ async function compressVideoToTarget(
       '-passlogfile', `"${passlogFilesystemPath}"`,
       '-an',
       '-f', isWebm ? 'webm' : 'null', isWebm ? '/dev/null' : '/dev/null',
-    ].join(' ');
+    ]);
 
-    const pass2Cmd = [
+    const pass2Cmd = buildFfmpegCommand([
       '-y',
       '-i', `"${inputPath}"`,
       '-c:v', vcodec,
@@ -277,7 +277,7 @@ async function compressVideoToTarget(
       '-c:a', acodec,
       '-b:a', '64k',
       `"${outputPath}"`,
-    ].join(' ');
+    ]);
 
     try {
       const pass1Session = await FFmpegKit.execute(pass1Cmd);
@@ -327,7 +327,7 @@ async function compressVideoToTarget(
     const retryOutputPath = retryOutputUri.replace('file://', '');
     const { uri: retryPasslogUri, path: retryPasslogPath } = getPasslogConfig(stem, retrySuffix);
 
-    const retry1Cmd = [
+    const retry1Cmd = buildFfmpegCommand([
       '-y', '-i', `"${inputPath}"`,
       '-c:v', vcodec,
       ...preset,
@@ -335,8 +335,8 @@ async function compressVideoToTarget(
       '-b:v', `${retryBitrate}k`,
       '-pass', '1', '-passlogfile', `"${retryPasslogPath}"`,
       '-an', '-f', isWebm ? 'webm' : 'null', isWebm ? '/dev/null' : '/dev/null',
-    ].join(' ');
-    const retry2Cmd = [
+    ]);
+    const retry2Cmd = buildFfmpegCommand([
       '-y', '-i', `"${inputPath}"`,
       '-c:v', vcodec,
       ...preset,
@@ -345,7 +345,7 @@ async function compressVideoToTarget(
       '-pass', '2', '-passlogfile', `"${retryPasslogPath}"`,
       '-c:a', acodec, '-b:a', '64k',
       `"${retryOutputPath}"`,
-    ].join(' ');
+    ]);
 
     const r1 = await FFmpegKit.execute(retry1Cmd);
     if (!ReturnCode.isSuccess(await r1.getReturnCode())) {
