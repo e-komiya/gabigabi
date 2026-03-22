@@ -16,11 +16,11 @@ export interface FfmpegProcessResult {
  */
 const GABIGABI_QUALITY: Record<number, number> = {
   0: 1,  // 圧縮率 0% → q:v=1（ほぼ劣化なし）
-  1: 8,  // 圧縮率55% → q:v=8
-  2: 13, // 圧縮率70% → q:v=13
-  3: 21, // 圧縮率85% → q:v=21
-  4: 25, // 圧縮率92% → q:v=25
-  5: 30, // 圧縮率99% → q:v=30
+  1: 12, // 圧縮率72% → q:v=12
+  2: 18, // 圧縮率84% → q:v=18
+  3: 24, // 圧縮率94% → q:v=24
+  4: 28, // 圧縮率98% → q:v=28
+  5: 31, // 圧縮率99% → q:v=31（最大劣化）
 };
 
 /**
@@ -37,10 +37,10 @@ const GABIGABI_QUALITY: Record<number, number> = {
  */
 const GABIGABI_CRF_H264: Record<number, number> = {
   0: 23, // ほぼ劣化なし
-  1: 35,
-  2: 40,
-  3: 45,
-  4: 48,
+  1: 38,
+  2: 43,
+  3: 47,
+  4: 50,
   5: 51, // 最低品質
 };
 
@@ -50,10 +50,10 @@ const GABIGABI_CRF_H264: Record<number, number> = {
  */
 const GABIGABI_CRF_VP9: Record<number, number> = {
   0: 33, // ほぼ劣化なし
-  1: 45,
-  2: 50,
-  3: 55,
-  4: 60,
+  1: 50,
+  2: 55,
+  3: 59,
+  4: 62,
   5: 63, // 最低品質
 };
 

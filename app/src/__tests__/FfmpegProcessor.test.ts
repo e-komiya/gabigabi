@@ -46,13 +46,13 @@ describe('processWithFfmpeg', () => {
     setupSuccess();
   });
 
-  it('gabigabiLevelマッピングを使う（level=3 -> q:v 21）', async () => {
+  it('gabigabiLevelマッピングを使う（level=3 -> q:v 24）', async () => {
     mockGetInfoAsync
       .mockResolvedValueOnce({ exists: true, size: 1000 })
       .mockResolvedValueOnce({ exists: true, size: 800 });
 
     await processWithFfmpeg('file:///in.jpg', 100, 3);
-    expect(lastCmd()).toContain('-q:v 21');
+    expect(lastCmd()).toContain('-q:v 24');
   });
 
   it('shrinkExpandEnabledで縮小→再拡大フィルタを追加する', async () => {
@@ -99,7 +99,7 @@ describe('processVideoWithFfmpeg', () => {
     const cmd = lastCmd();
     expect(cmd).toContain('libx264');
     expect(cmd).toContain('aac');
-    expect(cmd).toContain('-crf 40');
+    expect(cmd).toContain('-crf 43');
   });
 
   it('webmでvp9とb:v 0を使う', async () => {
@@ -111,6 +111,6 @@ describe('processVideoWithFfmpeg', () => {
     const cmd = lastCmd();
     expect(cmd).toContain('libvpx-vp9');
     expect(cmd).toContain('-b:v 0');
-    expect(cmd).toContain('-crf 50');
+    expect(cmd).toContain('-crf 55');
   });
 });
