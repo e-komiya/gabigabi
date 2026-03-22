@@ -113,4 +113,22 @@ describe('processVideoWithFfmpeg', () => {
     expect(cmd).toContain('-b:v 0');
     expect(cmd).toContain('-crf 50');
   });
+
+  it('compressionRate指定時はmp4のCRFを線形マッピングする', async () => {
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 1000 })
+      .mockResolvedValueOnce({ exists: true, size: 700 });
+
+    await processVideoWithFfmpeg('file:///in.mp4', 100, 0, 'mp4', 99);
+    expect(lastCmd()).toContain('-crf 51');
+  });
+
+  it('compressionRate指定時はwebmのCRFを線形マッピングする', async () => {
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 1000 })
+      .mockResolvedValueOnce({ exists: true, size: 700 });
+
+    await processVideoWithFfmpeg('file:///in.webm', 100, 0, 'webm', 0);
+    expect(lastCmd()).toContain('-crf 33');
+  });
 });

@@ -505,7 +505,13 @@ const MainScreen = () => {
 
       if (selectedMediaType === 'video') {
         // 動画のガビガビ化
-        const result = await processVideoWithFfmpeg(selectedImage, resizePercent, gabigabiLevel ?? 0, videoOutputFormat);
+        const result = await processVideoWithFfmpeg(
+          selectedImage,
+          resizePercent,
+          gabigabiLevel ?? 0,
+          videoOutputFormat,
+          compressionRate,
+        );
         resultUri = result.outputUri;
         resultBytes = result.outputBytes;
       } else {
@@ -881,7 +887,7 @@ const MainScreen = () => {
                 </>
               )}
 
-              {selectedMediaType !== 'video' && (outputFormat === 'jpeg' || outputFormat === 'webp') && (
+              {((selectedMediaType !== 'video' && (outputFormat === 'jpeg' || outputFormat === 'webp')) || selectedMediaType === 'video') && (
                 <View style={styles.qualityRow}>
                   <View style={styles.qualityLabelRow}>
                     <Text style={styles.qualityLabel}>圧縮率</Text>
@@ -894,8 +900,8 @@ const MainScreen = () => {
                     step={1}
                     value={compressionRate}
                     onValueChange={(v: number) => handleQualityChange(Math.round(v))}
-                    accessibilityLabel="画像圧縮率スライダー"
-                    accessibilityHint="0%から99%の範囲で圧縮率を変更します"
+                    accessibilityLabel={selectedMediaType === 'video' ? '動画圧縮率スライダー' : '画像圧縮率スライダー'}
+                    accessibilityHint={selectedMediaType === 'video' ? '0%から99%の範囲で動画の圧縮率を変更します' : '0%から99%の範囲で画像の圧縮率を変更します'}
                     minimumTrackTintColor={ACCENT2}
                     maximumTrackTintColor={BORDER}
                     thumbTintColor={ACCENT2}
