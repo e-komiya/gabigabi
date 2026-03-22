@@ -54,7 +54,6 @@ const VIDEO_FORMAT_OPTIONS: {label: string; value: VideoFormat}[] = [
 ];
 
 const GABIGABI_LEVELS: {label: string; value: number}[] = [
-  {label: '0', value: 0},
   {label: '1', value: 1},
   {label: '2', value: 2},
   {label: '3', value: 3},
@@ -71,12 +70,11 @@ const TEMPLATE_SETTINGS: Record<number, {
   multiCompressEnabled: boolean;
   multiCompressCount: number;
 }> = {
-  0: {resizePercent: 100, compressionRate: 0,  shrinkExpandEnabled: false, shrinkExpandRate: 50, multiCompressEnabled: false, multiCompressCount: 3},
-  1: {resizePercent: 100, compressionRate: 55, shrinkExpandEnabled: false, shrinkExpandRate: 50, multiCompressEnabled: false, multiCompressCount: 3},
-  2: {resizePercent: 75,  compressionRate: 70, shrinkExpandEnabled: false, shrinkExpandRate: 50, multiCompressEnabled: false, multiCompressCount: 3},
-  3: {resizePercent: 25,  compressionRate: 99, shrinkExpandEnabled: false, shrinkExpandRate: 50, multiCompressEnabled: false, multiCompressCount: 3},
-  4: {resizePercent: 25,  compressionRate: 99, shrinkExpandEnabled: true,  shrinkExpandRate: 50, multiCompressEnabled: false, multiCompressCount: 3},
-  5: {resizePercent: 5,   compressionRate: 99, shrinkExpandEnabled: true,  shrinkExpandRate: 50, multiCompressEnabled: true,  multiCompressCount: 3},
+  1: {resizePercent: 90, compressionRate: 72, shrinkExpandEnabled: false, shrinkExpandRate: 50, multiCompressEnabled: false, multiCompressCount: 3},
+  2: {resizePercent: 70, compressionRate: 84, shrinkExpandEnabled: false, shrinkExpandRate: 50, multiCompressEnabled: false, multiCompressCount: 3},
+  3: {resizePercent: 45, compressionRate: 94, shrinkExpandEnabled: false, shrinkExpandRate: 50, multiCompressEnabled: true,  multiCompressCount: 2},
+  4: {resizePercent: 30, compressionRate: 98, shrinkExpandEnabled: true,  shrinkExpandRate: 45, multiCompressEnabled: true,  multiCompressCount: 3},
+  5: {resizePercent: 15, compressionRate: 99, shrinkExpandEnabled: true,  shrinkExpandRate: 35, multiCompressEnabled: true,  multiCompressCount: 4},
 };
 
 const TARGET_SIZE_TEMPLATES: {label: string; value: string; unit: SizeUnit}[] = [
@@ -492,7 +490,7 @@ const MainScreen = () => {
 
   const handleTemplateSelect = useCallback(
     (level: number) => {
-      const settings = TEMPLATE_SETTINGS[level];
+      const settings = TEMPLATE_SETTINGS[level] ?? TEMPLATE_SETTINGS[1];
       setGabigabiLevel(level);
       setResizePercent(settings.resizePercent);
       setCompressionRate(settings.compressionRate);
@@ -541,7 +539,7 @@ const MainScreen = () => {
         const result = await processVideoWithFfmpeg(
           selectedImage,
           resizePercent,
-          gabigabiLevel ?? 0,
+          gabigabiLevel ?? 1,
           videoOutputFormat,
           compressionRate,
         );
