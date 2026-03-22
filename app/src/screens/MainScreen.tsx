@@ -36,6 +36,7 @@ import {convertImage, formatBytes, ImageFormat} from '../domain/convertImage';
 import {FFmpegKit, FFprobeKit} from 'ffmpeg-kit-react-native';
 import {processVideoWithFfmpeg} from '../data/ffmpeg/FfmpegProcessor';
 import {cleanupCachedTempFiles, getFileSizeBytes} from '../data/ffmpeg/ffmpegUtils';
+import {saveConversionHistoryItem, ConversionAction} from '../data/history/conversionHistory';
 
 const FORMAT_OPTIONS: {label: string; value: ImageFormat}[] = [
   {label: 'JPEG', value: 'jpeg'},
@@ -318,6 +319,34 @@ const MainScreen = () => {
   const [fileInfo, setFileInfo] = useState<{name: string; size: string; width: number; height: number} | null>(null);
   const outputBytesRef = useRef(0);
 
+  const saveHistory = useCallback(async (
+    action: ConversionAction,
+    inputPath: string,
+    outputPath: string,
+    inputBytes: number,
+    outputBytes: number,
+    targetBytes?: number,
+  ) => {
+    await saveConversionHistoryItem({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      inputPath,
+      outputPath,
+      inputBytes,
+      outputBytes,
+      mediaType: selectedMediaType ?? 'image',
+      params: {
+        action,
+        outputFormat,
+        videoOutputFormat,
+        gabigabiLevel,
+        resizePercent,
+        compressionRate,
+        targetBytes,
+      },
+    });
+  }, [selectedMediaType, outputFormat, videoOutputFormat, gabigabiLevel, resizePercent, compressionRate]);
+
   // #214: アプリ起動時に一度だけ一時ファイルをクリーンアップする（変換開始時からの移動）
   useEffect(() => {
     cleanupCachedTempFiles();
@@ -502,6 +531,10 @@ const MainScreen = () => {
     try {
       let resultUri: string;
       let resultBytes: number;
+      let inputBytes = 0;
+
+      const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
+      inputBytes = getFileSizeBytes(inputInfo);
 
       if (selectedMediaType === 'video') {
         // 動画のガビガビ化
@@ -509,9 +542,6 @@ const MainScreen = () => {
         resultUri = result.outputUri;
         resultBytes = result.outputBytes;
       } else {
-        const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
-        const inputBytes = getFileSizeBytes(inputInfo);
-
         // ガビガビレベル0 かつ フォーマット変換が必要な場合はフォーマット変換のみ
       // ガビガビレベル1以上の場合はガビガビ化（リサイズ+品質劣化）
       // 両方の設定を1回の「変換」で適用する
@@ -552,6 +582,7 @@ const MainScreen = () => {
 
       setProcessedImage(resultUri);
       outputBytesRef.current = resultBytes;
+      await saveHistory('gabigabi', selectedImage, resultUri, inputBytes, resultBytes);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
@@ -640,9 +671,12 @@ const MainScreen = () => {
     setIsProcessing(true);
     setProcessingAction('targetSize');
     try {
+      const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
+      const inputBytes = getFileSizeBytes(inputInfo);
       const result = await compressToTargetSize(selectedImage, targetBytes, videoOutputFormat);
       setProcessedImage(result.outputUri);
       outputBytesRef.current = result.outputBytes;
+      await saveHistory('targetSize', selectedImage, result.outputUri, inputBytes, result.outputBytes, targetBytes);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
