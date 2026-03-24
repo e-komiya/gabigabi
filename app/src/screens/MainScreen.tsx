@@ -546,20 +546,20 @@ const MainScreen = () => {
         resultUri = result.outputUri;
         resultBytes = result.outputBytes;
       } else {
-        // ガビガビレベル0 かつ フォーマット変換が必要な場合はフォーマット変換のみ
-      // ガビガビレベル1以上の場合はガビガビ化（リサイズ+品質劣化）
-      // 両方の設定を1回の「変換」で適用する
+        // テンプレート未選択（手動調整）時はフォーマット変換 + リサイズのみ
+        // テンプレート選択時（レベル1以上）はガビガビ化（リサイズ+品質劣化）
+        // 両方の設定を1回の「変換」で適用する
 
-      if (gabigabiLevel === null || gabigabiLevel === 0) {
-        // ガビガビなし → フォーマット変換 + リサイズのみ
-        if (resizePercent === 100 && outputFormat === 'jpeg') {
-          // 何も変更なし
-          Alert.alert('変換不要', '現在の設定では変換の必要がありません。\nガビガビレベルを上げるか、フォーマットやリサイズを変更してください。');
-          return;
-        }
-        if (resizePercent < 100) {
-          // リサイズだけ実行（ガビガビレベル0 = 高品質）
-          const result = await resizeImage(selectedImage, resizePercent, 0);
+        if (gabigabiLevel === null) {
+          // ガビガビなし → フォーマット変換 + リサイズのみ
+          if (resizePercent === 100 && outputFormat === 'jpeg') {
+            // 何も変更なし
+            Alert.alert('変換不要', '現在の設定では変換の必要がありません。\nフォーマットやリサイズを変更してください。');
+            return;
+          }
+          if (resizePercent < 100) {
+            // リサイズのみ実行（手動調整）
+            const result = await resizeImage(selectedImage, resizePercent, 0);
           resultUri = result.outputUri;
           resultBytes = result.outputBytes;
         } else {
