@@ -529,6 +529,7 @@ const MainScreen = () => {
     try {
       let resultUri: string;
       let resultBytes: number;
+      let historyAction: ConversionAction = 'gabigabi';
       let inputBytes = 0;
 
       const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
@@ -551,6 +552,7 @@ const MainScreen = () => {
         // 両方の設定を1回の「変換」で適用する
 
         if (gabigabiLevel === null) {
+          historyAction = 'convert';
           // ガビガビなし → フォーマット変換 + リサイズのみ
           if (resizePercent === 100 && outputFormat === 'jpeg') {
             // 何も変更なし
@@ -560,18 +562,18 @@ const MainScreen = () => {
           if (resizePercent < 100) {
             // リサイズのみ実行（手動調整）
             const result = await resizeImage(selectedImage, resizePercent, 0);
-          resultUri = result.outputUri;
-          resultBytes = result.outputBytes;
+            resultUri = result.outputUri;
+            resultBytes = result.outputBytes;
+          } else {
+            // フォーマット変換のみ
+            const result = await convertImage(selectedImage, {
+              outputFormat,
+              quality: compressionRate,
+            });
+            resultUri = result.outputUri;
+            resultBytes = result.outputBytes;
+          }
         } else {
-          // フォーマット変換のみ
-          const result = await convertImage(selectedImage, {
-            outputFormat,
-            quality: compressionRate,
-          });
-          resultUri = result.outputUri;
-          resultBytes = result.outputBytes;
-        }
-      } else {
         // ガビガビ化（リサイズ + 品質劣化）
         const result = await resizeImage(selectedImage, resizePercent, gabigabiLevel!, {
           shrinkExpandEnabled,
@@ -586,7 +588,7 @@ const MainScreen = () => {
 
       setProcessedImage(resultUri);
       outputBytesRef.current = resultBytes;
-      await saveHistory('gabigabi', selectedImage, resultUri, inputBytes, resultBytes);
+      await saveHistory(historyAction, selectedImage, resultUri, inputBytes, resultBytes);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
