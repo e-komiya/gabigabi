@@ -9,6 +9,23 @@ export interface CompressResult {
   compressionRatio: number;
 }
 
+let cachedH264Codec: 'libx264' | 'h264_mediacodec' | null = null;
+
+async function resolveH264Codec(): Promise<'libx264' | 'h264_mediacodec'> {
+  if (cachedH264Codec) {
+    return cachedH264Codec;
+  }
+
+  try {
+    const hardwareConfig = await FFmpegKit.execute('-encoders');
+    const output = await hardwareConfig.getOutput();
+    cachedH264Codec = output.includes('h264_mediacodec') ? 'h264_mediacodec' : 'libx264';
+  } catch {
+    cachedH264Codec = 'libx264';
+  }
+
+  return cachedH264Codec;
+}
 
 /**
  * ファイルの拡張子から動画かどうかを判定する。
@@ -211,19 +228,14 @@ async function compressVideoToTarget(
   // Android ハードウェア加速 (MediaCodec) の試行
   // H.264 かつ Android 環境（ffmpeg-kit-react-native が利用可能と想定）の場合
   if (!isWebm) {
-    try {
-      const hardwareConfig = await FFmpegKit.execute('-encoders');
-      const output = await hardwareConfig.getOutput();
-      if (output.includes('h264_mediacodec')) {
-        vcodec = 'h264_mediacodec';
-      }
-    } catch (e) {
-      // エンコーダ一覧の取得に失敗した場合はデフォルトの libx264 を使用
-    }
+    vcodec = await resolveH264Codec();
   }
 
   // プリセット設定 (H.264 libx264 の場合のみ)
-  const preset = (vcodec === 'libx264') ? ['-preset', 'superfast'] : [];
+  // 目標サイズ比が厳しいケースでは ultrafast を優先して速度を上げる
+  const targetRatio = targetBytes / originalBytes;
+  const h264Preset = targetRatio <= 0.35 ? 'ultrafast' : 'superfast';
+  const preset = (vcodec === 'libx264') ? ['-preset', h264Preset] : [];
 
   // 1パス目: CRFモードで高速圧縮を試行 (CRF=28をデフォルトとする)
   const crfCmd = buildFfmpegCommand([
