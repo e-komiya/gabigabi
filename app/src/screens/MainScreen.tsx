@@ -14,8 +14,6 @@ import {
   StatusBar,
   Modal,
   Animated,
-  PanResponder,
-  Dimensions,
   Linking,
   Switch,
   TextInput,
@@ -28,6 +26,7 @@ import { Svg, Rect, Path, G } from 'react-native-svg';
 import ImagePickerComponent from '../components/ImagePicker';
 import ResizeSlider from '../components/ResizeSlider';
 import ErrorModal from '../components/ErrorModal';
+import ImageModal from '../components/ImageModal';
 import {useAppStore} from '../state/store';
 import {VideoFormat, ConvertMethod, SizeUnit} from '../state/store';
 import {resizeImage} from '../domain/useResizeImage';
@@ -81,169 +80,6 @@ const TEMPLATE_SETTINGS: Record<number, {
 const TARGET_SIZE_TEMPLATES: {label: string; value: string; unit: SizeUnit}[] = [
   {label: 'Discord 10MB', value: '10', unit: 'MB'},
 ];
-
-const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
-
-/* ── Fullscreen image modal with pinch-to-zoom ── */
-interface ImageModalProps {
-  uri: string | null;
-  visible: boolean;
-  onClose: () => void;
-}
-
-const ImageModal: React.FC<ImageModalProps> = ({uri, visible, onClose}) => {
-  const scale = useRef(new Animated.Value(1)).current;
-  const lastScale = useRef(1);
-  const translateX = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-  const lastTranslateX = useRef(0);
-  const lastTranslateY = useRef(0);
-
-  // #207: track animated values via refs instead of `any` cast
-  const scaleValueRef = useRef(1);
-  const translateXValueRef = useRef(0);
-  const translateYValueRef = useRef(0);
-  const initialDistanceRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const scaleId = scale.addListener(({value}) => { scaleValueRef.current = value; });
-    const txId = translateX.addListener(({value}) => { translateXValueRef.current = value; });
-    const tyId = translateY.addListener(({value}) => { translateYValueRef.current = value; });
-    return () => {
-      scale.removeListener(scaleId);
-      translateX.removeListener(txId);
-      translateY.removeListener(tyId);
-    };
-  }, [scale, translateX, translateY]);
-
-  const reset = useCallback(() => {
-    scale.setValue(1);
-    lastScale.current = 1;
-    translateX.setValue(0);
-    translateY.setValue(0);
-    lastTranslateX.current = 0;
-    lastTranslateY.current = 0;
-  }, [scale, translateX, translateY]);
-
-  const handleClose = useCallback(() => {
-    reset();
-    onClose();
-  }, [reset, onClose]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        translateX.setOffset(lastTranslateX.current);
-        translateY.setOffset(lastTranslateY.current);
-        translateX.setValue(0);
-        translateY.setValue(0);
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        const touches = evt.nativeEvent.touches;
-        if (touches.length === 2) {
-          // Pinch-to-zoom
-          const dx = touches[0].pageX - touches[1].pageX;
-          const dy = touches[0].pageY - touches[1].pageY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (initialDistanceRef.current == null) {
-            initialDistanceRef.current = distance;
-          }
-          const newScale = Math.max(
-            0.5,
-            Math.min(5, lastScale.current * (distance / initialDistanceRef.current)),
-          );
-          scale.setValue(newScale);
-        } else {
-          translateX.setValue(gestureState.dx);
-          translateY.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: () => {
-        initialDistanceRef.current = null;
-        lastScale.current = scaleValueRef.current;
-        translateX.flattenOffset();
-        translateY.flattenOffset();
-        lastTranslateX.current = translateXValueRef.current;
-        lastTranslateY.current = translateYValueRef.current;
-      },
-    }),
-  ).current;
-
-  if (!uri) return null;
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <View style={modalStyles.overlay}>
-        <TouchableOpacity style={modalStyles.closeBtn} onPress={handleClose}>
-          <Text style={modalStyles.closeBtnText}>✕</Text>
-        </TouchableOpacity>
-        <Animated.Image
-          source={{uri}}
-          style={[
-            modalStyles.image,
-            {
-              transform: [
-                {scale},
-                {translateX},
-                {translateY},
-              ],
-            },
-          ]}
-          resizeMode="contain"
-          {...panResponder.panHandlers}
-        />
-        <TouchableOpacity style={modalStyles.resetBtn} onPress={reset}>
-          <Text style={modalStyles.resetBtnText}>{t('reset')}</Text>
-        </TouchableOpacity>
-      </View>
-    </Modal>
-  );
-};
-
-const modalStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  image: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT * 0.8,
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: 48,
-    right: 20,
-    zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeBtnText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  resetBtn: {
-    position: 'absolute',
-    bottom: 48,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-  },
-  resetBtnText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-});
 
 const MainScreen = () => {
   const insets = useSafeAreaInsets();
