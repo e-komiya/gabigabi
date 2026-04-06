@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, TextInput, StyleSheet, TouchableOpacity} from 'react-native';
 import CustomSlider from './CustomSlider';
+import {t} from '../i18n';
 
 interface ResizeSliderProps {
   value: number;
@@ -60,14 +61,14 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
           style={[styles.tab, activeTab === 'percent' && styles.tabActive]}
           onPress={() => setActiveTab('percent')}
           activeOpacity={0.7}>
-          <Text style={[styles.tabText, activeTab === 'percent' && styles.tabTextActive]}>% 指定</Text>
+          <Text style={[styles.tabText, activeTab === 'percent' && styles.tabTextActive]}>{t('resizePercentTab')}</Text>
         </TouchableOpacity>
         {hasOriginal && (
           <TouchableOpacity
             style={[styles.tab, activeTab === 'resolution' && styles.tabActive]}
             onPress={() => setActiveTab('resolution')}
             activeOpacity={0.7}>
-            <Text style={[styles.tabText, activeTab === 'resolution' && styles.tabTextActive]}>解像度指定</Text>
+            <Text style={[styles.tabText, activeTab === 'resolution' && styles.tabTextActive]}>{t('resizeResolutionTab')}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -76,7 +77,7 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
       {activeTab === 'percent' && (
         <View style={styles.tabContent}>
           <View style={styles.percentHeader}>
-            <Text style={styles.label}>リサイズ倍率</Text>
+            <Text style={styles.label}>{t('resizeScale')}</Text>
             <Text style={styles.valueDisplay}>
               <Text style={styles.valueNumber}>{Math.round(value)}</Text>
               <Text style={styles.valueUnit}>%</Text>
@@ -84,8 +85,8 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
           </View>
           <CustomSlider
             style={styles.slider}
-            accessibilityLabel="リサイズ倍率スライダー"
-            accessibilityHint="1%から100%の範囲で画像サイズを変更します"
+            accessibilityLabel={t('resizeScaleSliderLabel')}
+            accessibilityHint={t('resizeScaleSliderHint')}
             minimumValue={1}
             maximumValue={100}
             step={1}
@@ -108,7 +109,7 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
         <View style={styles.tabContent}>
           <View style={styles.directRow}>
             <View style={styles.directInput}>
-              <Text style={styles.directLabel}>幅</Text>
+              <Text style={styles.directLabel}>{t('width')}</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="number-pad"
@@ -119,7 +120,7 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
             </View>
             <Text style={styles.directX}>×</Text>
             <View style={styles.directInput}>
-              <Text style={styles.directLabel}>高さ</Text>
+              <Text style={styles.directLabel}>{t('height')}</Text>
               <TextInput
                 style={styles.input}
                 keyboardType="number-pad"

@@ -37,6 +37,7 @@ import {FFmpegKit, FFprobeKit} from 'ffmpeg-kit-react-native';
 import {processVideoWithFfmpeg} from '../data/ffmpeg/FfmpegProcessor';
 import {cleanupCachedTempFiles, getFileSizeBytes} from '../data/ffmpeg/ffmpegUtils';
 import {saveConversionHistoryItem, ConversionAction} from '../data/history/conversionHistory';
+import {t} from '../i18n';
 
 const FORMAT_OPTIONS: {label: string; value: ImageFormat}[] = [
   {label: 'JPEG', value: 'jpeg'},
@@ -283,7 +284,7 @@ const MainScreen = () => {
 
   const [errorModal, setErrorModal] = useState<{visible: boolean; title: string; message: string}>({
     visible: false,
-    title: 'エラー',
+    title: t('error'),
     message: '',
   });
 
@@ -423,7 +424,7 @@ const MainScreen = () => {
   const handleOpenPicker = useCallback(async () => {
     const { status } = await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('権限が必要', 'ギャラリーへのアクセスを許可してください');
+      Alert.alert(t('permissionRequired'), t('galleryPermissionMessage'));
       return;
     }
     const result = await ExpoImagePicker.launchImageLibraryAsync({
@@ -606,7 +607,7 @@ const MainScreen = () => {
     }
     const {status} = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
     if (status !== 'granted') {
-      Alert.alert('権限が必要', 'カメラロールへのアクセスを許可してください');
+      Alert.alert(t('permissionRequired'), 'Please allow camera roll access.');
       return;
     }
     try {
@@ -1071,7 +1072,7 @@ const MainScreen = () => {
             style={styles.resetButton}
             onPress={handleReset}
             activeOpacity={0.7}>
-            <Text style={styles.resetButtonText}>リセット</Text>
+            <Text style={styles.resetButtonText}>Reset</Text>
           </TouchableOpacity>
         )}
 
@@ -1086,7 +1087,7 @@ const MainScreen = () => {
             style={styles.cancelButton}
             onPress={handleCancel}
             activeOpacity={0.8}>
-            <Text style={styles.cancelButtonText}>⛔ キャンセル</Text>
+            <Text style={styles.cancelButtonText}>⛔ Cancel</Text>
           </TouchableOpacity>
         )}
 
@@ -1108,7 +1109,7 @@ const MainScreen = () => {
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel="共有">
-              <Text style={styles.buttonText}>🔗 共有</Text>
+              <Text style={styles.buttonText}>🔗 Share</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1128,7 +1129,7 @@ const MainScreen = () => {
                 <Text style={styles.buttonText}> 処理中...</Text>
               </View>
             ) : (
-              <Text style={styles.buttonText}>変換</Text>
+              <Text style={styles.buttonText}>Convert</Text>
             )}
           </TouchableOpacity>
         ) : (

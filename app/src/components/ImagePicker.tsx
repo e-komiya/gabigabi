@@ -1,6 +1,7 @@
 import React from 'react';
 import {View, TouchableOpacity, Text, StyleSheet, Alert} from 'react-native';
 import * as ExpoImagePicker from 'expo-image-picker';
+import {t} from '../i18n';
 
 interface ImagePickerProps {
   onImageSelect: (imageUri: string, mediaType: 'image' | 'video') => void;
@@ -27,7 +28,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   const handlePress = async () => {
     const { status } = await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('権限が必要', 'ギャラリーへのアクセスを許可してください');
+      Alert.alert(t('permissionRequired'), t('galleryPermissionMessage'));
       return;
     }
     const result = await ExpoImagePicker.launchImageLibraryAsync({
@@ -55,12 +56,12 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
       <Text style={styles.buttonText}>
         {selectedImage
           ? isVideo
-            ? '動画を変更する'
-            : '画像を変更する'
-          : '画像 / 動画を選択する'}
+            ? t('changeVideo')
+            : t('changeImage')
+          : t('pickImageOrVideo')}
       </Text>
       {!selectedImage && (
-        <Text style={styles.hint}>タップしてギャラリーを開く</Text>
+        <Text style={styles.hint}>{t('tapToOpenGallery')}</Text>
       )}
     </TouchableOpacity>
   );
