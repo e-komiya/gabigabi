@@ -22,6 +22,7 @@ import * as MediaLibrary from 'expo-media-library';
 import Share from 'react-native-share';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ExpoImagePicker from 'expo-image-picker';
+import * as Notifications from 'expo-notifications';
 import { Svg, Rect, Path, G } from 'react-native-svg';
 import ImagePickerComponent from '../components/ImagePicker';
 import ResizeSlider from '../components/ResizeSlider';
@@ -357,6 +358,22 @@ const MainScreen = () => {
     }
   }, []);
 
+  const ensureNotificationPermission = useCallback(async () => {
+    const current = await Notifications.getPermissionsAsync();
+    if (current.granted) return true;
+    const requested = await Notifications.requestPermissionsAsync();
+    return requested.granted;
+  }, []);
+
+  const notifyProcessingResult = useCallback(async (body: string) => {
+    const granted = await ensureNotificationPermission();
+    if (!granted) return;
+    await Notifications.scheduleNotificationAsync({
+      content: {title: 'GabiGabi', body, sound: false},
+      trigger: null,
+    });
+  }, [ensureNotificationPermission]);
+
   const handleProcess = async () => {
     if (!selectedImage) {
       return;
@@ -426,10 +443,12 @@ const MainScreen = () => {
       setProcessedImage(resultUri);
       outputBytesRef.current = resultBytes;
       await saveHistory(historyAction, selectedImage, resultUri, inputBytes, resultBytes);
+      await notifyProcessingResult('処理が完了しました。');
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
         showError(t('error'), `${t('convertFailed')}: ${msg}`);
+        await notifyProcessingResult('処理に失敗しました。アプリを開いて詳細を確認してください。');
       }
     } finally {
       setIsProcessing(false);
@@ -520,10 +539,12 @@ const MainScreen = () => {
       setProcessedImage(result.outputUri);
       outputBytesRef.current = result.outputBytes;
       await saveHistory('targetSize', selectedImage, result.outputUri, inputBytes, result.outputBytes, targetBytes);
+      await notifyProcessingResult('指定サイズ圧縮が完了しました。');
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
         showError(t('error'), `${t('targetCompressionFailed')}: ${msg}`);
+        await notifyProcessingResult('指定サイズ圧縮に失敗しました。アプリを開いて詳細を確認してください。');
       }
     } finally {
       setIsProcessing(false);
