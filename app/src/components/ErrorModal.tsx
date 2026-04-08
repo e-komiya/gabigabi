@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
+import {t} from '../i18n';
 
 interface ErrorModalProps {
   visible: boolean;
@@ -25,7 +26,7 @@ const BORDER = '#2a2a2a';
 
 const ErrorModal: React.FC<ErrorModalProps> = ({
   visible,
-  title = 'エラー',
+  title = t('error'),
   message,
   onClose,
 }) => {
@@ -67,7 +68,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
               onPress={handleCopy}
               activeOpacity={0.8}>
               <Text style={styles.copyButtonText}>
-                {copied ? 'コピー済み ✓' : 'コピー'}
+                {copied ? t('copied') : t('copy')}
               </Text>
             </TouchableOpacity>
 
@@ -75,7 +76,7 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
               style={styles.closeButton}
               onPress={onClose}
               activeOpacity={0.8}>
-              <Text style={styles.closeButtonText}>閉じる</Text>
+              <Text style={styles.closeButtonText}>{t('close')}</Text>
             </TouchableOpacity>
           </View>
         </View>

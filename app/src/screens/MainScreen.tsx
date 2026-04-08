@@ -14,8 +14,6 @@ import {
   StatusBar,
   Modal,
   Animated,
-  PanResponder,
-  Dimensions,
   Linking,
   Switch,
   TextInput,
@@ -24,10 +22,12 @@ import * as MediaLibrary from 'expo-media-library';
 import Share from 'react-native-share';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ExpoImagePicker from 'expo-image-picker';
+import * as Notifications from 'expo-notifications';
 import { Svg, Rect, Path, G } from 'react-native-svg';
 import ImagePickerComponent from '../components/ImagePicker';
 import ResizeSlider from '../components/ResizeSlider';
 import ErrorModal from '../components/ErrorModal';
+import ImageModal from '../components/ImageModal';
 import {useAppStore} from '../state/store';
 import {VideoFormat, ConvertMethod, SizeUnit} from '../state/store';
 import {resizeImage} from '../domain/useResizeImage';
@@ -36,6 +36,8 @@ import {convertImage, formatBytes, ImageFormat} from '../domain/convertImage';
 import {FFmpegKit, FFprobeKit} from 'ffmpeg-kit-react-native';
 import {processVideoWithFfmpeg} from '../data/ffmpeg/FfmpegProcessor';
 import {cleanupCachedTempFiles, getFileSizeBytes} from '../data/ffmpeg/ffmpegUtils';
+import {saveConversionHistoryItem, ConversionAction} from '../data/history/conversionHistory';
+import {t} from '../i18n';
 
 const FORMAT_OPTIONS: {label: string; value: ImageFormat}[] = [
   {label: 'JPEG', value: 'jpeg'},
@@ -80,169 +82,6 @@ const TARGET_SIZE_TEMPLATES: {label: string; value: string; unit: SizeUnit}[] = 
   {label: 'Discord 10MB', value: '10', unit: 'MB'},
 ];
 
-const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
-
-/* ── Fullscreen image modal with pinch-to-zoom ── */
-interface ImageModalProps {
-  uri: string | null;
-  visible: boolean;
-  onClose: () => void;
-}
-
-const ImageModal: React.FC<ImageModalProps> = ({uri, visible, onClose}) => {
-  const scale = useRef(new Animated.Value(1)).current;
-  const lastScale = useRef(1);
-  const translateX = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-  const lastTranslateX = useRef(0);
-  const lastTranslateY = useRef(0);
-
-  // #207: track animated values via refs instead of `any` cast
-  const scaleValueRef = useRef(1);
-  const translateXValueRef = useRef(0);
-  const translateYValueRef = useRef(0);
-  const initialDistanceRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const scaleId = scale.addListener(({value}) => { scaleValueRef.current = value; });
-    const txId = translateX.addListener(({value}) => { translateXValueRef.current = value; });
-    const tyId = translateY.addListener(({value}) => { translateYValueRef.current = value; });
-    return () => {
-      scale.removeListener(scaleId);
-      translateX.removeListener(txId);
-      translateY.removeListener(tyId);
-    };
-  }, [scale, translateX, translateY]);
-
-  const reset = useCallback(() => {
-    scale.setValue(1);
-    lastScale.current = 1;
-    translateX.setValue(0);
-    translateY.setValue(0);
-    lastTranslateX.current = 0;
-    lastTranslateY.current = 0;
-  }, [scale, translateX, translateY]);
-
-  const handleClose = useCallback(() => {
-    reset();
-    onClose();
-  }, [reset, onClose]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: () => {
-        translateX.setOffset(lastTranslateX.current);
-        translateY.setOffset(lastTranslateY.current);
-        translateX.setValue(0);
-        translateY.setValue(0);
-      },
-      onPanResponderMove: (evt, gestureState) => {
-        const touches = evt.nativeEvent.touches;
-        if (touches.length === 2) {
-          // Pinch-to-zoom
-          const dx = touches[0].pageX - touches[1].pageX;
-          const dy = touches[0].pageY - touches[1].pageY;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (initialDistanceRef.current == null) {
-            initialDistanceRef.current = distance;
-          }
-          const newScale = Math.max(
-            0.5,
-            Math.min(5, lastScale.current * (distance / initialDistanceRef.current)),
-          );
-          scale.setValue(newScale);
-        } else {
-          translateX.setValue(gestureState.dx);
-          translateY.setValue(gestureState.dy);
-        }
-      },
-      onPanResponderRelease: () => {
-        initialDistanceRef.current = null;
-        lastScale.current = scaleValueRef.current;
-        translateX.flattenOffset();
-        translateY.flattenOffset();
-        lastTranslateX.current = translateXValueRef.current;
-        lastTranslateY.current = translateYValueRef.current;
-      },
-    }),
-  ).current;
-
-  if (!uri) return null;
-
-  return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <View style={modalStyles.overlay}>
-        <TouchableOpacity style={modalStyles.closeBtn} onPress={handleClose}>
-          <Text style={modalStyles.closeBtnText}>✕</Text>
-        </TouchableOpacity>
-        <Animated.Image
-          source={{uri}}
-          style={[
-            modalStyles.image,
-            {
-              transform: [
-                {scale},
-                {translateX},
-                {translateY},
-              ],
-            },
-          ]}
-          resizeMode="contain"
-          {...panResponder.panHandlers}
-        />
-        <TouchableOpacity style={modalStyles.resetBtn} onPress={reset}>
-          <Text style={modalStyles.resetBtnText}>リセット</Text>
-        </TouchableOpacity>
-      </View>
-    </Modal>
-  );
-};
-
-const modalStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  image: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT * 0.8,
-  },
-  closeBtn: {
-    position: 'absolute',
-    top: 48,
-    right: 20,
-    zIndex: 10,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20,
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closeBtnText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  resetBtn: {
-    position: 'absolute',
-    bottom: 48,
-    alignSelf: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-  },
-  resetBtnText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-});
-
 const MainScreen = () => {
   const insets = useSafeAreaInsets();
   const {
@@ -282,7 +121,7 @@ const MainScreen = () => {
 
   const [errorModal, setErrorModal] = useState<{visible: boolean; title: string; message: string}>({
     visible: false,
-    title: 'エラー',
+    title: t('error'),
     message: '',
   });
 
@@ -315,6 +154,34 @@ const MainScreen = () => {
   // #97: file info
   const [fileInfo, setFileInfo] = useState<{name: string; size: string; width: number; height: number} | null>(null);
   const outputBytesRef = useRef(0);
+
+  const saveHistory = useCallback(async (
+    action: ConversionAction,
+    inputPath: string,
+    outputPath: string,
+    inputBytes: number,
+    outputBytes: number,
+    targetBytes?: number,
+  ) => {
+    await saveConversionHistoryItem({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      createdAt: new Date().toISOString(),
+      inputPath,
+      outputPath,
+      inputBytes,
+      outputBytes,
+      mediaType: selectedMediaType ?? 'image',
+      params: {
+        action,
+        outputFormat,
+        videoOutputFormat,
+        gabigabiLevel,
+        resizePercent,
+        compressionRate,
+        targetBytes,
+      },
+    });
+  }, [selectedMediaType, outputFormat, videoOutputFormat, gabigabiLevel, resizePercent, compressionRate]);
 
   // #214: アプリ起動時に一度だけ一時ファイルをクリーンアップする（変換開始時からの移動）
   useEffect(() => {
@@ -394,7 +261,7 @@ const MainScreen = () => {
   const handleOpenPicker = useCallback(async () => {
     const { status } = await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('権限が必要', 'ギャラリーへのアクセスを許可してください');
+      Alert.alert(t('permissionRequired'), t('galleryPermissionMessage'));
       return;
     }
     const result = await ExpoImagePicker.launchImageLibraryAsync({
@@ -491,6 +358,22 @@ const MainScreen = () => {
     }
   }, []);
 
+  const ensureNotificationPermission = useCallback(async () => {
+    const current = await Notifications.getPermissionsAsync();
+    if (current.granted) return true;
+    const requested = await Notifications.requestPermissionsAsync();
+    return requested.granted;
+  }, []);
+
+  const notifyProcessingResult = useCallback(async (body: string) => {
+    const granted = await ensureNotificationPermission();
+    if (!granted) return;
+    await Notifications.scheduleNotificationAsync({
+      content: {title: 'GabiGabi', body, sound: false},
+      trigger: null,
+    });
+  }, [ensureNotificationPermission]);
+
   const handleProcess = async () => {
     if (!selectedImage) {
       return;
@@ -500,42 +383,51 @@ const MainScreen = () => {
     try {
       let resultUri: string;
       let resultBytes: number;
+      let historyAction: ConversionAction = 'gabigabi';
+      let inputBytes = 0;
+
+      const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
+      inputBytes = getFileSizeBytes(inputInfo);
 
       if (selectedMediaType === 'video') {
         // 動画のガビガビ化
-        const result = await processVideoWithFfmpeg(selectedImage, resizePercent, gabigabiLevel ?? 1, videoOutputFormat);
+        const result = await processVideoWithFfmpeg(
+          selectedImage,
+          resizePercent,
+          gabigabiLevel ?? 1,
+          videoOutputFormat,
+          compressionRate,
+        );
         resultUri = result.outputUri;
         resultBytes = result.outputBytes;
       } else {
-        const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
-        const inputBytes = getFileSizeBytes(inputInfo);
+        // テンプレート未選択（手動調整）時はフォーマット変換 + リサイズのみ
+        // テンプレート選択時（レベル1以上）はガビガビ化（リサイズ+品質劣化）
+        // 両方の設定を1回の「変換」で適用する
 
-        // ガビガビレベル0 かつ フォーマット変換が必要な場合はフォーマット変換のみ
-      // ガビガビレベル1以上の場合はガビガビ化（リサイズ+品質劣化）
-      // 両方の設定を1回の「変換」で適用する
-
-      if (gabigabiLevel === null || gabigabiLevel === 0) {
-        // ガビガビなし → フォーマット変換 + リサイズのみ
-        if (resizePercent === 100 && outputFormat === 'jpeg') {
-          // 何も変更なし
-          Alert.alert('変換不要', '現在の設定では変換の必要がありません。\nガビガビレベルを上げるか、フォーマットやリサイズを変更してください。');
-          return;
-        }
-        if (resizePercent < 100) {
-          // リサイズだけ実行（ガビガビレベル0 = 高品質）
-          const result = await resizeImage(selectedImage, resizePercent, 0);
-          resultUri = result.outputUri;
-          resultBytes = result.outputBytes;
+        if (gabigabiLevel === null) {
+          historyAction = 'convert';
+          // ガビガビなし → フォーマット変換 + リサイズのみ
+          if (resizePercent === 100 && outputFormat === 'jpeg') {
+            // 何も変更なし
+            Alert.alert(t('noConversionNeededTitle'), t('noConversionNeededMessage'));
+            return;
+          }
+          if (resizePercent < 100) {
+            // リサイズのみ実行（手動調整）
+            const result = await resizeImage(selectedImage, resizePercent, 0);
+            resultUri = result.outputUri;
+            resultBytes = result.outputBytes;
+          } else {
+            // フォーマット変換のみ
+            const result = await convertImage(selectedImage, {
+              outputFormat,
+              quality: compressionRate,
+            });
+            resultUri = result.outputUri;
+            resultBytes = result.outputBytes;
+          }
         } else {
-          // フォーマット変換のみ
-          const result = await convertImage(selectedImage, {
-            outputFormat,
-            quality: compressionRate,
-          });
-          resultUri = result.outputUri;
-          resultBytes = result.outputBytes;
-        }
-      } else {
         // ガビガビ化（リサイズ + 品質劣化）
         const result = await resizeImage(selectedImage, resizePercent, gabigabiLevel!, {
           shrinkExpandEnabled,
@@ -550,10 +442,13 @@ const MainScreen = () => {
 
       setProcessedImage(resultUri);
       outputBytesRef.current = resultBytes;
+      await saveHistory(historyAction, selectedImage, resultUri, inputBytes, resultBytes);
+      await notifyProcessingResult('処理が完了しました。');
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
-        showError('エラー', `変換に失敗しました: ${msg}`);
+        showError(t('error'), `${t('convertFailed')}: ${msg}`);
+        await notifyProcessingResult('処理に失敗しました。アプリを開いて詳細を確認してください。');
       }
     } finally {
       setIsProcessing(false);
@@ -567,15 +462,15 @@ const MainScreen = () => {
     }
     const {status} = await MediaLibrary.requestPermissionsAsync(false, ['photo']);
     if (status !== 'granted') {
-      Alert.alert('権限が必要', 'カメラロールへのアクセスを許可してください');
+      Alert.alert(t('permissionRequired'), t('galleryPermissionMessage'));
       return;
     }
     try {
       // createAssetAsync はギャラリーを開かずにメディアストアに登録する
       const asset = await MediaLibrary.createAssetAsync(processedImage);
-      showSaveFeedback(`保存完了\n${asset.uri}`);
+      showSaveFeedback(`${t('saveSuccess')}\n${asset.uri}`);
     } catch (err) {
-      showError('エラー', `保存に失敗しました: ${String(err)}`);
+      showError(t('error'), `${t('saveFailed')}: ${String(err)}`);
     }
   };
 
@@ -610,7 +505,7 @@ const MainScreen = () => {
       if (message.includes('User did not share') || message.includes('cancel')) {
         return;
       }
-      showError('エラー', `共有に失敗しました: ${message}`);
+      showError(t('error'), `${t('shareFailed')}: ${message}`);
     }
   };
 
@@ -626,7 +521,7 @@ const MainScreen = () => {
     
     const val = parseFloat(targetSizeValue);
     if (isNaN(val) || val <= 0) {
-      Alert.alert('エラー', '有効な目標サイズを入力してください');
+      Alert.alert(t('error'), t('invalidTargetSize'));
       return;
     }
     
@@ -638,13 +533,18 @@ const MainScreen = () => {
     setIsProcessing(true);
     setProcessingAction('targetSize');
     try {
+      const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
+      const inputBytes = getFileSizeBytes(inputInfo);
       const result = await compressToTargetSize(selectedImage, targetBytes, videoOutputFormat);
       setProcessedImage(result.outputUri);
       outputBytesRef.current = result.outputBytes;
+      await saveHistory('targetSize', selectedImage, result.outputUri, inputBytes, result.outputBytes, targetBytes);
+      await notifyProcessingResult('指定サイズ圧縮が完了しました。');
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
-        showError('エラー', `指定サイズ圧縮に失敗しました: ${msg}`);
+        showError(t('error'), `${t('targetCompressionFailed')}: ${msg}`);
+        await notifyProcessingResult('指定サイズ圧縮に失敗しました。アプリを開いて詳細を確認してください。');
       }
     } finally {
       setIsProcessing(false);
@@ -688,7 +588,7 @@ const MainScreen = () => {
         <View style={styles.headerRow}>
           <View style={{flexDirection: 'column', alignItems: 'center', flex: 1, paddingHorizontal: 30}}>
             <Text style={styles.appName} numberOfLines={1} adjustsFontSizeToFit>GabiGabi</Text>
-            <Text style={styles.appSubtitle} numberOfLines={1} adjustsFontSizeToFit>画像・動画ガビガビ化&指定サイズ圧縮</Text>
+            <Text style={styles.appSubtitle} numberOfLines={1} adjustsFontSizeToFit>{t('appSubtitle')}</Text>
           </View>
           <TouchableOpacity 
             onPress={() => setAboutVisible(true)} 
@@ -704,15 +604,15 @@ const MainScreen = () => {
         <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24}}>
           <View style={{backgroundColor: '#1e1e1e', borderRadius: 16, padding: 24, width: '100%', maxWidth: 360}}>
             <Text style={{color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 4, textAlign: 'center'}}>GabiGabi</Text>
-            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 16, textAlign: 'center'}}>画像・動画ガビガビ化&指定サイズ圧縮</Text>
-            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>画像・動画の変換・圧縮・ガビガビ化ツール</Text>
-            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>ライセンス: GPL v3</Text>
-            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>FFmpeg / FFmpegKit を使用しています</Text>
+            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 16, textAlign: 'center'}}>{t('appSubtitle')}</Text>
+            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>{t('appDescription')}</Text>
+            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>{t('license')}</Text>
+            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>{t('ffmpegUsage')}</Text>
             <TouchableOpacity onPress={() => { Linking.openURL('https://github.com/e-komiya/gabigabi'); }}>
-              <Text style={{color: '#4da6ff', fontSize: 14, marginBottom: 16}}>GitHub でソースコードを見る</Text>
+              <Text style={{color: '#4da6ff', fontSize: 14, marginBottom: 16}}>{t('viewSourceOnGitHub')}</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setAboutVisible(false)} style={{backgroundColor: '#333', borderRadius: 8, padding: 12, alignItems: 'center'}}>
-              <Text style={{color: '#fff', fontSize: 16}}>閉じる</Text>
+              <Text style={{color: '#fff', fontSize: 16}}>{t('close')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -753,14 +653,14 @@ const MainScreen = () => {
               label="AFTER"
               uri={processedImage}
               mediaType={selectedMediaType === 'video' ? 'video' : 'image'}
-              placeholder={selectedImage ? '変換後' : '—'}
+              placeholder={selectedImage ? t('converted') : '—'}
               onPickerPress={undefined}
               onImagePress={handleImagePress}
             />
             {selectedImage && fileInfo && (
               <View style={styles.infoBlock}>
                 <Text style={styles.infoText} numberOfLines={1} ellipsizeMode="middle">📄 {processedImage ? processedImage.split('/').pop() : '—'}</Text>
-                <Text style={styles.infoText}>{processedImage ? formatBytes(outputBytesRef.current) : '変換後に表示'}</Text>
+                <Text style={styles.infoText}>{processedImage ? formatBytes(outputBytesRef.current) : t('showAfterConversion')}</Text>
                 <Text style={styles.infoText}>{Math.round(fileInfo.width * resizePercent / 100)} × {Math.round(fileInfo.height * resizePercent / 100)} px</Text>
                 <Text style={styles.infoText}>🏷 {processedImage ? (processedImage.split('.').pop()?.toUpperCase() ?? outputFormat.toUpperCase()) : outputFormat.toUpperCase()}</Text>
               </View>
@@ -773,12 +673,12 @@ const MainScreen = () => {
           <TouchableOpacity 
             style={[styles.methodTab, convertMethod === 'parameters' && styles.methodTabActive]}
             onPress={() => setConvertMethod('parameters')}>
-            <Text style={[styles.methodTabText, convertMethod === 'parameters' && styles.methodTabTextActive]}>パラメータを設定する</Text>
+            <Text style={[styles.methodTabText, convertMethod === 'parameters' && styles.methodTabTextActive]}>{t('setParameters')}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.methodTab, convertMethod === 'targetSize' && styles.methodTabActive]}
             onPress={() => setConvertMethod('targetSize')}>
-            <Text style={[styles.methodTabText, convertMethod === 'targetSize' && styles.methodTabTextActive]}>目標サイズを指定する</Text>
+            <Text style={[styles.methodTabText, convertMethod === 'targetSize' && styles.methodTabTextActive]}>{t('setTargetSize')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -786,9 +686,9 @@ const MainScreen = () => {
           <>
             {/* ── Template Section (旧ガビガビレベル) ── */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>テンプレート</Text>
+              <Text style={styles.sectionTitle}>{t('template')}</Text>
               <View style={styles.templateBlock}>
-                <Text style={styles.templateBlockLabel}>ガビガビレベル</Text>
+                <Text style={styles.templateBlockLabel}>{t('gabigabiLevel')}</Text>
                 <View style={styles.formatRow}>
                   {GABIGABI_LEVELS.map(item => (
                     <TouchableOpacity
@@ -823,11 +723,11 @@ const MainScreen = () => {
 
             {/* ── Format Conversion Section ── */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>出力フォーマット</Text>
+              <Text style={styles.sectionTitle}>{t('outputFormat')}</Text>
               {selectedMediaType !== 'image' && (
                 <>
                   {selectedMediaType === null && (
-                    <Text style={styles.formatGroupLabel}>🎬 動画</Text>
+                    <Text style={styles.formatGroupLabel}>🎬 {t('video')}</Text>
                   )}
                   <View style={[styles.formatRow, styles.formatRowWrap]}>
                     {VIDEO_FORMAT_OPTIONS.map(opt => (
@@ -853,7 +753,7 @@ const MainScreen = () => {
               {selectedMediaType !== 'video' && (
                 <>
                   {selectedMediaType === null && (
-                    <Text style={[styles.formatGroupLabel, {marginTop: 12}]}>画像</Text>
+                    <Text style={[styles.formatGroupLabel, {marginTop: 12}]}>{t('image')}</Text>
                   )}
                   <View style={styles.formatRow}>
                     {FORMAT_OPTIONS.map(opt => (
@@ -865,7 +765,7 @@ const MainScreen = () => {
                         ]}
                         onPress={() => setOutputFormat(opt.value)}
                         accessibilityRole="button"
-                        accessibilityLabel={`出力フォーマット ${opt.label}`}>
+                        accessibilityLabel={`${t('outputFormatAccessibility')} ${opt.label}`}>
                         <Text
                           style={[
                             styles.formatButtonText,
@@ -879,10 +779,10 @@ const MainScreen = () => {
                 </>
               )}
 
-              {selectedMediaType !== 'video' && (outputFormat === 'jpeg' || outputFormat === 'webp') && (
+              {((selectedMediaType !== 'video' && (outputFormat === 'jpeg' || outputFormat === 'webp')) || selectedMediaType === 'video') && (
                 <View style={styles.qualityRow}>
                   <View style={styles.qualityLabelRow}>
-                    <Text style={styles.qualityLabel}>圧縮率</Text>
+                    <Text style={styles.qualityLabel}>{t('compressionRate')}</Text>
                     <Text style={styles.qualityValue}>{compressionRate}%</Text>
                   </View>
                   <CustomSlider
@@ -892,8 +792,8 @@ const MainScreen = () => {
                     step={1}
                     value={compressionRate}
                     onValueChange={(v: number) => handleQualityChange(Math.round(v))}
-                    accessibilityLabel="画像圧縮率スライダー"
-                    accessibilityHint="0%から99%の範囲で圧縮率を変更します"
+                    accessibilityLabel={selectedMediaType === 'video' ? t('videoCompressionSlider') : t('imageCompressionSlider')}
+                    accessibilityHint={selectedMediaType === 'video' ? t('videoCompressionSliderHint') : t('imageCompressionSliderHint')}
                     minimumTrackTintColor={ACCENT2}
                     maximumTrackTintColor={BORDER}
                     thumbTintColor={ACCENT2}
@@ -905,8 +805,8 @@ const MainScreen = () => {
             {/* ── Shrink→Expand Section ── */}
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>縮小→再拡大</Text>
-                <Text style={styles.sectionHint}>画像を一度縮小して元サイズに戻す。{'\n'}引き伸ばしでブロックノイズが増幅されガビガビに</Text>
+                <Text style={styles.sectionTitle}>{t('shrinkExpand')}</Text>
+                <Text style={styles.sectionHint}>{t('shrinkExpandHint')}</Text>
               </View>
               <View style={styles.switchRow}>
                 <Text style={styles.switchLabel}>ON/OFF</Text>
@@ -920,7 +820,7 @@ const MainScreen = () => {
               {shrinkExpandEnabled && (
                 <View style={styles.qualityRow}>
                   <View style={styles.qualityLabelRow}>
-                    <Text style={styles.qualityLabel}>縮小率</Text>
+                    <Text style={styles.qualityLabel}>{t('shrinkRate')}</Text>
                     <Text style={styles.qualityValue}>{shrinkExpandRate}%</Text>
                   </View>
                   <CustomSlider
@@ -930,8 +830,8 @@ const MainScreen = () => {
                     step={1}
                     value={shrinkExpandRate}
                     onValueChange={handleShrinkExpandRateChange}
-                    accessibilityLabel="縮小率スライダー"
-                    accessibilityHint="10%から90%の範囲で縮小率を変更します"
+                    accessibilityLabel={t('shrinkRateSlider')}
+                    accessibilityHint={t('shrinkRateSliderHint')}
                     minimumTrackTintColor={ACCENT}
                     maximumTrackTintColor={BORDER}
                     thumbTintColor={ACCENT}
@@ -943,8 +843,8 @@ const MainScreen = () => {
             {/* ── Multi-Compress Section ── */}
             <View style={styles.sectionContainer}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>多重圧縮</Text>
-                <Text style={styles.sectionHint}>JPEG圧縮を繰り返すほど劣化が蓄積。{'\n'}回数が多いほどガビガビに</Text>
+                <Text style={styles.sectionTitle}>{t('multiCompress')}</Text>
+                <Text style={styles.sectionHint}>{t('multiCompressHint')}</Text>
               </View>
               <View style={styles.switchRow}>
                 <Text style={styles.switchLabel}>ON/OFF</Text>
@@ -958,8 +858,8 @@ const MainScreen = () => {
               {multiCompressEnabled && (
                 <View style={styles.qualityRow}>
                   <View style={styles.qualityLabelRow}>
-                    <Text style={styles.qualityLabel}>圧縮回数</Text>
-                    <Text style={styles.qualityValue}>{multiCompressCount}回</Text>
+                    <Text style={styles.qualityLabel}>{t('compressCount')}</Text>
+                    <Text style={styles.qualityValue}>{multiCompressCount}{t('timesSuffix')}</Text>
                   </View>
                   <CustomSlider
                     style={styles.qualitySlider}
@@ -968,8 +868,8 @@ const MainScreen = () => {
                     step={1}
                     value={multiCompressCount}
                     onValueChange={handleMultiCompressCountChange}
-                    accessibilityLabel="多重圧縮回数スライダー"
-                    accessibilityHint="1回から10回の範囲で圧縮回数を変更します"
+                    accessibilityLabel={t('multiCompressSlider')}
+                    accessibilityHint={t('multiCompressSliderHint')}
                     minimumTrackTintColor={ACCENT}
                     maximumTrackTintColor={BORDER}
                     thumbTintColor={ACCENT}
@@ -982,7 +882,7 @@ const MainScreen = () => {
           <>
             {/* ── Target Size Settings (#277) ── */}
             <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>目標サイズ設定</Text>
+              <Text style={styles.sectionTitle}>{t('targetSizeSettings')}</Text>
               <View style={styles.targetSizeInputRow}>
                 <TextInput
                   style={styles.targetSizeInput}
@@ -1004,7 +904,7 @@ const MainScreen = () => {
                 </View>
               </View>
               
-              <Text style={[styles.sectionTitle, {marginTop: 20}]}>テンプレート</Text>
+              <Text style={[styles.sectionTitle, {marginTop: 20}]}>{t('template')}</Text>
               <View style={styles.targetSizeTemplates}>
                 {TARGET_SIZE_TEMPLATES.map(tmpl => (
                   <TouchableOpacity
@@ -1017,7 +917,7 @@ const MainScreen = () => {
               </View>
               
               <Text style={{color: '#666', fontSize: 12, marginTop: 16, lineHeight: 18}}>
-                ※目標サイズに収まるように品質・ビットレートを自動調整します。画像の場合はJPEGに変換されます。
+                {t('targetSizeNote')}
               </Text>
             </View>
           </>
@@ -1029,7 +929,7 @@ const MainScreen = () => {
             style={styles.resetButton}
             onPress={handleReset}
             activeOpacity={0.7}>
-            <Text style={styles.resetButtonText}>リセット</Text>
+            <Text style={styles.resetButtonText}>Reset</Text>
           </TouchableOpacity>
         )}
 
@@ -1044,7 +944,7 @@ const MainScreen = () => {
             style={styles.cancelButton}
             onPress={handleCancel}
             activeOpacity={0.8}>
-            <Text style={styles.cancelButtonText}>⛔ キャンセル</Text>
+            <Text style={styles.cancelButtonText}>⛔ Cancel</Text>
           </TouchableOpacity>
         )}
 
@@ -1056,8 +956,8 @@ const MainScreen = () => {
               onPress={handleSave}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="カメラロールに保存">
-              <Text style={styles.buttonText}>カメラロールに保存</Text>
+              accessibilityLabel={t('saveToCameraRoll')}>
+              <Text style={styles.buttonText}>{t('saveToCameraRoll')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -1065,8 +965,8 @@ const MainScreen = () => {
               onPress={handleShare}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel="共有">
-              <Text style={styles.buttonText}>🔗 共有</Text>
+              accessibilityLabel={t('share')}>
+              <Text style={styles.buttonText}>🔗 Share</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -1079,14 +979,14 @@ const MainScreen = () => {
             disabled={!selectedImage || isProcessing}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="ガビガビ化を実行">
+            accessibilityLabel={t('runGabigabi')}>
             {isProcessing && processingAction === 'gabigabi' ? (
               <View style={styles.processingRow}>
                 <ActivityIndicator color="#fff" size="small" />
-                <Text style={styles.buttonText}> 処理中...</Text>
+                <Text style={styles.buttonText}> {t('processing')}</Text>
               </View>
             ) : (
-              <Text style={styles.buttonText}>変換</Text>
+              <Text style={styles.buttonText}>Convert</Text>
             )}
           </TouchableOpacity>
         ) : (
@@ -1096,14 +996,14 @@ const MainScreen = () => {
             disabled={!selectedImage || isProcessing}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="指定サイズ以下に圧縮">
+            accessibilityLabel={t('compressUnderTargetSize')}>
             {isProcessing && processingAction === 'targetSize' ? (
               <View style={styles.processingRow}>
                 <ActivityIndicator color="#fff" size="small" />
-                <Text style={styles.buttonText}> 処理中...</Text>
+                <Text style={styles.buttonText}> {t('processing')}</Text>
               </View>
             ) : (
-              <Text style={styles.buttonText}>指定サイズ以下に圧縮</Text>
+              <Text style={styles.buttonText}>{t('compressUnderTargetSize')}</Text>
             )}
           </TouchableOpacity>
         )}
@@ -1131,7 +1031,7 @@ const PreviewCard: React.FC<PreviewCardProps> = ({label, uri, mediaType = 'image
       mediaType === 'video' ? (
         <View style={[styles.previewEmpty, styles.videoPreview]}>
           <Text style={styles.videoPreviewIcon}>🎬</Text>
-          <Text style={styles.videoPreviewText}>動画</Text>
+          <Text style={styles.videoPreviewText}>{t('video')}</Text>
         </View>
       ) : (
         <TouchableOpacity onPress={() => onPickerPress ? onPickerPress() : onImagePress?.(uri)} activeOpacity={0.85}>
@@ -1148,14 +1048,14 @@ const PreviewCard: React.FC<PreviewCardProps> = ({label, uri, mediaType = 'image
             )}
           </View>
           <View style={styles.previewTapHint}>
-            <Text style={styles.previewTapHintText}>🔍 タップで拡大</Text>
+            <Text style={styles.previewTapHintText}>🔍 {t('tapToZoom')}</Text>
           </View>
         </TouchableOpacity>
       )
     ) : (
       <TouchableOpacity onPress={onPickerPress} activeOpacity={0.7} style={styles.previewEmptyTouchable}>
         <Text style={styles.previewEmptyIcon}>＋</Text>
-        <Text style={styles.previewEmptyText}>{placeholder || '画像 / 動画を選択'}</Text>
+        <Text style={styles.previewEmptyText}>{placeholder || t('selectImageOrVideo')}</Text>
       </TouchableOpacity>
     )}
   </View>

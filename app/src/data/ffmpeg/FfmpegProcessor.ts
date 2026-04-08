@@ -81,12 +81,16 @@ export async function processVideoWithFfmpeg(
   scalePct: number,
   gabigabiLevel: number = 2,
   outputFormat: VideoFormat = 'mp4',
+  compressionRate?: number,
 ): Promise<FfmpegProcessResult> {
   if (scalePct <= 0 || scalePct > 100) {
     throw new Error('scalePct must be within (0, 100]');
   }
   if (gabigabiLevel < 0 || gabigabiLevel > 5) {
     throw new Error('gabigabiLevel must be 0-5');
+  }
+  if (compressionRate !== undefined && (compressionRate < 0 || compressionRate > 99)) {
+    throw new Error('compressionRate must be 0-99');
   }
 
   const inputInfo = await FileSystem.getInfoAsync(inputUri, { size: true });
@@ -109,9 +113,21 @@ export async function processVideoWithFfmpeg(
 
   if (__DEV__) console.log('[FFmpeg] video outputPath:', outputPath);
 
-  const crf = outputFormat === 'webm'
-    ? (GABIGABI_CRF_VP9[gabigabiLevel] ?? 50)
-    : (GABIGABI_CRF_H264[gabigabiLevel] ?? 40);
+  const crf = (() => {
+    if (compressionRate === undefined) {
+      return outputFormat === 'webm'
+        ? (GABIGABI_CRF_VP9[gabigabiLevel] ?? 50)
+        : (GABIGABI_CRF_H264[gabigabiLevel] ?? 40);
+    }
+
+    // 圧縮率 0〜99 を CRF 範囲へ線形マッピング
+    if (outputFormat === 'webm') {
+      // VP9: 33〜63
+      return Math.round(33 + (63 - 33) * (compressionRate / 99));
+    }
+    // H.264: 23〜51
+    return Math.round(23 + (51 - 23) * (compressionRate / 99));
+  })();
   const scale = scalePct / 100;
 
   const codecArgs = VIDEO_FORMAT_CODECS[outputFormat] ?? VIDEO_FORMAT_CODECS.mp4;
