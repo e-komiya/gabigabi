@@ -40,3 +40,9 @@
 - [ ] 安全な場所へバックアップ（最低2系統）
 - [ ] パスワード管理ツールへ保管情報を記録
 - [ ] 復旧手順（保管場所・所有者）をチームで共有
+
+
+## 関連ドキュメント
+
+- `docs/release-google-play-assets.md`
+- `docs/release-play-console-checklist.md`

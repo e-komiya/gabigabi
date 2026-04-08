@@ -61,3 +61,9 @@ GabiGabi（ガビガビ）は、画像や動画を素早く変換・圧縮・劣
 
 - 上記アセットが `app/assets/store-listing/` に配置されている
 - Play Console の「ストア掲載情報」入力が完了している
+
+
+## 関連ドキュメント
+
+- `docs/release-play-console-upload.md`
+- `docs/release-play-console-checklist.md`
