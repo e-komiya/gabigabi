@@ -17,6 +17,7 @@ import {
   Linking,
   Switch,
   TextInput,
+  Platform,
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import Share from 'react-native-share';
@@ -365,11 +366,47 @@ const MainScreen = () => {
     return requested.granted;
   }, []);
 
-  const notifyProcessingResult = useCallback(async (body: string) => {
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    Notifications.setNotificationChannelAsync('processing-status', {
+      name: '処理ステータス',
+      importance: Notifications.AndroidImportance.DEFAULT,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#4CAF50',
+    }).catch(() => {
+      // ignore
+    });
+  }, []);
+
+  const notifyProcessingStarted = useCallback(async (body: string) => {
+    const granted = await ensureNotificationPermission();
+    if (!granted) return null;
+    return Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'GabiGabi',
+        body,
+        sound: false,
+        ...(Platform.OS === 'android' ? {channelId: 'processing-status'} : {}),
+      },
+      trigger: null,
+    });
+  }, [ensureNotificationPermission]);
+
+  const notifyProcessingResult = useCallback(async (body: string, activeNotificationId?: string | null) => {
     const granted = await ensureNotificationPermission();
     if (!granted) return;
+    if (activeNotificationId) {
+      await Notifications.dismissNotificationAsync(activeNotificationId).catch(() => {
+        // ignore
+      });
+    }
     await Notifications.scheduleNotificationAsync({
-      content: {title: 'GabiGabi', body, sound: false},
+      content: {
+        title: 'GabiGabi',
+        body,
+        sound: false,
+        ...(Platform.OS === 'android' ? {channelId: 'processing-status'} : {}),
+      },
       trigger: null,
     });
   }, [ensureNotificationPermission]);
@@ -380,6 +417,7 @@ const MainScreen = () => {
     }
     setIsProcessing(true);
     setProcessingAction('gabigabi');
+    const processingNotificationId = await notifyProcessingStarted('変換処理を開始しました。処理中です...');
     try {
       let resultUri: string;
       let resultBytes: number;
@@ -443,12 +481,12 @@ const MainScreen = () => {
       setProcessedImage(resultUri);
       outputBytesRef.current = resultBytes;
       await saveHistory(historyAction, selectedImage, resultUri, inputBytes, resultBytes);
-      await notifyProcessingResult('処理が完了しました。');
+      await notifyProcessingResult('処理が完了しました。', processingNotificationId);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
         showError(t('error'), `${t('convertFailed')}: ${msg}`);
-        await notifyProcessingResult('処理に失敗しました。アプリを開いて詳細を確認してください。');
+        await notifyProcessingResult('処理に失敗しました。アプリを開いて詳細を確認してください。', processingNotificationId);
       }
     } finally {
       setIsProcessing(false);
@@ -532,6 +570,7 @@ const MainScreen = () => {
     
     setIsProcessing(true);
     setProcessingAction('targetSize');
+    const processingNotificationId = await notifyProcessingStarted('指定サイズ圧縮を開始しました。処理中です...');
     try {
       const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
       const inputBytes = getFileSizeBytes(inputInfo);
@@ -539,12 +578,12 @@ const MainScreen = () => {
       setProcessedImage(result.outputUri);
       outputBytesRef.current = result.outputBytes;
       await saveHistory('targetSize', selectedImage, result.outputUri, inputBytes, result.outputBytes, targetBytes);
-      await notifyProcessingResult('指定サイズ圧縮が完了しました。');
+      await notifyProcessingResult('指定サイズ圧縮が完了しました。', processingNotificationId);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
         showError(t('error'), `${t('targetCompressionFailed')}: ${msg}`);
-        await notifyProcessingResult('指定サイズ圧縮に失敗しました。アプリを開いて詳細を確認してください。');
+        await notifyProcessingResult('指定サイズ圧縮に失敗しました。アプリを開いて詳細を確認してください。', processingNotificationId);
       }
     } finally {
       setIsProcessing(false);
