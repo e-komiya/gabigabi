@@ -386,7 +386,38 @@ const MainScreen = () => {
         title: 'GabiGabi',
         body,
         sound: false,
-        ...(Platform.OS === 'android' ? {channelId: 'processing-status'} : {}),
+        ...(Platform.OS === 'android'
+          ? {
+              channelId: 'processing-status',
+              sticky: true,
+              autoDismiss: false,
+            }
+          : {}),
+      },
+      trigger: null,
+    });
+  }, [ensureNotificationPermission]);
+
+  const notifyProcessingUpdate = useCallback(async (body: string, activeNotificationId?: string | null) => {
+    const granted = await ensureNotificationPermission();
+    if (!granted) return activeNotificationId ?? null;
+    if (activeNotificationId) {
+      await Notifications.dismissNotificationAsync(activeNotificationId).catch(() => {
+        // ignore
+      });
+    }
+    return Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'GabiGabi',
+        body,
+        sound: false,
+        ...(Platform.OS === 'android'
+          ? {
+              channelId: 'processing-status',
+              sticky: true,
+              autoDismiss: false,
+            }
+          : {}),
       },
       trigger: null,
     });
@@ -417,7 +448,7 @@ const MainScreen = () => {
     }
     setIsProcessing(true);
     setProcessingAction('gabigabi');
-    const processingNotificationId = await notifyProcessingStarted('変換処理を開始しました。処理中です...');
+    let processingNotificationId = await notifyProcessingStarted('変換処理を開始しました。処理中です...');
     try {
       let resultUri: string;
       let resultBytes: number;
@@ -426,8 +457,10 @@ const MainScreen = () => {
 
       const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
       inputBytes = getFileSizeBytes(inputInfo);
+      processingNotificationId = await notifyProcessingUpdate('入力解析が完了しました。変換を続行します...', processingNotificationId);
 
       if (selectedMediaType === 'video') {
+        processingNotificationId = await notifyProcessingUpdate('動画を処理中です...（バックグラウンドでも継続）', processingNotificationId);
         // 動画のガビガビ化
         const result = await processVideoWithFfmpeg(
           selectedImage,
@@ -439,6 +472,7 @@ const MainScreen = () => {
         resultUri = result.outputUri;
         resultBytes = result.outputBytes;
       } else {
+        processingNotificationId = await notifyProcessingUpdate('画像を処理中です...（バックグラウンドでも継続）', processingNotificationId);
         // テンプレート未選択（手動調整）時はフォーマット変換 + リサイズのみ
         // テンプレート選択時（レベル1以上）はガビガビ化（リサイズ+品質劣化）
         // 両方の設定を1回の「変換」で適用する
@@ -481,7 +515,7 @@ const MainScreen = () => {
       setProcessedImage(resultUri);
       outputBytesRef.current = resultBytes;
       await saveHistory(historyAction, selectedImage, resultUri, inputBytes, resultBytes);
-      await notifyProcessingResult('処理が完了しました。', processingNotificationId);
+      await notifyProcessingResult('処理が完了しました。通知をタップして結果を確認できます。', processingNotificationId);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
@@ -570,15 +604,16 @@ const MainScreen = () => {
     
     setIsProcessing(true);
     setProcessingAction('targetSize');
-    const processingNotificationId = await notifyProcessingStarted('指定サイズ圧縮を開始しました。処理中です...');
+    let processingNotificationId = await notifyProcessingStarted('指定サイズ圧縮を開始しました。処理中です...');
     try {
       const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
       const inputBytes = getFileSizeBytes(inputInfo);
+      processingNotificationId = await notifyProcessingUpdate('目標サイズに合わせて圧縮中です...（バックグラウンドでも継続）', processingNotificationId);
       const result = await compressToTargetSize(selectedImage, targetBytes, videoOutputFormat);
       setProcessedImage(result.outputUri);
       outputBytesRef.current = result.outputBytes;
       await saveHistory('targetSize', selectedImage, result.outputUri, inputBytes, result.outputBytes, targetBytes);
-      await notifyProcessingResult('指定サイズ圧縮が完了しました。', processingNotificationId);
+      await notifyProcessingResult('指定サイズ圧縮が完了しました。通知をタップして結果を確認できます。', processingNotificationId);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
