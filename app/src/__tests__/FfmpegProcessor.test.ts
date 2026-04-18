@@ -43,6 +43,11 @@ function lastCmd() {
 describe('processWithFfmpeg', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    const ffmpegUtils = jest.requireMock('../data/ffmpeg/ffmpegUtils');
+    ffmpegUtils.generateUniqueFileSuffix.mockReturnValue('12345_abc');
+    ffmpegUtils.extractErrorFromLogs.mockResolvedValue('');
+    ffmpegUtils.getCacheDir.mockReturnValue('file:///cache/');
+    ffmpegUtils.getFileSizeBytes.mockImplementation((info: { size?: number }) => info?.size ?? 0);
     setupSuccess();
   });
 
@@ -82,11 +87,34 @@ describe('processWithFfmpeg', () => {
     expect(mockExecute).toHaveBeenCalledTimes(3);
     expect(mockMoveAsync).toHaveBeenCalled();
   });
+
+  it.each([
+    { input: 'file:///in.jpg', expectedExt: '.jpg' },
+    { input: 'file:///in.png', expectedExt: '.jpg' },
+    { input: 'file:///in.webp', expectedExt: '.webp' },
+    { input: 'file:///in.bmp', expectedExt: '.bmp' },
+    { input: 'file:///in.gif', expectedExt: '.gif' },
+  ])('gabigabi経路で出力拡張子が期待通り($input)', async ({ input, expectedExt }) => {
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 1000 })
+      .mockResolvedValueOnce({ exists: true, size: 500 });
+
+    const result = await processWithFfmpeg(input, 80, 2);
+
+    expect(result.outputUri).toBe(`file:///cache/in_gabigabi_12345_abc${expectedExt}`);
+    expect(lastCmd()).toContain(`in_gabigabi_12345_abc${expectedExt}`);
+    expect(lastCmd()).toContain('-q:v 18');
+  });
 });
 
 describe('processVideoWithFfmpeg', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    const ffmpegUtils = jest.requireMock('../data/ffmpeg/ffmpegUtils');
+    ffmpegUtils.generateUniqueFileSuffix.mockReturnValue('12345_abc');
+    ffmpegUtils.extractErrorFromLogs.mockResolvedValue('');
+    ffmpegUtils.getCacheDir.mockReturnValue('file:///cache/');
+    ffmpegUtils.getFileSizeBytes.mockImplementation((info: { size?: number }) => info?.size ?? 0);
     setupSuccess();
   });
 

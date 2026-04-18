@@ -23,6 +23,7 @@ jest.mock('expo-file-system/legacy', () => ({
 }));
 
 jest.mock('../data/ffmpeg/ffmpegUtils', () => ({
+  buildFfmpegCommand: jest.fn().mockImplementation((args: string[]) => args.filter(Boolean).join(' ')),
   generateUniqueFileSuffix: jest.fn().mockReturnValue('12345_abc'),
   extractErrorFromLogs: jest.fn().mockResolvedValue('mock logs'),
   getCacheDir: jest.fn().mockReturnValue('file:///cache/'),
@@ -44,6 +45,7 @@ describe('convertImage', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     const ffmpegUtils = jest.requireMock('../data/ffmpeg/ffmpegUtils');
+    ffmpegUtils.buildFfmpegCommand.mockImplementation((args: string[]) => args.filter(Boolean).join(' '));
     ffmpegUtils.generateUniqueFileSuffix.mockReturnValue('12345_abc');
     ffmpegUtils.extractErrorFromLogs.mockResolvedValue('mock logs');
     ffmpegUtils.getCacheDir.mockReturnValue('file:///cache/');
@@ -117,5 +119,34 @@ describe('convertImage', () => {
 
     await expect(convertImage('file:///photos/in.jpg', { outputFormat: 'webp' })).rejects.toThrow('FFmpegフォーマット変換に失敗しました');
     expect(mockDeleteAsync).toHaveBeenCalledWith('file:///cache/in_converted_12345_abc.webp', { idempotent: true });
+  });
+
+  it.each([
+    { outputFormat: 'jpeg' as const, expectedExt: '.jpg', expectedArg: '-q:v' },
+    { outputFormat: 'png' as const, expectedExt: '.png', expectedArg: '-compression_level 6' },
+    { outputFormat: 'webp' as const, expectedExt: '.webp', expectedArg: '-quality' },
+    { outputFormat: 'bmp' as const, expectedExt: '.bmp', expectedArg: '-frames:v 1' },
+  ])('主要フォーマット変換($outputFormat)で拡張子とコマンドが一致する', async ({ outputFormat, expectedExt, expectedArg }) => {
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 1200 })
+      .mockResolvedValueOnce({ exists: true, size: 640 });
+
+    const result = await convertImage('file:///photos/input.png', { outputFormat, quality: 50 });
+
+    expect(result.outputUri).toBe(`file:///cache/input_converted_12345_abc${expectedExt}`);
+    expect(mockExecute.mock.calls[0][0]).toContain(expectedArg);
+  });
+
+  it('GIF変換で出力拡張子と2-pass経路が一致する', async () => {
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 2000 })
+      .mockResolvedValueOnce({ exists: true, size: 800 });
+
+    const result = await convertImage('file:///photos/anim.webp', { outputFormat: 'gif' });
+
+    expect(result.outputUri).toBe('file:///cache/anim_converted_12345_abc.gif');
+    expect(mockExecute).toHaveBeenCalledTimes(2);
+    expect(mockExecute.mock.calls[0][0]).toContain('palettegen');
+    expect(mockExecute.mock.calls[1][0]).toContain('paletteuse');
   });
 });
