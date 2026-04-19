@@ -88,22 +88,22 @@ describe('processWithFfmpeg', () => {
     expect(mockMoveAsync).toHaveBeenCalled();
   });
 
-
   it.each([
-    { input: 'file:///in.jpeg', outExt: '.jpeg' },
-    { input: 'file:///in.png', outExt: '.jpg' },
-    { input: 'file:///in.webp', outExt: '.webp' },
-    { input: 'file:///in.bmp', outExt: '.bmp' },
-    { input: 'file:///in.gif', outExt: '.gif' },
-  ])('gabigabi/resize経路の出力拡張子を維持する（$input）', async ({ input, outExt }) => {
+    { input: 'file:///in.jpg', expectedExt: '.jpg' },
+    { input: 'file:///in.png', expectedExt: '.jpg' },
+    { input: 'file:///in.webp', expectedExt: '.webp' },
+    { input: 'file:///in.bmp', expectedExt: '.bmp' },
+    { input: 'file:///in.gif', expectedExt: '.gif' },
+  ])('gabigabi経路で出力拡張子が期待通り($input)', async ({ input, expectedExt }) => {
     mockGetInfoAsync
       .mockResolvedValueOnce({ exists: true, size: 1000 })
-      .mockResolvedValueOnce({ exists: true, size: 700 });
+      .mockResolvedValueOnce({ exists: true, size: 500 });
 
     const result = await processWithFfmpeg(input, 80, 2);
 
-    expect(result.outputUri).toMatch(new RegExp(`${outExt.replace('.', '\\.')}$`));
-    expect(lastCmd()).toContain('-q:v');
+    expect(result.outputUri).toBe(`file:///cache/in_gabigabi_12345_abc${expectedExt}`);
+    expect(lastCmd()).toContain(`in_gabigabi_12345_abc${expectedExt}`);
+    expect(lastCmd()).toContain('-q:v 18');
   });
 });
 
