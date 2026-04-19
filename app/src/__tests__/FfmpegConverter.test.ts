@@ -74,6 +74,25 @@ describe('convertImage', () => {
     expect(mockExecute.mock.calls[0][0]).toContain('-compression_level 6');
   });
 
+  it.each([
+    { format: 'jpeg', expectedExt: '.jpg', qualityArg: '-q:v' },
+    { format: 'png', expectedExt: '.png', qualityArg: '-compression_level 6' },
+    { format: 'webp', expectedExt: '.webp', qualityArg: '-quality' },
+    { format: 'bmp', expectedExt: '.bmp', qualityArg: '' },
+  ])('主要フォーマット変換を網羅できる: $format', async ({ format, expectedExt, qualityArg }) => {
+    mockGetInfoAsync
+      .mockResolvedValueOnce({ exists: true, size: 1000 })
+      .mockResolvedValueOnce({ exists: true, size: 600 });
+
+    const result = await convertImage('file:///photos/input.png', { outputFormat: format as 'jpeg' | 'png' | 'webp' | 'bmp' });
+    const cmd = mockExecute.mock.calls[0][0] as string;
+
+    expect(result.outputUri).toMatch(new RegExp(`${expectedExt.replace('.', '\\.')}$`));
+    if (qualityArg) {
+      expect(cmd).toContain(qualityArg);
+    }
+  });
+
   it('GIF変換時に2パス実行しパレットを削除する', async () => {
     mockGetInfoAsync
       .mockResolvedValueOnce({ exists: true, size: 1000 })
