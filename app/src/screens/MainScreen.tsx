@@ -701,7 +701,7 @@ const MainScreen = () => {
         <View style={styles.previewRow}>
           <View style={styles.previewColumn}>
             <PreviewCard
-              label="BEFORE"
+              label={t('before')}
               uri={selectedImage}
               mediaType={selectedMediaType ?? 'image'}
               placeholder={''}
@@ -724,7 +724,7 @@ const MainScreen = () => {
           </View>
           <View style={styles.previewColumn}>
             <PreviewCard
-              label="AFTER"
+              label={t('after')}
               uri={processedImage}
               mediaType={selectedMediaType === 'video' ? 'video' : 'image'}
               placeholder={selectedImage ? t('converted') : '—'}
