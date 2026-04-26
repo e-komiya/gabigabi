@@ -448,7 +448,7 @@ const MainScreen = () => {
     }
     setIsProcessing(true);
     setProcessingAction('gabigabi');
-    let processingNotificationId = await notifyProcessingStarted('変換処理を開始しました。処理中です...');
+    let processingNotificationId = await notifyProcessingStarted(t('notifyStarted'));
     try {
       let resultUri: string;
       let resultBytes: number;
@@ -457,10 +457,10 @@ const MainScreen = () => {
 
       const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
       inputBytes = getFileSizeBytes(inputInfo);
-      processingNotificationId = await notifyProcessingUpdate('入力解析が完了しました。変換を続行します...', processingNotificationId);
+      processingNotificationId = await notifyProcessingUpdate(t('notifyInputAnalyzed'), processingNotificationId);
 
       if (selectedMediaType === 'video') {
-        processingNotificationId = await notifyProcessingUpdate('動画を処理中です...（バックグラウンドでも継続）', processingNotificationId);
+        processingNotificationId = await notifyProcessingUpdate(t('notifyVideoProcessing'), processingNotificationId);
         // 動画のガビガビ化
         const result = await processVideoWithFfmpeg(
           selectedImage,
@@ -472,7 +472,7 @@ const MainScreen = () => {
         resultUri = result.outputUri;
         resultBytes = result.outputBytes;
       } else {
-        processingNotificationId = await notifyProcessingUpdate('画像を処理中です...（バックグラウンドでも継続）', processingNotificationId);
+        processingNotificationId = await notifyProcessingUpdate(t('notifyImageProcessing'), processingNotificationId);
         // テンプレート未選択（手動調整）時はフォーマット変換 + リサイズのみ
         // テンプレート選択時（レベル1以上）はガビガビ化（リサイズ+品質劣化）
         // 両方の設定を1回の「変換」で適用する
@@ -515,12 +515,12 @@ const MainScreen = () => {
       setProcessedImage(resultUri);
       outputBytesRef.current = resultBytes;
       await saveHistory(historyAction, selectedImage, resultUri, inputBytes, resultBytes);
-      await notifyProcessingResult('処理が完了しました。通知をタップして結果を確認できます。', processingNotificationId);
+      await notifyProcessingResult(t('notifyCompleted'), processingNotificationId);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
         showError(t('error'), `${t('convertFailed')}: ${msg}`);
-        await notifyProcessingResult('処理に失敗しました。アプリを開いて詳細を確認してください。', processingNotificationId);
+        await notifyProcessingResult(t('notifyFailed'), processingNotificationId);
       }
     } finally {
       setIsProcessing(false);
@@ -604,21 +604,21 @@ const MainScreen = () => {
     
     setIsProcessing(true);
     setProcessingAction('targetSize');
-    let processingNotificationId = await notifyProcessingStarted('指定サイズ圧縮を開始しました。処理中です...');
+    let processingNotificationId = await notifyProcessingStarted(t('notifyCompressStarted'));
     try {
       const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
       const inputBytes = getFileSizeBytes(inputInfo);
-      processingNotificationId = await notifyProcessingUpdate('目標サイズに合わせて圧縮中です...（バックグラウンドでも継続）', processingNotificationId);
+      processingNotificationId = await notifyProcessingUpdate(t('notifyCompressProcessing'), processingNotificationId);
       const result = await compressToTargetSize(selectedImage, targetBytes, videoOutputFormat);
       setProcessedImage(result.outputUri);
       outputBytesRef.current = result.outputBytes;
       await saveHistory('targetSize', selectedImage, result.outputUri, inputBytes, result.outputBytes, targetBytes);
-      await notifyProcessingResult('指定サイズ圧縮が完了しました。通知をタップして結果を確認できます。', processingNotificationId);
+      await notifyProcessingResult(t('notifyCompressCompleted'), processingNotificationId);
     } catch (err) {
       const msg = String(err);
       if (!msg.includes('cancel') && !msg.includes('Cancel')) {
         showError(t('error'), `${t('targetCompressionFailed')}: ${msg}`);
-        await notifyProcessingResult('指定サイズ圧縮に失敗しました。アプリを開いて詳細を確認してください。', processingNotificationId);
+        await notifyProcessingResult(t('notifyCompressFailed'), processingNotificationId);
       }
     } finally {
       setIsProcessing(false);
