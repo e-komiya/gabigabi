@@ -1,5 +1,4 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import CustomSlider from '../components/CustomSlider';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   SafeAreaView,
@@ -12,11 +11,7 @@ import {
   Image,
   ScrollView,
   StatusBar,
-  Modal,
   Animated,
-  Linking,
-  Switch,
-  TextInput,
   Platform,
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
@@ -24,15 +19,12 @@ import Share from 'react-native-share';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ExpoImagePicker from 'expo-image-picker';
 import * as Notifications from 'expo-notifications';
-import { Svg, Rect, Path, G } from 'react-native-svg';
-import ImagePickerComponent from '../components/ImagePicker';
-import ResizeSlider from '../components/ResizeSlider';
 import ErrorModal from '../components/ErrorModal';
 import ImageModal from '../components/ImageModal';
 import {useAppStore} from '../state/store';
-import {VideoFormat, ConvertMethod, SizeUnit} from '../state/store';
+import {ConvertMethod} from '../state/store';
 import {resizeImage} from '../domain/useResizeImage';
-import {compressForDiscord, compressToTargetSize} from '../domain/useDiscordCompress';
+import {compressToTargetSize} from '../domain/useDiscordCompress';
 import {convertImage, formatBytes, ImageFormat} from '../domain/convertImage';
 import {FFmpegKit, FFprobeKit} from 'ffmpeg-kit-react-native';
 import {processVideoWithFfmpeg} from '../data/ffmpeg/FfmpegProcessor';
@@ -40,28 +32,21 @@ import {cleanupCachedTempFiles, getFileSizeBytes} from '../data/ffmpeg/ffmpegUti
 import {saveConversionHistoryItem, ConversionAction} from '../data/history/conversionHistory';
 import {t} from '../i18n';
 
-const FORMAT_OPTIONS: {label: string; value: ImageFormat}[] = [
-  {label: 'JPEG', value: 'jpeg'},
-  {label: 'PNG', value: 'png'},
-  {label: 'WebP', value: 'webp'},
-  {label: 'BMP', value: 'bmp'},
-  {label: 'GIF', value: 'gif'},
-];
+// Subcomponents
+import PreviewCard from './components/PreviewCard';
+import {BeforeInfoBlock, AfterInfoBlock} from './components/ImageInfoBlock';
+import SettingsPanel from './components/SettingsPanel';
+import TargetSizePanel from './components/TargetSizePanel';
+import AboutModal from './components/AboutModal';
 
-const VIDEO_FORMAT_OPTIONS: {label: string; value: VideoFormat}[] = [
-  {label: 'MP4', value: 'mp4'},
-  {label: 'MOV', value: 'mov'},
-  {label: 'MKV', value: 'mkv'},
-  {label: 'WebM', value: 'webm'},
-];
-
-const GABIGABI_LEVELS: {label: string; value: number}[] = [
-  {label: '1', value: 1},
-  {label: '2', value: 2},
-  {label: '3', value: 3},
-  {label: '4', value: 4},
-  {label: '5', value: 5},
-];
+/* ── Constants ── */
+const DARK_BG = '#0d0d0d';
+const CARD_BG = '#1a1a1a';
+const ACCENT = '#ff4e50';
+const ACCENT2 = '#fc913a';
+const TEXT_PRIMARY = '#f0f0f0';
+const TEXT_SECONDARY = '#888';
+const BORDER = '#2a2a2a';
 
 // テンプレートレベルに対応する設定値
 const TEMPLATE_SETTINGS: Record<number, {
@@ -79,9 +64,11 @@ const TEMPLATE_SETTINGS: Record<number, {
   5: {resizePercent: 15, compressionRate: 99, shrinkExpandEnabled: true,  shrinkExpandRate: 35, multiCompressEnabled: true,  multiCompressCount: 4},
 };
 
-const TARGET_SIZE_TEMPLATES: {label: string; value: string; unit: SizeUnit}[] = [
-  {label: 'Discord 10MB', value: '10', unit: 'MB'},
-];
+const resolvePickerMediaTypes = (selectedMediaType?: 'image' | 'video' | null) => {
+  if (selectedMediaType === 'video') return ['videos'] as const;
+  if (selectedMediaType === 'image') return ['images'] as const;
+  return ['images', 'videos'] as const;
+};
 
 const MainScreen = () => {
   const insets = useSafeAreaInsets();
@@ -184,7 +171,7 @@ const MainScreen = () => {
     });
   }, [selectedMediaType, outputFormat, videoOutputFormat, gabigabiLevel, resizePercent, compressionRate]);
 
-  // #214: アプリ起動時に一度だけ一時ファイルをクリーンアップする（変換開始時からの移動）
+  // #214: アプリ起動時に一度だけ一時ファイルをクリーンアップする
   useEffect(() => {
     cleanupCachedTempFiles();
   }, []);
@@ -473,9 +460,6 @@ const MainScreen = () => {
         resultBytes = result.outputBytes;
       } else {
         processingNotificationId = await notifyProcessingUpdate(t('notifyImageProcessing'), processingNotificationId);
-        // テンプレート未選択（手動調整）時はフォーマット変換 + リサイズのみ
-        // テンプレート選択時（レベル1以上）はガビガビ化（リサイズ+品質劣化）
-        // 両方の設定を1回の「変換」で適用する
 
         if (gabigabiLevel === null) {
           historyAction = 'convert';
@@ -500,16 +484,16 @@ const MainScreen = () => {
             resultBytes = result.outputBytes;
           }
         } else {
-        // ガビガビ化（リサイズ + 品質劣化）
-        const result = await resizeImage(selectedImage, resizePercent, gabigabiLevel!, {
-          shrinkExpandEnabled,
-          shrinkExpandRate,
-          multiCompressEnabled,
-          multiCompressCount,
-        });
-        resultUri = result.outputUri;
-        resultBytes = result.outputBytes;
-      }
+          // ガビガビ化（リサイズ + 品質劣化）
+          const result = await resizeImage(selectedImage, resizePercent, gabigabiLevel!, {
+            shrinkExpandEnabled,
+            shrinkExpandRate,
+            multiCompressEnabled,
+            multiCompressCount,
+          });
+          resultUri = result.outputUri;
+          resultBytes = result.outputBytes;
+        }
       } // end else (image)
 
       setProcessedImage(resultUri);
@@ -590,18 +574,18 @@ const MainScreen = () => {
 
   const handleTargetSizeProcess = async () => {
     if (!selectedImage) return;
-    
+
     const val = parseFloat(targetSizeValue);
     if (isNaN(val) || val <= 0) {
       Alert.alert(t('error'), t('invalidTargetSize'));
       return;
     }
-    
+
     let targetBytes = val;
     if (targetSizeUnit === 'KB') targetBytes *= 1024;
     else if (targetSizeUnit === 'MB') targetBytes *= 1024 * 1024;
     else if (targetSizeUnit === 'GB') targetBytes *= 1024 * 1024 * 1024;
-    
+
     setIsProcessing(true);
     setProcessingAction('targetSize');
     let processingNotificationId = await notifyProcessingStarted(t('notifyCompressStarted'));
@@ -624,11 +608,6 @@ const MainScreen = () => {
       setIsProcessing(false);
       setProcessingAction(null);
     }
-  };
-
-  const handleTargetSizeTemplateSelect = (tmpl: typeof TARGET_SIZE_TEMPLATES[0]) => {
-    setTargetSizeValue(tmpl.value);
-    setTargetSizeUnit(tmpl.unit);
   };
 
   return (
@@ -664,8 +643,8 @@ const MainScreen = () => {
             <Text style={styles.appName} numberOfLines={1} adjustsFontSizeToFit>GabiGabi</Text>
             <Text style={styles.appSubtitle} numberOfLines={1} adjustsFontSizeToFit>{t('appSubtitle')}</Text>
           </View>
-          <TouchableOpacity 
-            onPress={() => setAboutVisible(true)} 
+          <TouchableOpacity
+            onPress={() => setAboutVisible(true)}
             style={{position: 'absolute', right: 0, padding: 8}}
           >
             <Text style={{fontSize: 20, color: '#aaa'}}>ℹ️</Text>
@@ -674,23 +653,7 @@ const MainScreen = () => {
       </View>
 
       {/* ── About Modal ── */}
-      <Modal visible={aboutVisible} transparent animationType="fade" onRequestClose={() => setAboutVisible(false)}>
-        <View style={{flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', padding: 24}}>
-          <View style={{backgroundColor: '#1e1e1e', borderRadius: 16, padding: 24, width: '100%', maxWidth: 360}}>
-            <Text style={{color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 4, textAlign: 'center'}}>GabiGabi</Text>
-            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 16, textAlign: 'center'}}>{t('appSubtitle')}</Text>
-            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>{t('appDescription')}</Text>
-            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>{t('license')}</Text>
-            <Text style={{color: '#ccc', fontSize: 14, marginBottom: 8}}>{t('ffmpegUsage')}</Text>
-            <TouchableOpacity onPress={() => { Linking.openURL('https://github.com/e-komiya/gabigabi'); }}>
-              <Text style={{color: '#4da6ff', fontSize: 14, marginBottom: 16}}>{t('viewSourceOnGitHub')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setAboutVisible(false)} style={{backgroundColor: '#333', borderRadius: 8, padding: 12, alignItems: 'center'}}>
-              <Text style={{color: '#fff', fontSize: 16}}>{t('close')}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <AboutModal visible={aboutVisible} onClose={() => setAboutVisible(false)} />
 
       <ScrollView
         style={styles.scroll}
@@ -709,14 +672,7 @@ const MainScreen = () => {
               onImagePress={handleImagePress}
             />
             {selectedImage && fileInfo && (
-              <View style={styles.infoBlock}>
-                <Text style={styles.infoText} numberOfLines={1} ellipsizeMode="middle">📄 {fileInfo.name}</Text>
-                <Text style={styles.infoText}>{fileInfo.size}</Text>
-                {fileInfo.width > 0 && (
-                  <Text style={styles.infoText}>{fileInfo.width} × {fileInfo.height} px</Text>
-                )}
-                <Text style={styles.infoText}>🏷 {(fileInfo.name.split('.').pop() ?? '').toUpperCase()}</Text>
-              </View>
+              <BeforeInfoBlock fileInfo={fileInfo} />
             )}
           </View>
           <View style={styles.arrowContainer}>
@@ -732,24 +688,26 @@ const MainScreen = () => {
               onImagePress={handleImagePress}
             />
             {selectedImage && fileInfo && (
-              <View style={styles.infoBlock}>
-                <Text style={styles.infoText} numberOfLines={1} ellipsizeMode="middle">📄 {processedImage ? processedImage.split('/').pop() : '—'}</Text>
-                <Text style={styles.infoText}>{processedImage ? formatBytes(outputBytesRef.current) : t('showAfterConversion')}</Text>
-                <Text style={styles.infoText}>{Math.round(fileInfo.width * resizePercent / 100)} × {Math.round(fileInfo.height * resizePercent / 100)} px</Text>
-                <Text style={styles.infoText}>🏷 {processedImage ? (processedImage.split('.').pop()?.toUpperCase() ?? outputFormat.toUpperCase()) : outputFormat.toUpperCase()}</Text>
-              </View>
+              <AfterInfoBlock
+                fileInfo={fileInfo}
+                processedImage={processedImage}
+                outputBytesFormatted={formatBytes(outputBytesRef.current)}
+                resizePercent={resizePercent}
+                outputFormat={outputFormat}
+                showAfterConversion={t('showAfterConversion')}
+              />
             )}
           </View>
         </View>
 
         {/* ── Convert Method Tabs (#277) ── */}
         <View style={styles.methodTabs}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.methodTab, convertMethod === 'parameters' && styles.methodTabActive]}
             onPress={() => setConvertMethod('parameters')}>
             <Text style={[styles.methodTabText, convertMethod === 'parameters' && styles.methodTabTextActive]}>{t('setParameters')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.methodTab, convertMethod === 'targetSize' && styles.methodTabActive]}
             onPress={() => setConvertMethod('targetSize')}>
             <Text style={[styles.methodTabText, convertMethod === 'targetSize' && styles.methodTabTextActive]}>{t('setTargetSize')}</Text>
@@ -757,246 +715,37 @@ const MainScreen = () => {
         </View>
 
         {convertMethod === 'parameters' ? (
-          <>
-            {/* ── Template Section (旧ガビガビレベル) ── */}
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>{t('template')}</Text>
-              <View style={styles.templateBlock}>
-                <Text style={styles.templateBlockLabel}>{t('gabigabiLevel')}</Text>
-                <View style={styles.formatRow}>
-                  {GABIGABI_LEVELS.map(item => (
-                    <TouchableOpacity
-                      key={item.value}
-                      style={[
-                        styles.formatButton,
-                        gabigabiLevel === item.value && styles.gabigabiButtonActive,
-                      ]}
-                      onPress={() => handleTemplateSelect(item.value)}>
-                      <Text
-                        style={[
-                          styles.formatButtonText,
-                          gabigabiLevel === item.value && styles.formatButtonTextActive,
-                        ]}>
-                        {item.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-            </View>
-
-            {/* ── Resize Slider ── */}
-            <View style={styles.sliderCard}>
-              <ResizeSlider
-                value={resizePercent}
-                onValueChange={handleResizeChange}
-                originalWidth={fileInfo?.width}
-                originalHeight={fileInfo?.height}
-              />
-            </View>
-
-            {/* ── Format Conversion Section ── */}
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>{t('outputFormat')}</Text>
-              {selectedMediaType !== 'image' && (
-                <>
-                  {selectedMediaType === null && (
-                    <Text style={styles.formatGroupLabel}>🎬 {t('video')}</Text>
-                  )}
-                  <View style={[styles.formatRow, styles.formatRowWrap]}>
-                    {VIDEO_FORMAT_OPTIONS.map(opt => (
-                      <TouchableOpacity
-                        key={opt.value}
-                        style={[
-                          styles.formatButton,
-                          videoOutputFormat === opt.value && styles.formatButtonActive,
-                        ]}
-                        onPress={() => setVideoOutputFormat(opt.value)}>
-                        <Text
-                          style={[
-                            styles.formatButtonText,
-                            videoOutputFormat === opt.value && styles.formatButtonTextActive,
-                          ]}>
-                          {opt.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </>
-              )}
-              {selectedMediaType !== 'video' && (
-                <>
-                  {selectedMediaType === null && (
-                    <Text style={[styles.formatGroupLabel, {marginTop: 12}]}>{t('image')}</Text>
-                  )}
-                  <View style={styles.formatRow}>
-                    {FORMAT_OPTIONS.map(opt => (
-                      <TouchableOpacity
-                        key={opt.value}
-                        style={[
-                          styles.formatButton,
-                          outputFormat === opt.value && styles.formatButtonActive,
-                        ]}
-                        onPress={() => setOutputFormat(opt.value)}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${t('outputFormatAccessibility')} ${opt.label}`}>
-                        <Text
-                          style={[
-                            styles.formatButtonText,
-                            outputFormat === opt.value && styles.formatButtonTextActive,
-                          ]}>
-                          {opt.label}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </>
-              )}
-
-              {((selectedMediaType !== 'video' && (outputFormat === 'jpeg' || outputFormat === 'webp')) || selectedMediaType === 'video') && (
-                <View style={styles.qualityRow}>
-                  <View style={styles.qualityLabelRow}>
-                    <Text style={styles.qualityLabel}>{t('compressionRate')}</Text>
-                    <Text style={styles.qualityValue}>{compressionRate}%</Text>
-                  </View>
-                  <CustomSlider
-                    style={styles.qualitySlider}
-                    minimumValue={0}
-                    maximumValue={99}
-                    step={1}
-                    value={compressionRate}
-                    onValueChange={(v: number) => handleQualityChange(Math.round(v))}
-                    accessibilityLabel={selectedMediaType === 'video' ? t('videoCompressionSlider') : t('imageCompressionSlider')}
-                    accessibilityHint={selectedMediaType === 'video' ? t('videoCompressionSliderHint') : t('imageCompressionSliderHint')}
-                    minimumTrackTintColor={ACCENT2}
-                    maximumTrackTintColor={BORDER}
-                    thumbTintColor={ACCENT2}
-                  />
-                </View>
-              )}
-            </View>
-
-            {/* ── Shrink→Expand Section ── */}
-            <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>{t('shrinkExpand')}</Text>
-                <Text style={styles.sectionHint}>{t('shrinkExpandHint')}</Text>
-              </View>
-              <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>ON/OFF</Text>
-                <Switch
-                  value={shrinkExpandEnabled}
-                  onValueChange={handleShrinkExpandToggle}
-                  trackColor={{false: BORDER, true: ACCENT}}
-                  thumbColor={shrinkExpandEnabled ? '#fff' : '#888'}
-                />
-              </View>
-              {shrinkExpandEnabled && (
-                <View style={styles.qualityRow}>
-                  <View style={styles.qualityLabelRow}>
-                    <Text style={styles.qualityLabel}>{t('shrinkRate')}</Text>
-                    <Text style={styles.qualityValue}>{shrinkExpandRate}%</Text>
-                  </View>
-                  <CustomSlider
-                    style={styles.qualitySlider}
-                    minimumValue={10}
-                    maximumValue={90}
-                    step={1}
-                    value={shrinkExpandRate}
-                    onValueChange={handleShrinkExpandRateChange}
-                    accessibilityLabel={t('shrinkRateSlider')}
-                    accessibilityHint={t('shrinkRateSliderHint')}
-                    minimumTrackTintColor={ACCENT}
-                    maximumTrackTintColor={BORDER}
-                    thumbTintColor={ACCENT}
-                  />
-                </View>
-              )}
-            </View>
-
-            {/* ── Multi-Compress Section ── */}
-            <View style={styles.sectionContainer}>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>{t('multiCompress')}</Text>
-                <Text style={styles.sectionHint}>{t('multiCompressHint')}</Text>
-              </View>
-              <View style={styles.switchRow}>
-                <Text style={styles.switchLabel}>ON/OFF</Text>
-                <Switch
-                  value={multiCompressEnabled}
-                  onValueChange={handleMultiCompressToggle}
-                  trackColor={{false: BORDER, true: ACCENT}}
-                  thumbColor={multiCompressEnabled ? '#fff' : '#888'}
-                />
-              </View>
-              {multiCompressEnabled && (
-                <View style={styles.qualityRow}>
-                  <View style={styles.qualityLabelRow}>
-                    <Text style={styles.qualityLabel}>{t('compressCount')}</Text>
-                    <Text style={styles.qualityValue}>{multiCompressCount}{t('timesSuffix')}</Text>
-                  </View>
-                  <CustomSlider
-                    style={styles.qualitySlider}
-                    minimumValue={1}
-                    maximumValue={10}
-                    step={1}
-                    value={multiCompressCount}
-                    onValueChange={handleMultiCompressCountChange}
-                    accessibilityLabel={t('multiCompressSlider')}
-                    accessibilityHint={t('multiCompressSliderHint')}
-                    minimumTrackTintColor={ACCENT}
-                    maximumTrackTintColor={BORDER}
-                    thumbTintColor={ACCENT}
-                  />
-                </View>
-              )}
-            </View>
-          </>
+          <SettingsPanel
+            selectedMediaType={selectedMediaType}
+            gabigabiLevel={gabigabiLevel}
+            resizePercent={resizePercent}
+            compressionRate={compressionRate}
+            outputFormat={outputFormat as ImageFormat}
+            videoOutputFormat={videoOutputFormat}
+            shrinkExpandEnabled={shrinkExpandEnabled}
+            shrinkExpandRate={shrinkExpandRate}
+            multiCompressEnabled={multiCompressEnabled}
+            multiCompressCount={multiCompressCount}
+            fileInfoWidth={fileInfo?.width}
+            fileInfoHeight={fileInfo?.height}
+            onTemplateSelect={handleTemplateSelect}
+            onResizeChange={handleResizeChange}
+            onQualityChange={handleQualityChange}
+            onOutputFormatChange={setOutputFormat}
+            onVideoOutputFormatChange={setVideoOutputFormat}
+            onShrinkExpandToggle={handleShrinkExpandToggle}
+            onShrinkExpandRateChange={handleShrinkExpandRateChange}
+            onMultiCompressToggle={handleMultiCompressToggle}
+            onMultiCompressCountChange={handleMultiCompressCountChange}
+          />
         ) : (
-          <>
-            {/* ── Target Size Settings (#277) ── */}
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>{t('targetSizeSettings')}</Text>
-              <View style={styles.targetSizeInputRow}>
-                <TextInput
-                  style={styles.targetSizeInput}
-                  value={targetSizeValue}
-                  onChangeText={setTargetSizeValue}
-                  keyboardType="numeric"
-                  placeholder="0.0"
-                  placeholderTextColor="#666"
-                />
-                <View style={styles.unitButtons}>
-                  {(['KB', 'MB', 'GB'] as SizeUnit[]).map(u => (
-                    <TouchableOpacity
-                      key={u}
-                      style={[styles.unitButton, targetSizeUnit === u && styles.unitButtonActive]}
-                      onPress={() => setTargetSizeUnit(u)}>
-                      <Text style={[styles.unitButtonText, targetSizeUnit === u && styles.unitButtonTextActive]}>{u}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
-              
-              <Text style={[styles.sectionTitle, {marginTop: 20}]}>{t('template')}</Text>
-              <View style={styles.targetSizeTemplates}>
-                {TARGET_SIZE_TEMPLATES.map(tmpl => (
-                  <TouchableOpacity
-                    key={tmpl.label}
-                    style={styles.targetSizeTemplate}
-                    onPress={() => handleTargetSizeTemplateSelect(tmpl)}>
-                    <Text style={styles.targetSizeTemplateText}>{tmpl.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              
-              <Text style={{color: '#666', fontSize: 12, marginTop: 16, lineHeight: 18}}>
-                {t('targetSizeNote')}
-              </Text>
-            </View>
-          </>
+          <TargetSizePanel
+            targetSizeValue={targetSizeValue}
+            targetSizeUnit={targetSizeUnit}
+            onValueChange={setTargetSizeValue}
+            onUnitChange={setTargetSizeUnit}
+          />
         )}
-
 
         {(selectedImage || processedImage) && (
           <TouchableOpacity
@@ -1086,64 +835,7 @@ const MainScreen = () => {
   );
 };
 
-/* ── Inline sub-component: preview card ── */
-interface PreviewCardProps {
-  label: string;
-  uri: string | null;
-  mediaType?: 'image' | 'video';
-  placeholder: string;
-  onPickerPress?: () => void;
-  onImagePress?: (uri: string | null) => void;
-}
-
-const PreviewCard: React.FC<PreviewCardProps> = ({label, uri, mediaType = 'image', placeholder, onImagePress, onPickerPress}) => (
-  <View style={styles.previewCard}>
-    <View style={styles.previewLabelRow}>
-      <Text style={styles.previewLabel}>{label}</Text>
-    </View>
-    {uri ? (
-      mediaType === 'video' ? (
-        <View style={[styles.previewEmpty, styles.videoPreview]}>
-          <Text style={styles.videoPreviewIcon}>🎬</Text>
-          <Text style={styles.videoPreviewText}>{t('video')}</Text>
-        </View>
-      ) : (
-        <TouchableOpacity onPress={() => onPickerPress ? onPickerPress() : onImagePress?.(uri)} activeOpacity={0.85}>
-          <Image source={{uri}} style={styles.previewImage} resizeMode="cover" />
-          <View style={styles.svgOverlay}>
-            {onPickerPress && (
-              <Svg width="100%" height="100%" viewBox="0 0 640 640">
-                <Path
-                  d="M500.7 138.7L512 149.4L512 96C512 78.3 526.3 64 544 64C561.7 64 576 78.3 576 96L576 224C576 241.7 561.7 256 544 256L416 256C398.3 256 384 241.7 384 224C384 206.3 398.3 192 416 192L463.9 192L456.3 184.8C456.1 184.6 455.9 184.4 455.7 184.2C380.7 109.2 259.2 109.2 184.2 184.2C109.2 259.2 109.2 380.7 184.2 455.7C259.2 530.7 380.7 530.7 455.7 455.7C463.9 447.5 471.2 438.8 477.6 429.6C487.7 415.1 507.7 411.6 522.2 421.7C536.7 431.8 540.2 451.8 530.1 466.3C521.6 478.5 511.9 490.1 501 501C401 601 238.9 601 139 501C39.1 401 39 239 139 139C238.9 39.1 400.7 39 500.7 138.7z"
-                  fill={ACCENT}
-                  opacity="0.6"
-                />
-              </Svg>
-            )}
-          </View>
-          <View style={styles.previewTapHint}>
-            <Text style={styles.previewTapHintText}>🔍 {t('tapToZoom')}</Text>
-          </View>
-        </TouchableOpacity>
-      )
-    ) : (
-      <TouchableOpacity onPress={onPickerPress} activeOpacity={0.7} style={styles.previewEmptyTouchable}>
-        <Text style={styles.previewEmptyIcon}>＋</Text>
-        <Text style={styles.previewEmptyText}>{placeholder || t('selectImageOrVideo')}</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-);
-
 /* ── Styles ── */
-const DARK_BG = '#0d0d0d';
-const CARD_BG = '#1a1a1a';
-const ACCENT = '#ff4e50';
-const ACCENT2 = '#fc913a';
-const TEXT_PRIMARY = '#f0f0f0';
-const TEXT_SECONDARY = '#888';
-const BORDER = '#2a2a2a';
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1193,115 +885,6 @@ const styles = StyleSheet.create({
   previewColumn: {
     flex: 1,
   },
-  infoBlock: {
-    backgroundColor: CARD_BG,
-    borderRadius: 10,
-    padding: 8,
-    marginTop: 6,
-    gap: 2,
-  },
-  infoText: {
-    fontSize: 11,
-    color: '#aaa',
-  },
-  previewCard: {
-    flex: 1,
-    backgroundColor: CARD_BG,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: BORDER,
-    overflow: 'hidden',
-  },
-  previewLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: BORDER,
-  },
-  changeButtonContainer: {
-    backgroundColor: '#333',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#444',
-  },
-  changeButtonText: {
-    color: '#eee',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  previewEmptyTouchable: {
-    width: '100%',
-    height: 150,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  previewEmptyIcon: {
-    fontSize: 28,
-    color: TEXT_SECONDARY,
-  },
-  previewLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: TEXT_SECONDARY,
-    textAlign: 'center',
-    paddingVertical: 6,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  previewImage: {
-    width: '100%',
-    height: 150,
-  },
-  svgOverlay: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 32,
-    height: 32,
-    pointerEvents: 'none',
-  },
-  saveFeedback: {
-    position: 'absolute',
-    bottom: 100,
-    left: 20,
-    right: 20,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    padding: 16,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#444',
-    alignItems: 'center',
-    zIndex: 9999,
-  },
-  saveFeedbackText: {
-    color: '#fff',
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  previewTapHint: {
-    position: 'absolute',
-    bottom: 4,
-    right: 6,
-  },
-  previewTapHintText: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.6)',
-  },
-  previewEmpty: {
-    height: 150,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  previewEmptyText: {
-    color: TEXT_SECONDARY,
-    fontSize: 13,
-  },
   arrowContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -1341,232 +924,25 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
 
-  /* size row */
-  sizeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-    gap: 8,
-  },
-  sizeSeparator: {
-    color: ACCENT2,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-
-  /* slider card */
-  sliderCard: {
-    backgroundColor: CARD_BG,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: BORDER,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
-  },
-
-  /* format section */
-  sectionContainer: {
-    backgroundColor: CARD_BG,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: BORDER,
+  /* save feedback toast */
+  saveFeedback: {
+    position: 'absolute',
+    bottom: 100,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.85)',
     padding: 16,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: TEXT_SECONDARY,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 12,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  sectionHint: {
-    fontSize: 10,
-    color: '#666',
-    textAlign: 'right',
-    flex: 1,
-    marginLeft: 12,
-    lineHeight: 14,
-  },
-  formatRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  formatRowWrap: {
-    flexWrap: 'wrap',
-  },
-  templateBlock: {
-    backgroundColor: CARD_BG,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: BORDER,
-    padding: 12,
-  },
-  templateBlockLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: TEXT_SECONDARY,
-    marginBottom: 8,
-  },
-  formatGroupLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: TEXT_SECONDARY,
-    marginBottom: 8,
-  },
-  formatButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: BORDER,
+    borderColor: '#444',
     alignItems: 'center',
-    backgroundColor: '#222',
+    zIndex: 9999,
   },
-  formatButtonActive: {
-    borderColor: ACCENT,
-    backgroundColor: ACCENT,
-  },
-  gabigabiButtonActive: {
-    borderColor: '#ff9800',
-    backgroundColor: '#ff9800',
-  },
-  formatButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: TEXT_SECONDARY,
-  },
-  formatButtonTextActive: {
+  saveFeedbackText: {
     color: '#fff',
-  },
-  qualityRow: {
-    marginTop: 12,
-  },
-  switchRow: {
-    flexDirection: 'row' as const,
-    justifyContent: 'space-between' as const,
-    alignItems: 'center' as const,
-    marginBottom: 4,
-  },
-  switchLabel: {
-    fontSize: 14,
-    color: TEXT_PRIMARY,
-    fontWeight: '600',
-  },
-  qualityLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  qualityLabel: {
-    fontSize: 13,
-    color: TEXT_SECONDARY,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  qualityValue: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: ACCENT2,
-  },
-  qualitySlider: {
-    width: '100%',
-    height: 40,
-  },
-  qualityButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  qualityPreset: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: BORDER,
-    backgroundColor: '#222',
-  },
-  qualityPresetActive: {
-    borderColor: ACCENT2,
-    backgroundColor: ACCENT2,
-  },
-  qualityPresetText: {
-    fontSize: 13,
-    color: TEXT_SECONDARY,
-  },
-  qualityPresetTextActive: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-
-  /* target size settings */
-  targetSizeInputRow: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'center',
-  },
-  targetSizeInput: {
-    flex: 1,
-    backgroundColor: '#222',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: BORDER,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  unitButtons: {
-    flexDirection: 'row',
-    backgroundColor: '#222',
-    borderRadius: 8,
-    padding: 3,
-    borderWidth: 1,
-    borderColor: BORDER,
-  },
-  unitButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  unitButtonActive: {
-    backgroundColor: '#444',
-  },
-  unitButtonText: {
     fontSize: 12,
-    color: '#888',
-    fontWeight: 'bold',
-  },
-  unitButtonTextActive: {
-    color: '#fff',
-  },
-  targetSizeTemplates: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  targetSizeTemplate: {
-    backgroundColor: '#222',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: BORDER,
-  },
-  targetSizeTemplateText: {
-    color: TEXT_SECONDARY,
-    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
   },
 
   /* button row */
@@ -1594,18 +970,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     shadowColor: '#5865F2',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  convertButton: {
-    flex: 1,
-    backgroundColor: ACCENT2,
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    shadowColor: ACCENT2,
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -1694,44 +1058,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 32,
     gap: 10,
-  },
-
-  /* file info (#97) */
-  fileInfoCard: {
-    backgroundColor: CARD_BG,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: BORDER,
-    padding: 12,
-    marginBottom: 12,
-    gap: 4,
-  },
-  fileInfoTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: TEXT_SECONDARY,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  fileInfoText: {
-    fontSize: 13,
-    color: TEXT_PRIMARY,
-  },
-
-  /* video preview (#80) */
-  videoPreview: {
-    backgroundColor: '#111',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 4,
-  },
-  videoPreviewIcon: {
-    fontSize: 40,
-  },
-  videoPreviewText: {
-    fontSize: 12,
-    color: TEXT_SECONDARY,
   },
 });
 
