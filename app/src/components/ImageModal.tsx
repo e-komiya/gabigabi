@@ -108,9 +108,11 @@ const ImageModal: React.FC<ImageModalProps> = ({uri, visible, onClose}) => {
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose} accessibilityViewIsModal={true}>
       <View style={styles.overlay}>
-        <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
+        <TouchableOpacity style={styles.closeBtn} onPress={handleClose}
+          accessibilityRole="button"
+          accessibilityLabel={t('close')}>
           <Text style={styles.closeBtnText}>✕</Text>
         </TouchableOpacity>
         <Animated.Image
@@ -122,9 +124,14 @@ const ImageModal: React.FC<ImageModalProps> = ({uri, visible, onClose}) => {
             },
           ]}
           resizeMode="contain"
+          accessible={true}
+          accessibilityRole="image"
+          accessibilityLabel={t('previewImage')}
           {...panResponder.panHandlers}
         />
-        <TouchableOpacity style={styles.resetBtn} onPress={reset}>
+        <TouchableOpacity style={styles.resetBtn} onPress={reset}
+          accessibilityRole="button"
+          accessibilityLabel={t('reset')}>
           <Text style={styles.resetBtnText}>{t('reset')}</Text>
         </TouchableOpacity>
       </View>

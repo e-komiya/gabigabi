@@ -43,12 +43,13 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+      accessibilityViewIsModal={true}>
       <View style={styles.overlay}>
         <View style={styles.dialog}>
           {/* Title */}
           <View style={styles.titleRow}>
-            <Text style={styles.titleText}>{title}</Text>
+            <Text style={styles.titleText} accessibilityRole="header">{title}</Text>
           </View>
 
           {/* Scrollable error body */}
@@ -66,7 +67,9 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
             <TouchableOpacity
               style={[styles.copyButton, copied && styles.copyButtonDone]}
               onPress={handleCopy}
-              activeOpacity={0.8}>
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={copied ? t('copied') : t('copy')}>
               <Text style={styles.copyButtonText}>
                 {copied ? t('copied') : t('copy')}
               </Text>
@@ -75,7 +78,9 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
             <TouchableOpacity
               style={styles.closeButton}
               onPress={onClose}
-              activeOpacity={0.8}>
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={t('close')}>
               <Text style={styles.closeButtonText}>{t('close')}</Text>
             </TouchableOpacity>
           </View>

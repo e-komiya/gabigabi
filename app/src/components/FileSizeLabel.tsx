@@ -45,9 +45,12 @@ const FileSizeLabel: React.FC<FileSizeLabelProps> = ({label, uri}) => {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.value}>{size}</Text>
+    <View
+      style={styles.container}
+      accessible={true}
+      accessibilityLabel={`${label} ${size}`}>
+      <Text style={styles.label} accessibilityElementsHidden={true}>{label}</Text>
+      <Text style={styles.value} accessibilityElementsHidden={true}>{size}</Text>
     </View>
   );
 };

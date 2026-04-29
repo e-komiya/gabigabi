@@ -51,7 +51,15 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
     <TouchableOpacity
       style={[styles.button, selectedImage && styles.buttonSelected]}
       onPress={handlePress}
-      activeOpacity={0.7}>
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={
+        selectedImage
+          ? isVideo
+            ? t('changeVideo')
+            : t('changeImage')
+          : t('pickImageOrVideo')
+      }>
       <Text style={styles.icon}>{isVideo ? '🎬' : '🖼️'}</Text>
       <Text style={styles.buttonText}>
         {selectedImage
