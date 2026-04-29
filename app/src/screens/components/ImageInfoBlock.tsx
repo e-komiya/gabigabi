@@ -38,7 +38,11 @@ const styles = StyleSheet.create({
 });
 
 export const BeforeInfoBlock: React.FC<BeforeInfoBlockProps> = ({fileInfo}) => (
-  <View style={styles.infoBlock}>
+  <View
+    style={styles.infoBlock}
+    accessible
+    accessibilityRole="summary"
+    accessibilityLabel={`変換前: ${fileInfo.name}, サイズ ${fileInfo.size}${fileInfo.width > 0 ? `, 解像度 ${fileInfo.width} × ${fileInfo.height} ピクセル` : ''}`}>
     <Text style={styles.infoText} numberOfLines={1} ellipsizeMode="middle">📄 {fileInfo.name}</Text>
     <Text style={styles.infoText}>{fileInfo.size}</Text>
     {fileInfo.width > 0 && (
@@ -55,19 +59,32 @@ export const AfterInfoBlock: React.FC<AfterInfoBlockProps> = ({
   resizePercent,
   outputFormat,
   showAfterConversion,
-}) => (
-  <View style={styles.infoBlock}>
-    <Text style={styles.infoText} numberOfLines={1} ellipsizeMode="middle">
-      📄 {processedImage ? processedImage.split('/').pop() : '—'}
-    </Text>
-    <Text style={styles.infoText}>
-      {processedImage ? outputBytesFormatted : showAfterConversion}
-    </Text>
-    <Text style={styles.infoText}>
-      {Math.round(fileInfo.width * resizePercent / 100)} × {Math.round(fileInfo.height * resizePercent / 100)} px
-    </Text>
-    <Text style={styles.infoText}>
-      🏷 {processedImage ? (processedImage.split('.').pop()?.toUpperCase() ?? outputFormat.toUpperCase()) : outputFormat.toUpperCase()}
-    </Text>
-  </View>
-);
+}) => {
+  const filename = processedImage ? processedImage.split('/').pop() : '—';
+  const sizeLabel = processedImage ? outputBytesFormatted : showAfterConversion;
+  const resizedW = Math.round(fileInfo.width * resizePercent / 100);
+  const resizedH = Math.round(fileInfo.height * resizePercent / 100);
+  const fmtLabel = processedImage ? (processedImage.split('.').pop()?.toUpperCase() ?? outputFormat.toUpperCase()) : outputFormat.toUpperCase();
+  return (
+    <View
+      style={styles.infoBlock}
+      accessible
+      accessibilityRole="summary"
+      accessibilityLabel={processedImage
+        ? `変換後: ${filename}, サイズ ${sizeLabel}, 解像度 ${resizedW} × ${resizedH} ピクセル, フォーマット ${fmtLabel}`
+        : showAfterConversion}>
+      <Text style={styles.infoText} numberOfLines={1} ellipsizeMode="middle">
+        📄 {filename}
+      </Text>
+      <Text style={styles.infoText}>
+        {sizeLabel}
+      </Text>
+      <Text style={styles.infoText}>
+        {resizedW} × {resizedH} px
+      </Text>
+      <Text style={styles.infoText}>
+        🏷 {fmtLabel}
+      </Text>
+    </View>
+  );
+};

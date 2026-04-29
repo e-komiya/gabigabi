@@ -9,18 +9,32 @@ interface AboutModalProps {
 }
 
 const AboutModal: React.FC<AboutModalProps> = ({visible, onClose}) => (
-  <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-    <View style={styles.overlay}>
-      <View style={styles.dialog}>
-        <Text style={styles.title}>GabiGabi</Text>
+  <Modal
+    visible={visible}
+    transparent
+    animationType="fade"
+    onRequestClose={onClose}
+    accessibilityViewIsModal
+    accessibilityLabel={t('appDescription')}>
+    <View style={styles.overlay} accessible={false}>
+      <View style={styles.dialog} accessibilityRole="summary" accessible>
+        <Text style={styles.title} accessibilityRole="header">GabiGabi</Text>
         <Text style={styles.subtitle}>{t('appSubtitle')}</Text>
         <Text style={styles.bodyText}>{t('appDescription')}</Text>
         <Text style={styles.bodyText}>{t('license')}</Text>
         <Text style={styles.bodyText}>{t('ffmpegUsage')}</Text>
-        <TouchableOpacity onPress={() => { Linking.openURL('https://github.com/e-komiya/gabigabi'); }}>
+        <TouchableOpacity
+          onPress={() => { Linking.openURL('https://github.com/e-komiya/gabigabi'); }}
+          accessibilityRole="link"
+          accessibilityLabel={t('viewSourceOnGitHub')}
+          accessibilityHint="GitHubのリポジトリページをブラウザで開きます">
           <Text style={styles.link}>{t('viewSourceOnGitHub')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+        <TouchableOpacity
+          onPress={onClose}
+          style={styles.closeButton}
+          accessibilityRole="button"
+          accessibilityLabel={t('close')}>
           <Text style={styles.closeButtonText}>{t('close')}</Text>
         </TouchableOpacity>
       </View>

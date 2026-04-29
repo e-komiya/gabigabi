@@ -15,20 +15,38 @@ export interface PreviewCardProps {
 }
 
 const PreviewCard: React.FC<PreviewCardProps> = ({label, uri, mediaType = 'image', placeholder, onImagePress, onPickerPress}) => (
-  <View style={styles.previewCard}>
+  <View
+    style={styles.previewCard}
+    accessible={false}>
     <View style={styles.previewLabelRow}>
-      <Text style={styles.previewLabel}>{label}</Text>
+      <Text style={styles.previewLabel} accessibilityRole="header">{label}</Text>
     </View>
     {uri ? (
       mediaType === 'video' ? (
-        <View style={[styles.previewEmpty, styles.videoPreview]}>
+        <View
+          style={[styles.previewEmpty, styles.videoPreview]}
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel={`${label}: ${t('video')}`}>
           <Text style={styles.videoPreviewIcon}>🎬</Text>
           <Text style={styles.videoPreviewText}>{t('video')}</Text>
         </View>
       ) : (
-        <TouchableOpacity onPress={() => onPickerPress ? onPickerPress() : onImagePress?.(uri)} activeOpacity={0.85}>
-          <Image source={{uri}} style={styles.previewImage} resizeMode="cover" />
-          <View style={styles.svgOverlay}>
+        <TouchableOpacity
+          onPress={() => onPickerPress ? onPickerPress() : onImagePress?.(uri)}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={onPickerPress ? t('changeImage') : `${label} ${t('tapToZoom')}`}
+          accessibilityHint={onPickerPress ? t('tapToOpenGallery') : t('tapToZoom')}>
+          <Image
+            source={{uri}}
+            style={styles.previewImage}
+            resizeMode="cover"
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={`${label} ${t('tapToZoom')}`}
+          />
+          <View style={styles.svgOverlay} accessible={false} importantForAccessibility="no-hide-descendants">
             {onPickerPress && (
               <Svg width="100%" height="100%" viewBox="0 0 640 640">
                 <Path
@@ -39,14 +57,20 @@ const PreviewCard: React.FC<PreviewCardProps> = ({label, uri, mediaType = 'image
               </Svg>
             )}
           </View>
-          <View style={styles.previewTapHint}>
+          <View style={styles.previewTapHint} accessible={false} importantForAccessibility="no-hide-descendants">
             <Text style={styles.previewTapHintText}>🔍 {t('tapToZoom')}</Text>
           </View>
         </TouchableOpacity>
       )
     ) : (
-      <TouchableOpacity onPress={onPickerPress} activeOpacity={0.7} style={styles.previewEmptyTouchable}>
-        <Text style={styles.previewEmptyIcon}>＋</Text>
+      <TouchableOpacity
+        onPress={onPickerPress}
+        activeOpacity={0.7}
+        style={styles.previewEmptyTouchable}
+        accessibilityRole="button"
+        accessibilityLabel={t('pickImageOrVideo')}
+        accessibilityHint={t('tapToOpenGallery')}>
+        <Text style={styles.previewEmptyIcon} accessible={false}>＋</Text>
         <Text style={styles.previewEmptyText}>{placeholder || t('selectImageOrVideo')}</Text>
       </TouchableOpacity>
     )}
