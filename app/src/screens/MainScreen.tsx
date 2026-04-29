@@ -38,15 +38,9 @@ import {BeforeInfoBlock, AfterInfoBlock} from './components/ImageInfoBlock';
 import SettingsPanel from './components/SettingsPanel';
 import TargetSizePanel from './components/TargetSizePanel';
 import AboutModal from './components/AboutModal';
+import {DARK_BG, CARD_BG, ACCENT, ACCENT2, TEXT_PRIMARY, TEXT_SECONDARY, BORDER} from './components/sharedStyles';
 
-/* ── Constants ── */
-const DARK_BG = '#0d0d0d';
-const CARD_BG = '#1a1a1a';
-const ACCENT = '#ff4e50';
-const ACCENT2 = '#fc913a';
-const TEXT_PRIMARY = '#f0f0f0';
-const TEXT_SECONDARY = '#888';
-const BORDER = '#2a2a2a';
+/* ── Constants are now imported from sharedStyles ── */
 
 // テンプレートレベルに対応する設定値
 const TEMPLATE_SETTINGS: Record<number, {
@@ -639,15 +633,15 @@ const MainScreen = () => {
       {/* ── Header ── */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
-          <View style={{flexDirection: 'column', alignItems: 'center', flex: 1, paddingHorizontal: 30}}>
+          <View style={styles.headerTitleBlock}>
             <Text style={styles.appName} numberOfLines={1} adjustsFontSizeToFit>GabiGabi</Text>
             <Text style={styles.appSubtitle} numberOfLines={1} adjustsFontSizeToFit>{t('appSubtitle')}</Text>
           </View>
           <TouchableOpacity
             onPress={() => setAboutVisible(true)}
-            style={{position: 'absolute', right: 0, padding: 8}}
+            style={styles.aboutButton}
           >
-            <Text style={{fontSize: 20, color: '#aaa'}}>ℹ️</Text>
+            <Text style={styles.aboutButtonIcon}>ℹ️</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -860,6 +854,21 @@ const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
+  },
+  headerTitleBlock: {
+    flexDirection: 'column' as const,
+    alignItems: 'center' as const,
+    flex: 1,
+    paddingHorizontal: 30,
+  },
+  aboutButton: {
+    position: 'absolute' as const,
+    right: 0,
+    padding: 8,
+  },
+  aboutButtonIcon: {
+    fontSize: 20,
+    color: '#aaa',
   },
   appName: {
     fontSize: 22,
