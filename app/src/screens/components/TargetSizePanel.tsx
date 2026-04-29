@@ -2,7 +2,7 @@ import React from 'react';
 import {View, Text, TouchableOpacity, TextInput, StyleSheet} from 'react-native';
 import {SizeUnit} from '../../state/store';
 import {t} from '../../i18n';
-import {sharedStyles, BORDER, TEXT_SECONDARY} from './sharedStyles';
+import {sharedStyles, BORDER, TEXT_SECONDARY, DARK_BG} from './sharedStyles';
 
 const TARGET_SIZE_TEMPLATES: {label: string; value: string; unit: SizeUnit}[] = [
   {label: 'Discord 10MB', value: '10', unit: 'MB'},
@@ -50,7 +50,7 @@ const TargetSizePanel: React.FC<TargetSizePanelProps> = ({
         </View>
       </View>
 
-      <Text style={[sharedStyles.sectionTitle, {marginTop: 20}]}>{t('template')}</Text>
+      <Text style={[sharedStyles.sectionTitle, styles.templateTitle]}>{t('template')}</Text>
       <View style={styles.targetSizeTemplates}>
         {TARGET_SIZE_TEMPLATES.map(tmpl => (
           <TouchableOpacity
@@ -62,7 +62,7 @@ const TargetSizePanel: React.FC<TargetSizePanelProps> = ({
         ))}
       </View>
 
-      <Text style={{color: '#666', fontSize: 12, marginTop: 16, lineHeight: 18}}>
+      <Text style={styles.noteText}>
         {t('targetSizeNote')}
       </Text>
     </View>
@@ -70,6 +70,15 @@ const TargetSizePanel: React.FC<TargetSizePanelProps> = ({
 };
 
 const styles = StyleSheet.create({
+  templateTitle: {
+    marginTop: 20,
+  },
+  noteText: {
+    color: '#666',
+    fontSize: 12,
+    marginTop: 16,
+    lineHeight: 18,
+  },
   targetSizeInputRow: {
     flexDirection: 'row',
     gap: 12,
