@@ -60,14 +60,20 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
         <TouchableOpacity
           style={[styles.tab, activeTab === 'percent' && styles.tabActive]}
           onPress={() => setActiveTab('percent')}
-          activeOpacity={0.7}>
+          activeOpacity={0.7}
+          accessibilityRole="tab"
+          accessibilityLabel={t('resizePercentTab')}
+          accessibilityState={{selected: activeTab === 'percent'}}>
           <Text style={[styles.tabText, activeTab === 'percent' && styles.tabTextActive]}>{t('resizePercentTab')}</Text>
         </TouchableOpacity>
         {hasOriginal && (
           <TouchableOpacity
             style={[styles.tab, activeTab === 'resolution' && styles.tabActive]}
             onPress={() => setActiveTab('resolution')}
-            activeOpacity={0.7}>
+            activeOpacity={0.7}
+            accessibilityRole="tab"
+            accessibilityLabel={t('resizeResolutionTab')}
+            accessibilityState={{selected: activeTab === 'resolution'}}>
             <Text style={[styles.tabText, activeTab === 'resolution' && styles.tabTextActive]}>{t('resizeResolutionTab')}</Text>
           </TouchableOpacity>
         )}
