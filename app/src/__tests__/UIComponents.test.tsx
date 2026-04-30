@@ -8,6 +8,9 @@ import ReactTestRenderer from 'react-test-renderer';
 
 // ---- モック ----
 
+jest.mock('../i18n', () => ({
+  t: (key: string) => key,
+}));
 jest.mock('expo-clipboard', () => ({
   setStringAsync: jest.fn().mockResolvedValue(undefined),
 }));
@@ -295,5 +298,98 @@ describe('ResizeSlider', () => {
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
+  });
+
+  it('パーセントタブの accessibilityRole が "tab" である', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <ResizeSlider value={50} onValueChange={jest.fn()} />,
+      );
+    });
+    const instance = renderer!.root;
+    const percentTab = instance.findAll(
+      (node) => node.props.accessibilityRole === 'tab' && typeof node.props.onPress === 'function',
+    );
+    expect(percentTab.length).toBeGreaterThan(0);
+    expect(percentTab[0].props.accessibilityRole).toBe('tab');
+  });
+
+  it('初期状態でパーセントタブの accessibilityState.selected が true である', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <ResizeSlider value={50} onValueChange={jest.fn()} />,
+      );
+    });
+    const instance = renderer!.root;
+    const percentTab = instance.findAll(
+      (node) => node.props.accessibilityRole === 'tab' && typeof node.props.onPress === 'function',
+    )[0];
+    expect(percentTab.props.accessibilityState).toEqual(
+      expect.objectContaining({selected: true}),
+    );
+  });
+
+  it('originalWidth/Height ありで解像度タブの accessibilityRole が "tab" である', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <ResizeSlider
+          value={50}
+          onValueChange={jest.fn()}
+          originalWidth={1920}
+          originalHeight={1080}
+        />,
+      );
+    });
+    const instance = renderer!.root;
+    // accessibilityLabel で解像度タブを特定する
+    const resolutionTab = instance.findAll(
+      (node) => node.props.accessibilityRole === 'tab' &&
+        node.props.accessibilityLabel === 'resizeResolutionTab',
+    );
+    expect(resolutionTab.length).toBeGreaterThan(0);
+    expect(resolutionTab[0].props.accessibilityRole).toBe('tab');
+  });
+
+  it('タブ切り替え後に accessibilityState.selected が更新される', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <ResizeSlider
+          value={50}
+          onValueChange={jest.fn()}
+          originalWidth={1920}
+          originalHeight={1080}
+        />,
+      );
+    });
+    const instance = renderer!.root;
+    const findPercentTab = () => instance.findAll(
+      (node) => node.props.accessibilityRole === 'tab' &&
+        node.props.accessibilityLabel === 'resizePercentTab',
+    )[0];
+    const findResolutionTab = () => instance.findAll(
+      (node) => node.props.accessibilityRole === 'tab' &&
+        node.props.accessibilityLabel === 'resizeResolutionTab',
+    )[0];
+    // 初期: パーセントタブが selected
+    expect(findPercentTab().props.accessibilityState).toEqual(
+      expect.objectContaining({selected: true}),
+    );
+    expect(findResolutionTab().props.accessibilityState).toEqual(
+      expect.objectContaining({selected: false}),
+    );
+    // 解像度タブを選択
+    await ReactTestRenderer.act(() => {
+      findResolutionTab().props.onPress();
+    });
+    expect(findPercentTab().props.accessibilityState).toEqual(
+      expect.objectContaining({selected: false}),
+    );
+    expect(findResolutionTab().props.accessibilityState).toEqual(
+      expect.objectContaining({selected: true}),
+    );
   });
 });
