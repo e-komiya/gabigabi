@@ -22,6 +22,7 @@ const DICT: Dict = {
   width: {ja: '幅', en: 'Width'},
   height: {ja: '高さ', en: 'Height'},
   reset: {ja: 'リセット', en: 'Reset'},
+  previewImage: {ja: 'プレビュー画像', en: 'Preview image'},
   noConversionNeededTitle: {ja: '変換不要', en: 'No conversion needed'},
   noConversionNeededMessage: {ja: '現在の設定では変換の必要がありません。\nフォーマットやリサイズを変更してください。', en: 'No conversion is needed with the current settings.\nPlease change the format or resize settings.'},
   convertFailed: {ja: '変換に失敗しました', en: 'Conversion failed'},
