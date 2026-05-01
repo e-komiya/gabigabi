@@ -52,6 +52,7 @@ const DICT: Dict = {
   showAfterConversion: {ja: '変換後に表示', en: 'Shown after conversion'},
   setParameters: {ja: 'パラメータを設定する', en: 'Set parameters'},
   setTargetSize: {ja: '目標サイズを指定する', en: 'Set target size'},
+  aboutButton: {ja: 'アプリ情報', en: 'About this app'},
   template: {ja: 'テンプレート', en: 'Template'},
   gabigabiLevel: {ja: 'ガビガビレベル', en: 'Blocky level'},
   outputFormat: {ja: '出力フォーマット', en: 'Output format'},
