@@ -30,6 +30,7 @@ import {FFmpegKit, FFprobeKit} from 'ffmpeg-kit-react-native';
 import {processVideoWithFfmpeg} from '../data/ffmpeg/FfmpegProcessor';
 import {cleanupCachedTempFiles, getFileSizeBytes} from '../data/ffmpeg/ffmpegUtils';
 import {saveConversionHistoryItem, ConversionAction} from '../data/history/conversionHistory';
+import ConversionHistoryModal from './components/ConversionHistoryModal';
 import {t} from '../i18n';
 
 // Subcomponents
@@ -113,6 +114,7 @@ const MainScreen = () => {
   const [fullscreenUri, setFullscreenUri] = useState<string | null>(null);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [aboutVisible, setAboutVisible] = useState(false);
+  const [historyVisible, setHistoryVisible] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [saveMessageOpacity] = useState(new Animated.Value(0));
 
@@ -643,11 +645,22 @@ const MainScreen = () => {
           >
             <Text style={styles.aboutButtonIcon}>ℹ️</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setHistoryVisible(true)}
+            style={[styles.aboutButton, {right: 40}]}
+            accessibilityRole="button"
+            accessibilityLabel={t('conversionHistoryButton')}
+          >
+            <Text style={styles.aboutButtonIcon}>🕐</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* ── About Modal ── */}
       <AboutModal visible={aboutVisible} onClose={() => setAboutVisible(false)} />
+
+      {/* ── Conversion History Modal (#107) ── */}
+      <ConversionHistoryModal visible={historyVisible} onClose={() => setHistoryVisible(false)} />
 
       <ScrollView
         style={styles.scroll}

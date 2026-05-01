@@ -83,6 +83,16 @@ const DICT: Dict = {
   compressUnderTargetSize: {ja: '指定サイズ以下に圧縮', en: 'Compress below target size'},
   tapToZoom: {ja: 'タップで拡大', en: 'Tap to zoom'},
   selectImageOrVideo: {ja: '画像 / 動画を選択', en: 'Select image / video'},
+  conversionHistoryTitle: {ja: '変換履歴', en: 'Conversion history'},
+  conversionHistoryButton: {ja: '変換履歴を表示', en: 'Show conversion history'},
+  noHistory: {ja: '変換履歴がありません', en: 'No conversion history'},
+  clearHistoryTitle: {ja: '履歴を全削除', en: 'Clear all history'},
+  clearHistoryMessage: {ja: '変換履歴をすべて削除しますか？この操作は取り消せません。', en: 'Delete all conversion history? This cannot be undone.'},
+  clearHistoryConfirm: {ja: '削除', en: 'Delete'},
+  cancel: {ja: 'キャンセル', en: 'Cancel'},
+  actionGabigabi: {ja: 'ガビガビ化', en: 'Blocky'},
+  actionConvert: {ja: '変換', en: 'Convert'},
+  actionTargetSize: {ja: 'サイズ指定', en: 'Target size'},
 };
 
 export const t = (key: keyof typeof DICT): string => {
