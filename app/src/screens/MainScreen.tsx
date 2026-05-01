@@ -640,6 +640,8 @@ const MainScreen = () => {
           <TouchableOpacity
             onPress={() => setAboutVisible(true)}
             style={styles.aboutButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('aboutButton')}
           >
             <Text style={styles.aboutButtonIcon}>ℹ️</Text>
           </TouchableOpacity>
@@ -698,12 +700,18 @@ const MainScreen = () => {
         <View style={styles.methodTabs}>
           <TouchableOpacity
             style={[styles.methodTab, convertMethod === 'parameters' && styles.methodTabActive]}
-            onPress={() => setConvertMethod('parameters')}>
+            onPress={() => setConvertMethod('parameters')}
+            accessibilityRole="tab"
+            accessibilityLabel={t('setParameters')}
+            accessibilityState={{selected: convertMethod === 'parameters'}}>
             <Text style={[styles.methodTabText, convertMethod === 'parameters' && styles.methodTabTextActive]}>{t('setParameters')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.methodTab, convertMethod === 'targetSize' && styles.methodTabActive]}
-            onPress={() => setConvertMethod('targetSize')}>
+            onPress={() => setConvertMethod('targetSize')}
+            accessibilityRole="tab"
+            accessibilityLabel={t('setTargetSize')}
+            accessibilityState={{selected: convertMethod === 'targetSize'}}>
             <Text style={[styles.methodTabText, convertMethod === 'targetSize' && styles.methodTabTextActive]}>{t('setTargetSize')}</Text>
           </TouchableOpacity>
         </View>
