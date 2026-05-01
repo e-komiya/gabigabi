@@ -44,3 +44,7 @@ export async function saveConversionHistoryItem(item: ConversionHistoryItem): Pr
   const next = [item, ...current].slice(0, MAX_ITEMS);
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
+
+export async function clearConversionHistory(): Promise<void> {
+  await AsyncStorage.removeItem(STORAGE_KEY);
+}
