@@ -62,9 +62,10 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem}> = ({item}) => {
     ? Math.round((item.outputBytes / item.inputBytes) * 100)
     : 0;
   const fileName = item.outputPath.split('/').pop() ?? '—';
+  const a11yLabel = `${actionLabel(item.params.action)} ${formatDate(item.createdAt)} ${formatBytes(item.inputBytes)} → ${formatBytes(item.outputBytes)} (${ratio}%)`;
 
   return (
-    <View style={styles.itemCard}>
+    <View style={styles.itemCard} accessible={true} accessibilityLabel={a11yLabel}>
       <View style={styles.itemHeader}>
         <Text style={styles.itemDate}>{formatDate(item.createdAt)}</Text>
         <View style={[styles.actionBadge, item.params.action === 'gabigabi' && styles.actionBadgeGabi]}>
@@ -128,7 +129,11 @@ const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible,
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t('conversionHistoryTitle')}</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.closeButton}
+            accessibilityRole="button"
+            accessibilityLabel={t('close')}>
             <Text style={styles.closeButtonText}>{t('close')}</Text>
           </TouchableOpacity>
         </View>
@@ -149,6 +154,8 @@ const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible,
             renderItem={({item}) => <HistoryItem item={item} />}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
+            accessible={true}
+            accessibilityLabel={t('conversionHistoryTitle')}
           />
         )}
 
