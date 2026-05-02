@@ -1,14 +1,16 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {getConversionHistory, saveConversionHistoryItem} from '../data/history/conversionHistory';
+import {getConversionHistory, saveConversionHistoryItem, clearConversionHistory} from '../data/history/conversionHistory';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),
+  removeItem: jest.fn(),
 }));
 
 const mockedAsyncStorage = AsyncStorage as unknown as {
   getItem: jest.Mock;
   setItem: jest.Mock;
+  removeItem: jest.Mock;
 };
 
 describe('conversionHistory', () => {
@@ -24,6 +26,20 @@ describe('conversionHistory', () => {
 
   it('履歴が壊れていたら空配列を返す', async () => {
     mockedAsyncStorage.getItem.mockResolvedValueOnce('{broken');
+    const rows = await getConversionHistory();
+    expect(rows).toEqual([]);
+  });
+
+  it('clearConversionHistory を呼ぶと removeItem が正しいキーで呼ばれる', async () => {
+    mockedAsyncStorage.removeItem.mockResolvedValueOnce(undefined);
+    await clearConversionHistory();
+    expect(mockedAsyncStorage.removeItem).toHaveBeenCalledWith('conversion-history-v1');
+  });
+
+  it('clearConversionHistory 後に getConversionHistory が空配列を返す', async () => {
+    mockedAsyncStorage.removeItem.mockResolvedValueOnce(undefined);
+    mockedAsyncStorage.getItem.mockResolvedValueOnce(null);
+    await clearConversionHistory();
     const rows = await getConversionHistory();
     expect(rows).toEqual([]);
   });
