@@ -15,6 +15,7 @@ import {
   getConversionHistory,
 } from '../../data/history/conversionHistory';
 import {t} from '../../i18n';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 interface ConversionHistoryModalProps {
   visible: boolean;
@@ -86,6 +87,7 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem}> = ({item}) => {
 };
 
 const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible, onClose}) => {
+  const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<ConversionHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -127,7 +129,7 @@ const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible,
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, {paddingTop: insets.top + 12}]}>
           <Text style={styles.headerTitle}>{t('conversionHistoryTitle')}</Text>
           <TouchableOpacity
             onPress={onClose}
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 56,
+    paddingTop: 12, // base value; dynamic safe-area padding applied inline via useSafeAreaInsets
     paddingBottom: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
