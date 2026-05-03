@@ -243,6 +243,7 @@ const MainScreen = () => {
   );
 
   const handleOpenPicker = useCallback(async () => {
+    if (isProcessing) return;
     const { status } = await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(t('permissionRequired'), t('galleryPermissionMessage'));
@@ -260,7 +261,7 @@ const MainScreen = () => {
         /\.(mp4|mov|mkv|webm|m4v|3gp|flv)$/i.test(asset.uri);
       handleImageSelect(asset.uri, isVideo ? 'video' : 'image');
     }
-  }, [handleImageSelect]);
+  }, [handleImageSelect, isProcessing]);
 
   const handleResizeChange = useCallback(
     (percent: number) => {
