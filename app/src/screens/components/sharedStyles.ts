@@ -7,6 +7,7 @@ export const ACCENT2 = '#fc913a';
 export const TEXT_PRIMARY = '#f0f0f0';
 export const TEXT_SECONDARY = '#888';
 export const BORDER = '#2a2a2a';
+export const INPUT_BG = '#111';
 
 export const sharedStyles = StyleSheet.create({
   sectionContainer: {
