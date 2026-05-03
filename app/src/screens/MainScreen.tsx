@@ -239,7 +239,7 @@ const MainScreen = () => {
       setSelectedMediaType(mediaType);
       setProcessedImage(null);
     },
-    [setSelectedImage, setProcessedImage],
+    [setSelectedImage, setSelectedMediaType, setProcessedImage],
   );
 
   const handleOpenPicker = useCallback(async () => {
