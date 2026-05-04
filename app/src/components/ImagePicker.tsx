@@ -2,6 +2,7 @@ import React from 'react';
 import {View, TouchableOpacity, Text, StyleSheet, Alert} from 'react-native';
 import * as ExpoImagePicker from 'expo-image-picker';
 import {t} from '../i18n';
+import {ACCENT, CARD_BG, BORDER, TEXT_SECONDARY} from '../screens/components/sharedStyles';
 
 interface ImagePickerProps {
   onImageSelect: (imageUri: string, mediaType: 'image' | 'video') => void;
@@ -14,11 +15,6 @@ const resolvePickerMediaTypes = (selectedMediaType?: 'image' | 'video') => {
   if (selectedMediaType === 'image') return ['images'] as const;
   return ['images', 'videos'] as const;
 };
-
-const ACCENT = '#ff4e50';
-const CARD_BG = '#1a1a1a';
-const BORDER = '#2a2a2a';
-const TEXT_SECONDARY = '#888';
 
 const ImagePicker: React.FC<ImagePickerProps> = ({
   onImageSelect,
