@@ -2,6 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {View, Text, TextInput, StyleSheet, TouchableOpacity} from 'react-native';
 import CustomSlider from './CustomSlider';
 import {t} from '../i18n';
+import {ACCENT, ACCENT2, TEXT_PRIMARY, TEXT_SECONDARY, BORDER, INPUT_BG} from '../screens/components/sharedStyles';
 
 interface ResizeSliderProps {
   value: number;
@@ -10,12 +11,6 @@ interface ResizeSliderProps {
   originalHeight?: number;
 }
 
-const ACCENT = '#ff4e50';
-const ACCENT2 = '#fc913a';
-const TEXT_PRIMARY = '#f0f0f0';
-const TEXT_SECONDARY = '#888';
-const BORDER = '#2a2a2a';
-const INPUT_BG = '#111';
 
 type TabMode = 'percent' | 'resolution';
 
