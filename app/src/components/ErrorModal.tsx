@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import {t} from '../i18n';
+import {DARK_BG, CARD_BG, ACCENT, TEXT_PRIMARY, TEXT_SECONDARY, BORDER} from '../screens/components/sharedStyles';
 
 interface ErrorModalProps {
   visible: boolean;
@@ -16,13 +17,6 @@ interface ErrorModalProps {
   message: string;
   onClose: () => void;
 }
-
-const DARK_BG = '#0d0d0d';
-const CARD_BG = '#1a1a1a';
-const ACCENT = '#ff4e50';
-const TEXT_PRIMARY = '#f0f0f0';
-const TEXT_SECONDARY = '#888';
-const BORDER = '#2a2a2a';
 
 const ErrorModal: React.FC<ErrorModalProps> = ({
   visible,

@@ -3,14 +3,12 @@ import {View, Text, StyleSheet} from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { getFileSizeBytes } from '../data/ffmpeg/ffmpegUtils';
 import { formatBytes } from '../utils/formatBytes';
+import { TEXT_SECONDARY, ACCENT2 } from '../screens/components/sharedStyles';
 
 interface FileSizeLabelProps {
   label: string;
   uri: string;
 }
-
-const TEXT_SECONDARY = '#888';
-const ACCENT2 = '#fc913a';
 
 const FileSizeLabel: React.FC<FileSizeLabelProps> = ({label, uri}) => {
   const [size, setSize] = useState<string | null>(null);

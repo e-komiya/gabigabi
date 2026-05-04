@@ -1,6 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import {CARD_BG} from './sharedStyles';
+import {CARD_BG, TEXT_SECONDARY} from './sharedStyles';
 
 interface FileInfo {
   name: string;
@@ -22,7 +22,6 @@ interface AfterInfoBlockProps {
   showAfterConversion: string;
 }
 
-const TEXT_SECONDARY = '#aaa';
 const styles = StyleSheet.create({
   infoBlock: {
     backgroundColor: CARD_BG,

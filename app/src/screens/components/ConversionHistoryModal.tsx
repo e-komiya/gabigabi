@@ -16,24 +16,14 @@ import {
 } from '../../data/history/conversionHistory';
 import {t} from '../../i18n';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {DARK_BG, CARD_BG, ACCENT, TEXT_PRIMARY, TEXT_SECONDARY, BORDER} from './sharedStyles';
+import {formatBytes} from '../../utils/formatBytes';
 
 interface ConversionHistoryModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-const DARK_BG = '#0d0d0d';
-const CARD_BG = '#1a1a1a';
-const ACCENT = '#ff4e50';
-const TEXT_PRIMARY = '#f0f0f0';
-const TEXT_SECONDARY = '#888';
-const BORDER = '#2a2a2a';
-
-function formatBytes(bytes: number): string {
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${bytes} B`;
-}
 
 function formatDate(iso: string): string {
   try {
