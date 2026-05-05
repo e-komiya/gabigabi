@@ -168,4 +168,63 @@ describe('convertImage', () => {
     expect(mockExecute.mock.calls[0][0]).toContain('palettegen');
     expect(mockExecute.mock.calls[1][0]).toContain('paletteuse');
   });
+
+  it('BMP変換: FFmpeg失敗時に出力を削除してエラーをスローする', async () => {
+    const { ReturnCode } = jest.requireMock('ffmpeg-kit-react-native');
+    ReturnCode.isSuccess.mockReturnValue(false);
+    mockGetInfoAsync.mockResolvedValueOnce({ exists: true, size: 1000 });
+
+    await expect(
+      convertImage('file:///photos/in.jpg', { outputFormat: 'bmp' })
+    ).rejects.toThrow('FFmpegフォーマット変換に失敗しました');
+    expect(mockDeleteAsync).toHaveBeenCalledWith(
+      'file:///cache/in_converted_12345_abc.bmp',
+      { idempotent: true }
+    );
+  });
+
+  it('GIF変換: パレット生成（pass1）失敗時にエラーをスローしパレットファイルを削除する', async () => {
+    const { ReturnCode } = jest.requireMock('ffmpeg-kit-react-native');
+    // pass1 失敗、pass2 は呼ばれない
+    ReturnCode.isSuccess.mockReturnValueOnce(false);
+    mockGetInfoAsync.mockResolvedValueOnce({ exists: true, size: 1000 });
+
+    await expect(
+      convertImage('file:///photos/in.mp4', { outputFormat: 'gif' })
+    ).rejects.toThrow('GIF パレット生成に失敗しました');
+    // finally ブロックでパレットファイルが削除されること
+    expect(mockDeleteAsync).toHaveBeenCalledWith(
+      'file:///cache/in_converted_12345_abc.gif.palette.png',
+      { idempotent: true }
+    );
+    // pass2 は実行されないこと
+    expect(mockExecute).toHaveBeenCalledTimes(1);
+  });
+
+  it('extMap が全 ImageFormat を網羅している（スナップショット）', async () => {
+    // 各フォーマットで convertImage を呼んで出力拡張子を収集する
+    const formats = ['jpeg', 'png', 'webp', 'bmp', 'gif'] as const;
+    const extResults: Record<string, string> = {};
+
+    for (const fmt of formats) {
+      jest.resetAllMocks();
+      const ffmpegUtils = jest.requireMock('../data/ffmpeg/ffmpegUtils');
+      ffmpegUtils.buildFfmpegCommand.mockImplementation((args: string[]) => args.filter(Boolean).join(' '));
+      ffmpegUtils.generateUniqueFileSuffix.mockReturnValue('12345_abc');
+      ffmpegUtils.extractErrorFromLogs.mockResolvedValue('mock logs');
+      ffmpegUtils.getCacheDir.mockReturnValue('file:///cache/');
+      ffmpegUtils.getFileSizeBytes.mockImplementation((info: { size?: number }) => info?.size ?? 0);
+      setupSuccessSession();
+
+      mockGetInfoAsync
+        .mockResolvedValueOnce({ exists: true, size: 1000 })
+        .mockResolvedValueOnce({ exists: true, size: 500 });
+
+      const result = await convertImage('file:///photos/input.png', { outputFormat: fmt });
+      const ext = result.outputUri.replace(/^.*(\.\w+)$/, '$1');
+      extResults[fmt] = ext;
+    }
+
+    expect(extResults).toMatchSnapshot();
+  });
 });

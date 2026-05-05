@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`convertImage extMap が全 ImageFormat を網羅している（スナップショット） 1`] = `
+{
+  "bmp": ".bmp",
+  "gif": ".gif",
+  "jpeg": ".jpg",
+  "png": ".png",
+  "webp": ".webp",
+}
+`;
