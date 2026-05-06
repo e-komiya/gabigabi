@@ -259,6 +259,7 @@ const MainScreen = () => {
       const isVideo =
         asset.type === 'video' ||
         /\.(mp4|mov|mkv|webm|m4v|3gp|flv)$/i.test(asset.uri);
+      // HEIC/HEIF は入力フォーマットとして許可（出力は既存フォーマットに変換）
       handleImageSelect(asset.uri, isVideo ? 'video' : 'image');
     }
   }, [handleImageSelect, isProcessing]);

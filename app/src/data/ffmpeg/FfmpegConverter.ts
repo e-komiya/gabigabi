@@ -4,6 +4,13 @@ import { buildFfmpegCommand, generateUniqueFileSuffix, extractErrorFromLogs, get
 
 export type ImageFormat = 'jpeg' | 'png' | 'webp' | 'bmp' | 'gif';
 
+/**
+ * 入力として受け付けるフォーマット（HEIC/HEIFを含む）。
+ * 出力フォーマットは ImageFormat のみ。
+ * FFmpegKit は iOS/Android で HEIC/HEIF 入力をネイティブにサポートする。
+ */
+export type InputImageFormat = ImageFormat | 'heic' | 'heif';
+
 export interface ConvertOptions {
   outputFormat: ImageFormat;
   quality?: number; // compressionRate 0-99 for jpeg/webp (ignored for png)
@@ -19,8 +26,9 @@ export interface FfmpegConvertResult {
 /**
  * FFmpegを使って画像フォーマットを変換する。
  * JPEG, PNG, WebP への出力に対応。
+ * 入力は HEIC/HEIF を含む主要画像形式に対応。
  *
- * @param inputUri     入力画像のファイルURI
+ * @param inputUri     入力画像のファイルURI（file://プレフィックス付き、HEIC樔対応）
  * @param options      変換オプション（出力フォーマット、品質）
  */
 export async function convertImage(
