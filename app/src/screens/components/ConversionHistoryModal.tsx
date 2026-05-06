@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import {
   ConversionHistoryItem,
@@ -48,29 +49,54 @@ function actionLabel(action: ConversionHistoryItem['params']['action']): string 
   }
 }
 
+const HistoryItemThumbnail: React.FC<{uri: string}> = ({uri}) => {
+  const [error, setError] = useState(false);
+  if (error) {
+    return (
+      <View style={styles.thumbnail} accessibilityLabel="変換後画像のサムネイル">
+        <Text style={styles.thumbnailFallback}>📷</Text>
+      </View>
+    );
+  }
+  return (
+    <Image
+      source={{uri}}
+      style={styles.thumbnail}
+      accessibilityLabel="変換後画像のサムネイル"
+      onError={() => setError(true)}
+    />
+  );
+};
+
 const HistoryItem: React.FC<{item: ConversionHistoryItem}> = ({item}) => {
   const ratio = item.inputBytes > 0
     ? Math.round((item.outputBytes / item.inputBytes) * 100)
     : 0;
   const fileName = item.outputPath.split('/').pop() ?? '—';
   const a11yLabel = `${actionLabel(item.params.action)} ${formatDate(item.createdAt)} ${formatBytes(item.inputBytes)} → ${formatBytes(item.outputBytes)} (${ratio}%)`;
+  const thumbnailUri = item.outputPath.startsWith('file://') ? item.outputPath : `file://${item.outputPath}`;
 
   return (
     <View style={styles.itemCard} accessible={true} accessibilityLabel={a11yLabel}>
-      <View style={styles.itemHeader}>
-        <Text style={styles.itemDate}>{formatDate(item.createdAt)}</Text>
-        <View style={[styles.actionBadge, item.params.action === 'gabigabi' && styles.actionBadgeGabi]}>
-          <Text style={styles.actionBadgeText}>{actionLabel(item.params.action)}</Text>
+      <View style={styles.itemRow}>
+        <HistoryItemThumbnail uri={thumbnailUri} />
+        <View style={styles.itemContent}>
+          <View style={styles.itemHeader}>
+            <Text style={styles.itemDate}>{formatDate(item.createdAt)}</Text>
+            <View style={[styles.actionBadge, item.params.action === 'gabigabi' && styles.actionBadgeGabi]}>
+              <Text style={styles.actionBadgeText}>{actionLabel(item.params.action)}</Text>
+            </View>
+          </View>
+          <Text style={styles.itemFileName} numberOfLines={1} ellipsizeMode="middle">📄 {fileName}</Text>
+          <View style={styles.itemSizeRow}>
+            <Text style={styles.itemSize}>{formatBytes(item.inputBytes)}</Text>
+            <Text style={styles.itemArrow}>→</Text>
+            <Text style={[styles.itemSize, ratio < 100 ? styles.sizeReduced : styles.sizeIncreased]}>
+              {formatBytes(item.outputBytes)}
+            </Text>
+            <Text style={styles.itemRatio}>({ratio}%)</Text>
+          </View>
         </View>
-      </View>
-      <Text style={styles.itemFileName} numberOfLines={1} ellipsizeMode="middle">📄 {fileName}</Text>
-      <View style={styles.itemSizeRow}>
-        <Text style={styles.itemSize}>{formatBytes(item.inputBytes)}</Text>
-        <Text style={styles.itemArrow}>→</Text>
-        <Text style={[styles.itemSize, ratio < 100 ? styles.sizeReduced : styles.sizeIncreased]}>
-          {formatBytes(item.outputBytes)}
-        </Text>
-        <Text style={styles.itemRatio}>({ratio}%)</Text>
       </View>
     </View>
   );
@@ -219,6 +245,27 @@ const styles = StyleSheet.create({
     borderColor: BORDER,
     padding: 14,
     marginBottom: 10,
+    gap: 6,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  thumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    backgroundColor: '#333',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    flexShrink: 0,
+  },
+  thumbnailFallback: {
+    fontSize: 24,
+  },
+  itemContent: {
+    flex: 1,
     gap: 6,
   },
   itemHeader: {
