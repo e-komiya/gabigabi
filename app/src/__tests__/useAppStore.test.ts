@@ -40,6 +40,8 @@ describe('useAppStore', () => {
       convertMethod: 'parameters',
       targetSizeValue: '10',
       targetSizeUnit: 'MB',
+      gifFps: 10,
+      gifScale: 100,
     });
   });
 
@@ -275,6 +277,43 @@ describe('useAppStore', () => {
     it('"GB" をセットできる', () => {
       useAppStore.getState().setTargetSizeUnit('GB');
       expect(useAppStore.getState().targetSizeUnit).toBe('GB');
+    });
+  });
+
+  describe('setGifFps', () => {
+    it('gifFps のデフォルト値は 10', () => {
+      expect(useAppStore.getState().gifFps).toBe(10);
+    });
+
+    it('gifFps を正しく更新する', () => {
+      useAppStore.getState().setGifFps(15);
+      expect(useAppStore.getState().gifFps).toBe(15);
+    });
+
+    it('gifFps を 1 にセットできる', () => {
+      useAppStore.getState().setGifFps(1);
+      expect(useAppStore.getState().gifFps).toBe(1);
+    });
+
+    it('gifFps を 30 にセットできる', () => {
+      useAppStore.getState().setGifFps(30);
+      expect(useAppStore.getState().gifFps).toBe(30);
+    });
+  });
+
+  describe('setGifScale', () => {
+    it('gifScale のデフォルト値は 100', () => {
+      expect(useAppStore.getState().gifScale).toBe(100);
+    });
+
+    it('gifScale を正しく更新する', () => {
+      useAppStore.getState().setGifScale(50);
+      expect(useAppStore.getState().gifScale).toBe(50);
+    });
+
+    it('gifScale を 1 にセットできる', () => {
+      useAppStore.getState().setGifScale(1);
+      expect(useAppStore.getState().gifScale).toBe(1);
     });
   });
 

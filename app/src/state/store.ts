@@ -25,6 +25,9 @@ interface AppState {
   convertMethod: ConvertMethod;
   targetSizeValue: string;
   targetSizeUnit: SizeUnit;
+  // #138 GIF options
+  gifFps: number;
+  gifScale: number;
   
   setSelectedImage: (image: string | null) => void;
   setSelectedMediaType: (mediaType: 'image' | 'video' | null) => void;
@@ -43,6 +46,9 @@ interface AppState {
   setConvertMethod: (method: ConvertMethod) => void;
   setTargetSizeValue: (value: string) => void;
   setTargetSizeUnit: (unit: SizeUnit) => void;
+  // #138 GIF setters
+  setGifFps: (fps: number) => void;
+  setGifScale: (scale: number) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -64,6 +70,8 @@ export const useAppStore = create<AppState>()(
       convertMethod: 'parameters',
       targetSizeValue: '10',
       targetSizeUnit: 'MB',
+      gifFps: 10,
+      gifScale: 100,
 
       setSelectedImage: image => set({selectedImage: image}),
       setSelectedMediaType: mediaType => set({selectedMediaType: mediaType}),
@@ -81,6 +89,8 @@ export const useAppStore = create<AppState>()(
       setConvertMethod: method => set({convertMethod: method}),
       setTargetSizeValue: value => set({targetSizeValue: value}),
       setTargetSizeUnit: unit => set({targetSizeUnit: unit}),
+      setGifFps: fps => set({gifFps: fps}),
+      setGifScale: scale => set({gifScale: scale}),
     }),
     {
       name: 'gabigabi-app-settings',
@@ -97,6 +107,8 @@ export const useAppStore = create<AppState>()(
         convertMethod: state.convertMethod,
         targetSizeValue: state.targetSizeValue,
         targetSizeUnit: state.targetSizeUnit,
+        gifFps: state.gifFps,
+        gifScale: state.gifScale,
       }),
     },
   ),
