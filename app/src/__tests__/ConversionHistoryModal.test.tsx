@@ -15,6 +15,11 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({top: 0, bottom: 0, left: 0, right: 0}),
+  SafeAreaProvider: ({children}: {children: React.ReactNode}) => children,
+}));
+
 jest.mock('../data/history/conversionHistory', () => ({
   getConversionHistory: jest.fn(),
   clearConversionHistory: jest.fn(),
@@ -101,6 +106,17 @@ describe('ConversionHistoryModal', () => {
     const renderer = await createWithData([sampleItem]);
     const json = JSON.stringify(renderer.toJSON());
     expect(json).toContain('sample_out.jpg');
+  });
+
+  it('サムネイル画像が正しいURIでレンダリングされる', async () => {
+    const renderer = await createWithData([sampleItem]);
+    const images = renderer.root.findAll(
+      (node: ReactTestRenderer.ReactTestInstance) =>
+        node.type === 'Image' &&
+        node.props.accessibilityLabel === '変換後画像のサムネイル',
+    );
+    expect(images.length).toBeGreaterThan(0);
+    expect(images[0].props.source.uri).toBe('file:///out/sample_out.jpg');
   });
 
   it('「クリア」ボタンは履歴ありのときのみ表示される', async () => {
