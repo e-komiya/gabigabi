@@ -1,7 +1,7 @@
-import { convertImage as ffmpegConvertImage, ImageFormat, ConvertOptions, FfmpegConvertResult } from '../data/ffmpeg/FfmpegConverter';
+import { convertImage as ffmpegConvertImage, ImageFormat, ConvertOptions, FfmpegConvertResult, InputImageFormat } from '../data/ffmpeg/FfmpegConverter';
 export { formatBytes } from '../utils/formatBytes';
 
-export type { ImageFormat };
+export type { ImageFormat, InputImageFormat };
 
 export interface ConvertImageResult {
   outputUri: string;

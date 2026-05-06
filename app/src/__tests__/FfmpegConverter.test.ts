@@ -227,4 +227,33 @@ describe('convertImage', () => {
 
     expect(extResults).toMatchSnapshot();
   });
+
+  it('HEIC入力ファイルから JPEG へ変換できる', async () => {
+    mockGetInfoAsync
+      .mockResolvedValueOnce({exists: true, size: 3000})
+      .mockResolvedValueOnce({exists: true, size: 800});
+
+    const result = await convertImage('file:///photos/photo.heic', {
+      outputFormat: 'jpeg',
+      quality: 0,
+    });
+
+    expect(result.outputUri).toMatch(/\.jpg$/);
+    expect(mockExecute).toHaveBeenCalledTimes(1);
+    const cmd = mockExecute.mock.calls[0][0] as string;
+    expect(cmd).toContain('photo.heic');
+  });
+
+  it('HEIF入力ファイルから PNG へ変換できる', async () => {
+    mockGetInfoAsync
+      .mockResolvedValueOnce({exists: true, size: 3500})
+      .mockResolvedValueOnce({exists: true, size: 1200});
+
+    const result = await convertImage('file:///photos/photo.heif', {
+      outputFormat: 'png',
+    });
+
+    expect(result.outputUri).toMatch(/\.png$/);
+    expect(mockExecute).toHaveBeenCalledTimes(1);
+  });
 });
