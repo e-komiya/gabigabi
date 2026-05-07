@@ -6,6 +6,9 @@ import {sharedStyles, BORDER, TEXT_SECONDARY, DARK_BG} from './sharedStyles';
 
 const TARGET_SIZE_TEMPLATES: {label: string; value: string; unit: SizeUnit}[] = [
   {label: 'Discord 10MB', value: '10', unit: 'MB'},
+  {label: 'X (Twitter) 5MB', value: '5', unit: 'MB'},
+  {label: 'LINE 10MB', value: '10', unit: 'MB'},
+  {label: 'Instagram 8MB', value: '8', unit: 'MB'},
 ];
 
 interface TargetSizePanelProps {
