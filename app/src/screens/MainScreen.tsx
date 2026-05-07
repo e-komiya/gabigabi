@@ -84,6 +84,8 @@ const MainScreen = () => {
     convertMethod,
     targetSizeValue,
     targetSizeUnit,
+    gifFps,
+    gifScale,
     setSelectedImage,
     setSelectedMediaType,
     setResizePercent,
@@ -100,6 +102,8 @@ const MainScreen = () => {
     setConvertMethod,
     setTargetSizeValue,
     setTargetSizeUnit,
+    setGifFps,
+    setGifScale,
   } = useAppStore();
 
   const [errorModal, setErrorModal] = useState<{visible: boolean; title: string; message: string}>({
@@ -477,6 +481,7 @@ const MainScreen = () => {
             const result = await convertImage(selectedImage, {
               outputFormat,
               quality: compressionRate,
+              ...(outputFormat === 'gif' ? {gifFps, gifScale} : {}),
             });
             resultUri = result.outputUri;
             resultBytes = result.outputBytes;
@@ -754,6 +759,10 @@ const MainScreen = () => {
             onShrinkExpandRateChange={handleShrinkExpandRateChange}
             onMultiCompressToggle={handleMultiCompressToggle}
             onMultiCompressCountChange={handleMultiCompressCountChange}
+            gifFps={gifFps}
+            gifScale={gifScale}
+            onGifFpsChange={setGifFps}
+            onGifScaleChange={setGifScale}
           />
         ) : (
           <TargetSizePanel

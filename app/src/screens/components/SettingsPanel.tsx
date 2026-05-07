@@ -48,6 +48,8 @@ interface SettingsPanelProps {
   multiCompressCount: number;
   fileInfoWidth?: number;
   fileInfoHeight?: number;
+  gifFps: number;
+  gifScale: number;
   onTemplateSelect: (level: number) => void;
   onResizeChange: (percent: number) => void;
   onQualityChange: (quality: number) => void;
@@ -57,6 +59,8 @@ interface SettingsPanelProps {
   onShrinkExpandRateChange: (val: number) => void;
   onMultiCompressToggle: (val: boolean) => void;
   onMultiCompressCountChange: (val: number) => void;
+  onGifFpsChange: (fps: number) => void;
+  onGifScaleChange: (scale: number) => void;
 }
 
 const SettingsPanel: React.FC<SettingsPanelProps> = ({
@@ -72,6 +76,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   multiCompressCount,
   fileInfoWidth,
   fileInfoHeight,
+  gifFps,
+  gifScale,
   onTemplateSelect,
   onResizeChange,
   onQualityChange,
@@ -81,6 +87,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onShrinkExpandRateChange,
   onMultiCompressToggle,
   onMultiCompressCountChange,
+  onGifFpsChange,
+  onGifScaleChange,
 }) => (
   <>
     {/* ── Template Section ── */}
@@ -178,6 +186,46 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         </>
       )}
 
+      {selectedMediaType !== 'video' && outputFormat === 'gif' && (
+        <>
+          <View style={sharedStyles.qualityRow}>
+            <View style={sharedStyles.qualityLabelRow}>
+              <Text style={sharedStyles.qualityLabel}>{t('gifFps')}</Text>
+              <Text style={sharedStyles.qualityValue}>{gifFps} fps</Text>
+            </View>
+            <CustomSlider
+              style={sharedStyles.qualitySlider}
+              minimumValue={1}
+              maximumValue={30}
+              step={1}
+              value={gifFps}
+              onValueChange={(v: number) => onGifFpsChange(Math.round(v))}
+              accessibilityLabel={t('gifFpsSlider')}
+              minimumTrackTintColor={ACCENT2}
+              maximumTrackTintColor={BORDER}
+              thumbTintColor={ACCENT2}
+            />
+          </View>
+          <View style={sharedStyles.qualityRow}>
+            <View style={sharedStyles.qualityLabelRow}>
+              <Text style={sharedStyles.qualityLabel}>{t('gifScale')}</Text>
+              <Text style={sharedStyles.qualityValue}>{gifScale}%</Text>
+            </View>
+            <CustomSlider
+              style={sharedStyles.qualitySlider}
+              minimumValue={1}
+              maximumValue={100}
+              step={1}
+              value={gifScale}
+              onValueChange={(v: number) => onGifScaleChange(Math.round(v))}
+              accessibilityLabel={t('gifScaleSlider')}
+              minimumTrackTintColor={ACCENT2}
+              maximumTrackTintColor={BORDER}
+              thumbTintColor={ACCENT2}
+            />
+          </View>
+        </>
+      )}
       {((selectedMediaType !== 'video' && (outputFormat === 'jpeg' || outputFormat === 'webp')) || selectedMediaType === 'video') && (
         <View style={sharedStyles.qualityRow}>
           <View style={sharedStyles.qualityLabelRow}>
