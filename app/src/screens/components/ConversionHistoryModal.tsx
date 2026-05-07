@@ -49,8 +49,15 @@ function actionLabel(action: ConversionHistoryItem['params']['action']): string 
   }
 }
 
-const HistoryItemThumbnail: React.FC<{uri: string}> = ({uri}) => {
+const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'}> = ({uri, mediaType}) => {
   const [error, setError] = useState(false);
+  if (mediaType === 'video') {
+    return (
+      <View style={styles.thumbnail} accessibilityLabel="変換後動画のサムネイル">
+        <Text style={styles.thumbnailFallback}>🎬</Text>
+      </View>
+    );
+  }
   if (error) {
     return (
       <View style={styles.thumbnail} accessibilityLabel="変換後画像のサムネイル">
@@ -79,7 +86,7 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem}> = ({item}) => {
   return (
     <View style={styles.itemCard} accessible={true} accessibilityLabel={a11yLabel}>
       <View style={styles.itemRow}>
-        <HistoryItemThumbnail uri={thumbnailUri} />
+        <HistoryItemThumbnail uri={thumbnailUri} mediaType={item.mediaType} />
         <View style={styles.itemContent}>
           <View style={styles.itemHeader}>
             <Text style={styles.itemDate}>{formatDate(item.createdAt)}</Text>
