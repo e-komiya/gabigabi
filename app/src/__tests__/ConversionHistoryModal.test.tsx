@@ -15,6 +15,10 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
+jest.mock('expo-video-thumbnails', () => ({
+  getThumbnailAsync: jest.fn().mockResolvedValue({uri: 'file:///thumb.jpg'}),
+}));
+
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({top: 0, bottom: 0, left: 0, right: 0}),
   SafeAreaProvider: ({children}: {children: React.ReactNode}) => children,
@@ -191,5 +195,29 @@ describe('ConversionHistoryModal', () => {
     expect(mockedClearHistory).toHaveBeenCalledTimes(1);
     const json = JSON.stringify(renderer.toJSON());
     expect(json).not.toContain('sample_out.jpg');
+  });
+});
+
+describe('ビデオサムネイル', () => {
+  it('mediaType=videoのアイテムで getThumbnailAsync が呼ばれる', async () => {
+    const VideoThumbnails = require('expo-video-thumbnails');
+    const mockedGetHistory = require('../data/history/conversionHistory').getConversionHistory as jest.Mock;
+    const videoItem: ConversionHistoryItem = {
+      id: 'vid-1',
+      createdAt: new Date().toISOString(),
+      inputBytes: 5000,
+      outputBytes: 3000,
+      outputPath: '/cache/out.mp4',
+      mediaType: 'video',
+      params: {action: 'convert'},
+    };
+    mockedGetHistory.mockResolvedValueOnce([videoItem]);
+    await createWithData([videoItem]);
+    // 非同期処理の完了を待つ
+    await ReactTestRenderer.act(async () => {});
+    expect(VideoThumbnails.getThumbnailAsync).toHaveBeenCalledWith(
+      expect.stringContaining('out.mp4'),
+      {time: 0},
+    );
   });
 });

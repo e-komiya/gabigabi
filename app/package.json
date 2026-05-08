@@ -28,7 +28,8 @@
     "react-native-screens": "~4.23.0",
     "react-native-share": "^12.2.5",
     "react-native-svg": "^15.15.3",
-    "zustand": "^5.0.5"
+    "zustand": "^5.0.5",
+    "expo-video-thumbnails": "~8.1.6"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

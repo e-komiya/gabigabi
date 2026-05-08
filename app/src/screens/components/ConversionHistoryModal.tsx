@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import * as VideoThumbnails from 'expo-video-thumbnails';
 import {
   ConversionHistoryItem,
   clearConversionHistory,
@@ -51,7 +52,44 @@ function actionLabel(action: ConversionHistoryItem['params']['action']): string 
 
 const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'}> = ({uri, mediaType}) => {
   const [error, setError] = useState(false);
+  const [videoThumbUri, setVideoThumbUri] = useState<string | null>(null);
+  const [videoThumbLoading, setVideoThumbLoading] = useState(false);
+
+  useEffect(() => {
+    if (mediaType !== 'video') return;
+    let cancelled = false;
+    setVideoThumbLoading(true);
+    VideoThumbnails.getThumbnailAsync(uri, {time: 0})
+      .then(({uri: thumbUri}) => {
+        if (!cancelled) setVideoThumbUri(thumbUri);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setVideoThumbLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [uri, mediaType]);
+
   if (mediaType === 'video') {
+    if (videoThumbLoading) {
+      return (
+        <View style={styles.thumbnail} accessibilityLabel="動画サムネイル読み込み中">
+          <ActivityIndicator size="small" color="#aaa" />
+        </View>
+      );
+    }
+    if (videoThumbUri && !error) {
+      return (
+        <Image
+          source={{uri: videoThumbUri}}
+          style={styles.thumbnail}
+          accessibilityLabel="変換後動画のサムネイル"
+          onError={() => setError(true)}
+        />
+      );
+    }
     return (
       <View style={styles.thumbnail} accessibilityLabel="変換後動画のサムネイル">
         <Text style={styles.thumbnailFallback}>🎬</Text>
