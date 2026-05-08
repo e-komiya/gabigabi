@@ -109,4 +109,10 @@ describe('MainScreen', () => {
     const btn = getByRole('button', { name: 'Run blocky effect' });
     expect(btn.props.accessibilityState?.disabled ?? btn.props.disabled).toBeTruthy();
   });
+
+  it('目標サイズ未達の警告エリアは初期状態では表示されない', () => {
+    const { queryByRole } = render(<MainScreen />);
+    // accessibilityRole="alert" の警告は初期状態では存在しない
+    expect(queryByRole('alert')).toBeNull();
+  });
 });

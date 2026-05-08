@@ -98,6 +98,9 @@ const DICT: Dict = {
   gifFpsSlider: {ja: 'GIF フレームレートスライダー', en: 'GIF frame rate slider'},
   gifScale: {ja: 'GIF スケール率', en: 'GIF Scale'},
   gifScaleSlider: {ja: 'GIF スケール率スライダー', en: 'GIF scale slider'},
+  targetSizeNotReachedPrefix: {ja: '目標サイズ（', en: 'Could not reach target size ('},
+  targetSizeNotReachedMiddle: {ja: '）を達成できませんでした（結果: ', en: '), result: '},
+  targetSizeNotReachedSuffix: {ja: '）', en: ')'},
 };
 
 export const t = (key: keyof typeof DICT): string => {
