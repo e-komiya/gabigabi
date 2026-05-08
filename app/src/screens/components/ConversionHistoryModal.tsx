@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import {
   ConversionHistoryItem,
+  ConversionAction,
   clearConversionHistory,
   getConversionHistory,
 } from '../../data/history/conversionHistory';
@@ -113,6 +114,7 @@ const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible,
   const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<ConversionHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [filterAction, setFilterAction] = useState<'all' | ConversionAction>('all');
 
   const loadHistory = useCallback(async () => {
     setLoading(true);
@@ -163,26 +165,47 @@ const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible,
           </TouchableOpacity>
         </View>
 
+        {/* Filter tabs */}
+        <View style={styles.filterRow}>
+          {(['all', 'gabigabi', 'convert', 'targetSize'] as const).map(action => (
+            <TouchableOpacity
+              key={action}
+              style={[styles.filterTab, filterAction === action && styles.filterTabActive]}
+              onPress={() => setFilterAction(action)}
+              accessibilityRole="tab"
+              accessibilityState={{selected: filterAction === action}}>
+              <Text style={[styles.filterTabText, filterAction === action && styles.filterTabTextActive]}>
+                {action === 'all' ? t('filterAll') : actionLabel(action as ConversionAction)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Content */}
-        {loading ? (
-          <View style={styles.emptyContainer}>
-            <ActivityIndicator color={ACCENT} size="large" />
-          </View>
-        ) : history.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>{t('noHistory')}</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={history}
-            keyExtractor={item => item.id}
-            renderItem={({item}) => <HistoryItem item={item} />}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-            accessible={true}
-            accessibilityLabel={t('conversionHistoryTitle')}
-          />
-        )}
+        {(() => {
+          const filteredHistory = filterAction === 'all'
+            ? history
+            : history.filter(item => item.params.action === filterAction);
+          return loading ? (
+            <View style={styles.emptyContainer}>
+              <ActivityIndicator color={ACCENT} size="large" />
+            </View>
+          ) : filteredHistory.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>{t('noHistory')}</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredHistory}
+              keyExtractor={item => item.id}
+              renderItem={({item}) => <HistoryItem item={item} />}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              accessible={true}
+              accessibilityLabel={t('conversionHistoryTitle')}
+            />
+          );
+        })()}
 
         {/* Clear button */}
         {history.length > 0 && (
@@ -345,6 +368,34 @@ const styles = StyleSheet.create({
     color: ACCENT,
     fontSize: 15,
     fontWeight: '700',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
+  },
+  filterTab: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#222',
+    alignItems: 'center',
+  },
+  filterTabActive: {
+    backgroundColor: '#ff980033',
+    borderWidth: 1,
+    borderColor: '#ff9800',
+  },
+  filterTabText: {
+    fontSize: 11,
+    color: TEXT_SECONDARY,
+    fontWeight: '600',
+  },
+  filterTabTextActive: {
+    color: '#ff9800',
   },
 });
 

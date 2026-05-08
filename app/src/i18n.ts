@@ -94,6 +94,7 @@ const DICT: Dict = {
   actionGabigabi: {ja: 'ガビガビ化', en: 'Blocky'},
   actionConvert: {ja: '変換', en: 'Convert'},
   actionTargetSize: {ja: 'サイズ指定', en: 'Target size'},
+  filterAll: {ja: 'すべて', en: 'All'},
   gifFps: {ja: 'GIF フレームレート', en: 'GIF Frame Rate'},
   gifFpsSlider: {ja: 'GIF フレームレートスライダー', en: 'GIF frame rate slider'},
   gifScale: {ja: 'GIF スケール率', en: 'GIF Scale'},
