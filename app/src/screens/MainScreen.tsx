@@ -113,6 +113,7 @@ const MainScreen = () => {
   });
 
   const [processingAction, setProcessingAction] = useState<'gabigabi' | 'convert' | 'targetSize' | null>(null);
+  const [targetSizeNotReached, setTargetSizeNotReached] = useState<{target: number; actual: number} | null>(null);
 
   // #77: fullscreen modal state
   const [fullscreenUri, setFullscreenUri] = useState<string | null>(null);
@@ -573,6 +574,7 @@ const MainScreen = () => {
     setSelectedMediaType(null);
     setProcessedImage(null);
     outputBytesRef.current = 0;
+    setTargetSizeNotReached(null);
   };
 
   const handleTargetSizeProcess = async () => {
@@ -599,6 +601,7 @@ const MainScreen = () => {
       const result = await compressToTargetSize(selectedImage, targetBytes, videoOutputFormat);
       setProcessedImage(result.outputUri);
       outputBytesRef.current = result.outputBytes;
+      setTargetSizeNotReached(result.outputBytes > targetBytes ? {target: targetBytes, actual: result.outputBytes} : null);
       await saveHistory('targetSize', selectedImage, result.outputUri, inputBytes, result.outputBytes, targetBytes);
       await notifyProcessingResult(t('notifyCompressCompleted'), processingNotificationId);
     } catch (err) {
@@ -712,6 +715,13 @@ const MainScreen = () => {
                 outputFormat={outputFormat}
                 showAfterConversion={t('showAfterConversion')}
               />
+            )}
+            {targetSizeNotReached && (
+              <View style={styles.targetSizeWarning} accessibilityRole="alert">
+                <Text style={styles.targetSizeWarningText}>
+                  ⚠️ {t('targetSizeNotReachedPrefix')}{formatBytes(targetSizeNotReached.target)}{t('targetSizeNotReachedMiddle')}{formatBytes(targetSizeNotReached.actual)}{t('targetSizeNotReachedSuffix')}
+                </Text>
+              </View>
             )}
           </View>
         </View>
@@ -1099,6 +1109,20 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 32,
     gap: 10,
+  },
+
+  targetSizeWarning: {
+    backgroundColor: '#3a2000',
+    borderWidth: 1,
+    borderColor: '#ff9800',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 6,
+  },
+  targetSizeWarningText: {
+    color: '#ff9800',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 
