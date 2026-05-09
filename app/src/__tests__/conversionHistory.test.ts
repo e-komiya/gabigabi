@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {getConversionHistory, saveConversionHistoryItem, clearConversionHistory} from '../data/history/conversionHistory';
+import {getConversionHistory, saveConversionHistoryItem, clearConversionHistory, deleteConversionHistoryItem} from '../data/history/conversionHistory';
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
@@ -61,6 +61,26 @@ describe('conversionHistory', () => {
     expect(mockedAsyncStorage.setItem).toHaveBeenCalledWith(
       'conversion-history-v1',
       JSON.stringify([{id: 'new', createdAt: '2026-03-22T00:00:00.000Z', inputPath: 'file:///in.jpg', outputPath: 'file:///out.jpg', inputBytes: 100, outputBytes: 50, mediaType: 'image', params: {action: 'gabigabi'}}, {id: 'old'}]),
+    );
+  });
+});
+
+describe('deleteConversionHistoryItem', () => {
+  it('指定IDの履歴アイテムを削除して保存する', async () => {
+    mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify([{id: 'a'}, {id: 'b'}, {id: 'c'}]));
+    await deleteConversionHistoryItem('b');
+    expect(mockedAsyncStorage.setItem).toHaveBeenCalledWith(
+      'conversion-history-v1',
+      JSON.stringify([{id: 'a'}, {id: 'c'}]),
+    );
+  });
+
+  it('存在しないIDを指定しても残りのアイテムはそのまま', async () => {
+    mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify([{id: 'a'}, {id: 'b'}]));
+    await deleteConversionHistoryItem('z');
+    expect(mockedAsyncStorage.setItem).toHaveBeenCalledWith(
+      'conversion-history-v1',
+      JSON.stringify([{id: 'a'}, {id: 'b'}]),
     );
   });
 });
