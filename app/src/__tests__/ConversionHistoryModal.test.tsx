@@ -221,3 +221,110 @@ describe('ビデオサムネイル', () => {
     );
   });
 });
+
+
+describe('フィルタータブ機能', () => {
+  const gabiItem: ConversionHistoryItem = {
+    id: 'gabi-1',
+    createdAt: '2026-04-01T10:00:00.000Z',
+    inputPath: 'file:///in/gabi.jpg',
+    outputPath: 'file:///out/gabi_out.jpg',
+    inputBytes: 1024,
+    outputBytes: 512,
+    mediaType: 'image',
+    params: {action: 'gabigabi'},
+  };
+  const convertItem: ConversionHistoryItem = {
+    id: 'conv-1',
+    createdAt: '2026-04-02T10:00:00.000Z',
+    inputPath: 'file:///in/conv.png',
+    outputPath: 'file:///out/conv_out.jpg',
+    inputBytes: 2048,
+    outputBytes: 1024,
+    mediaType: 'image',
+    params: {action: 'convert'},
+  };
+  const targetSizeItem: ConversionHistoryItem = {
+    id: 'target-1',
+    createdAt: '2026-04-03T10:00:00.000Z',
+    inputPath: 'file:///in/target.jpg',
+    outputPath: 'file:///out/target_out.jpg',
+    inputBytes: 4096,
+    outputBytes: 2048,
+    mediaType: 'image',
+    params: {action: 'targetSize'},
+  };
+  const allItems = [gabiItem, convertItem, targetSizeItem];
+
+  /** filterRow 直下の tab を i18nテキストで特定する */
+  function findFilterTab(
+    renderer: ReactTestRenderer.ReactTestRenderer,
+    label: string,
+  ): ReactTestRenderer.ReactTestInstance | undefined {
+    return renderer.root.findAll(
+      (node: ReactTestRenderer.ReactTestInstance) =>
+        node.props.accessibilityRole === 'tab' &&
+        node.findAll(
+          (child: ReactTestRenderer.ReactTestInstance) =>
+            child.type === 'Text' && child.props.children === label,
+          {deep: true},
+        ).length > 0,
+    )[0];
+  }
+
+  it('「すべて」タブが初期選択されている', async () => {
+    const renderer = await createWithData(allItems);
+    const allTab = findFilterTab(renderer, 'All');
+    expect(allTab).toBeDefined();
+    expect(allTab!.props.accessibilityState?.selected).toBe(true);
+  });
+
+  it('「ガビガビ化」タブ選択時にガビガビ化のみ選択される', async () => {
+    const renderer = await createWithData(allItems);
+    const gabiTab = findFilterTab(renderer, 'Blocky');
+    expect(gabiTab).toBeDefined();
+    await ReactTestRenderer.act(async () => { gabiTab!.props.onPress?.(); });
+
+    const allTab2 = findFilterTab(renderer, 'All');
+    const gabiTab2 = findFilterTab(renderer, 'Blocky');
+    expect(allTab2!.props.accessibilityState?.selected).toBe(false);
+    expect(gabiTab2!.props.accessibilityState?.selected).toBe(true);
+  });
+
+  it('「変換」タブ選択時に変換タブが選択される', async () => {
+    const renderer = await createWithData(allItems);
+    const convertTab = findFilterTab(renderer, 'Convert');
+    expect(convertTab).toBeDefined();
+    await ReactTestRenderer.act(async () => { convertTab!.props.onPress?.(); });
+
+    const convertTab2 = findFilterTab(renderer, 'Convert');
+    const allTab2 = findFilterTab(renderer, 'All');
+    expect(convertTab2!.props.accessibilityState?.selected).toBe(true);
+    expect(allTab2!.props.accessibilityState?.selected).toBe(false);
+  });
+
+  it('「サイズ指定」タブ選択時にサイズ指定タブが選択される', async () => {
+    const renderer = await createWithData(allItems);
+    const targetTab = findFilterTab(renderer, 'Target size');
+    expect(targetTab).toBeDefined();
+    await ReactTestRenderer.act(async () => { targetTab!.props.onPress?.(); });
+
+    const targetTab2 = findFilterTab(renderer, 'Target size');
+    const allTab2 = findFilterTab(renderer, 'All');
+    expect(targetTab2!.props.accessibilityState?.selected).toBe(true);
+    expect(allTab2!.props.accessibilityState?.selected).toBe(false);
+  });
+
+  it('タブ切り替え後に「すべて」タブに戻ると「すべて」が選択状態になる', async () => {
+    const renderer = await createWithData(allItems);
+    const gabiTab = findFilterTab(renderer, 'Blocky');
+    const allTab = findFilterTab(renderer, 'All');
+    await ReactTestRenderer.act(async () => { gabiTab!.props.onPress?.(); });
+    await ReactTestRenderer.act(async () => { allTab!.props.onPress?.(); });
+
+    const allTab2 = findFilterTab(renderer, 'All');
+    const gabiTab2 = findFilterTab(renderer, 'Blocky');
+    expect(allTab2!.props.accessibilityState?.selected).toBe(true);
+    expect(gabiTab2!.props.accessibilityState?.selected).toBe(false);
+  });
+});
