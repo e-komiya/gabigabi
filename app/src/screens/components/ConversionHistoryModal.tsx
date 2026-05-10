@@ -16,6 +16,7 @@ import {
   ConversionHistoryItem,
   ConversionAction,
   clearConversionHistory,
+  deleteConversionHistoryItem,
   getConversionHistory,
 } from '../../data/history/conversionHistory';
 import {t} from '../../i18n';
@@ -115,7 +116,7 @@ const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'
   );
 };
 
-const HistoryItem: React.FC<{item: ConversionHistoryItem}> = ({item}) => {
+const HistoryItem: React.FC<{item: ConversionHistoryItem; onDelete: (id: string) => void}> = ({item, onDelete}) => {
   const [fileExists, setFileExists] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -139,8 +140,17 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem}> = ({item}) => {
         <View style={styles.itemContent}>
           <View style={styles.itemHeader}>
             <Text style={styles.itemDate}>{formatDate(item.createdAt)}</Text>
-            <View style={[styles.actionBadge, item.params.action === 'gabigabi' && styles.actionBadgeGabi]}>
-              <Text style={styles.actionBadgeText}>{actionLabel(item.params.action)}</Text>
+            <View style={styles.itemHeaderRight}>
+              <View style={[styles.actionBadge, item.params.action === 'gabigabi' && styles.actionBadgeGabi]}>
+                <Text style={styles.actionBadgeText}>{actionLabel(item.params.action)}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => onDelete(item.id)}
+                style={styles.deleteButton}
+                accessibilityRole="button"
+                accessibilityLabel={t('deleteHistoryItemTitle')}>
+                <Text style={styles.deleteButtonText}>✕</Text>
+              </TouchableOpacity>
             </View>
           </View>
           <Text style={styles.itemFileName} numberOfLines={1} ellipsizeMode="middle">📄 {fileName}</Text>
@@ -183,6 +193,24 @@ const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible,
       loadHistory();
     }
   }, [visible, loadHistory]);
+
+  const handleDeleteItem = useCallback((id: string) => {
+    Alert.alert(
+      t('deleteHistoryItemTitle'),
+      t('deleteHistoryItemMessage'),
+      [
+        {text: t('cancel'), style: 'cancel'},
+        {
+          text: t('deleteHistoryItemConfirm'),
+          style: 'destructive',
+          onPress: async () => {
+            await deleteConversionHistoryItem(id);
+            setHistory(prev => prev.filter(item => item.id !== id));
+          },
+        },
+      ],
+    );
+  }, []);
 
   const handleClear = useCallback(() => {
     Alert.alert(
@@ -250,7 +278,7 @@ const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible,
             <FlatList
               data={filteredHistory}
               keyExtractor={item => item.id}
-              renderItem={({item}) => <HistoryItem item={item} />}
+              renderItem={({item}) => <HistoryItem item={item} onDelete={handleDeleteItem} />}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
               accessible={true}
@@ -362,6 +390,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  itemHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  deleteButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#3a1010',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteButtonText: {
+    color: ACCENT,
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 14,
   },
   itemDate: {
     fontSize: 12,
