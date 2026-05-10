@@ -44,6 +44,38 @@ describe('conversionHistory', () => {
     expect(rows).toEqual([]);
   });
 
+  it('50件を超えた場合に古い履歴を切り捨てる', async () => {
+    const existing = Array.from({length: 50}, (_, i) => ({
+      id: `old-${i}`,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      inputPath: 'file:///in.jpg',
+      outputPath: 'file:///out.jpg',
+      inputBytes: 100,
+      outputBytes: 50,
+      mediaType: 'image' as const,
+      params: {action: 'gabigabi' as const},
+    }));
+    mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify(existing));
+
+    const newItem = {
+      id: 'newest',
+      createdAt: '2026-03-22T00:00:00.000Z',
+      inputPath: 'file:///in.jpg',
+      outputPath: 'file:///out.jpg',
+      inputBytes: 200,
+      outputBytes: 100,
+      mediaType: 'image' as const,
+      params: {action: 'gabigabi' as const},
+    };
+    await saveConversionHistoryItem(newItem);
+
+    const saved = JSON.parse(mockedAsyncStorage.setItem.mock.calls[0][1]);
+    expect(saved).toHaveLength(50);
+    expect(saved[0].id).toBe('newest');
+    // 最古のold-49が切り捨てられ、old-48が末尾になること
+    expect(saved[49].id).toBe('old-48');
+  });
+
   it('新しい履歴を先頭に追加して保存する', async () => {
     mockedAsyncStorage.getItem.mockResolvedValueOnce(JSON.stringify([{id: 'old'}]));
 
