@@ -1,97 +1,72 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# convert2gabigabi
 
-# Getting Started
+画像・動画の変換・圧縮・ガビガビ化ツール（React Native / Expo）
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## アプリ概要
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+**convert2gabigabi** は Android / iOS 向けのメディア変換アプリです。
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- 🎨 **ガビガビ化**: 画像・動画をモザイク（ブロック）エフェクトで劣化させる
+- 🗜️ **指定サイズ圧縮**: 目標ファイルサイズに収まるよう自動で圧縮
+- 🔄 **フォーマット変換**: 画像・動画のフォーマット変換（JPEG, PNG, WebP, MP4, MOV など）
+- 📋 **変換履歴**: 過去の変換結果を一覧表示・個別削除・全削除
+
+---
+
+## セットアップ
+
+### 必要な環境
+
+- Node.js 18 以上
+- React Native 開発環境（[Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) 参照）
+- Android Studio（Android ビルド時）または Xcode（iOS ビルド時）
+
+### インストール
 
 ```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+git clone https://github.com/e-komiya/gabigabi.git
+cd gabigabi/app
+npm install
 ```
 
-## Step 2: Build and run your app
+---
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## 実行方法
+
+### Metro 起動
+
+```sh
+npm start
+```
 
 ### Android
 
 ```sh
-# Using npm
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
 ### iOS
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
 ```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+---
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+## 主な機能
 
-## Step 3: Modify your app
+| 機能 | 説明 |
+|------|------|
+| ガビガビ化 | 画像・動画をブロックノイズで劣化 |
+| 指定サイズ圧縮 | 目標バイト数に合わせて自動圧縮 |
+| フォーマット変換 | 画像・動画の形式変換 |
+| 変換履歴 | 変換結果の閲覧・削除・フィルタリング |
+| 多言語対応 | 日本語・英語 |
 
-Now that you have successfully run the app, let's make changes!
+---
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+## ライセンス
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+[GNU General Public License v3.0](../LICENSE)
