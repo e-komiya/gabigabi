@@ -53,6 +53,26 @@ function actionLabel(action: ConversionHistoryItem['params']['action']): string 
   }
 }
 
+function formatParams(item: ConversionHistoryItem): string | null {
+  const p = item.params;
+  if (p.action === 'gabigabi') {
+    const level = p.gabigabiLevel != null ? `Lv.${p.gabigabiLevel}` : null;
+    const resize = p.resizePercent != null ? `${p.resizePercent}%` : null;
+    const fmt = p.outputFormat ?? p.videoOutputFormat ?? null;
+    return [level, resize, fmt].filter(Boolean).join(' / ') || null;
+  }
+  if (p.action === 'convert') {
+    const outFmt = p.outputFormat ?? p.videoOutputFormat ?? null;
+    return outFmt ? `→ ${outFmt}` : null;
+  }
+  if (p.action === 'targetSize') {
+    const target = p.targetBytes != null ? formatBytes(p.targetBytes) : null;
+    const result = formatBytes(item.outputBytes);
+    return target ? `目標: ${target} / 結果: ${result}` : null;
+  }
+  return null;
+}
+
 const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'}> = ({uri, mediaType}) => {
   const [error, setError] = useState(false);
   const [videoThumbUri, setVideoThumbUri] = useState<string | null>(null);
@@ -154,6 +174,11 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem; onDelete: (id: string)
             </View>
           </View>
           <Text style={styles.itemFileName} numberOfLines={1} ellipsizeMode="middle">📄 {fileName}</Text>
+          {formatParams(item) !== null && (
+            <Text style={styles.itemParams} numberOfLines={1} ellipsizeMode="tail">
+              {formatParams(item)}
+            </Text>
+          )}
           {fileExists === false ? (
             <Text style={styles.fileNotFoundText}>{t('fileNotFound')}</Text>
           ) : (
@@ -433,6 +458,11 @@ const styles = StyleSheet.create({
   itemFileName: {
     fontSize: 12,
     color: '#aaa',
+  },
+  itemParams: {
+    fontSize: 11,
+    color: '#888',
+    fontStyle: 'italic',
   },
   itemSizeRow: {
     flexDirection: 'row',
