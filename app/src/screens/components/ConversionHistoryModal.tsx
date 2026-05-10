@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import {
   ConversionHistoryItem,
@@ -115,6 +116,15 @@ const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'
 };
 
 const HistoryItem: React.FC<{item: ConversionHistoryItem}> = ({item}) => {
+  const [fileExists, setFileExists] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const path = item.outputPath.startsWith('file://') ? item.outputPath : `file://${item.outputPath}`;
+    FileSystem.getInfoAsync(path)
+      .then(info => setFileExists(info.exists))
+      .catch(() => setFileExists(false));
+  }, [item.outputPath]);
+
   const ratio = item.inputBytes > 0
     ? Math.round((item.outputBytes / item.inputBytes) * 100)
     : 0;
@@ -123,7 +133,7 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem}> = ({item}) => {
   const thumbnailUri = item.outputPath.startsWith('file://') ? item.outputPath : `file://${item.outputPath}`;
 
   return (
-    <View style={styles.itemCard} accessible={true} accessibilityLabel={a11yLabel}>
+    <View style={[styles.itemCard, fileExists === false && styles.itemCardUnavailable]} accessible={true} accessibilityLabel={a11yLabel}>
       <View style={styles.itemRow}>
         <HistoryItemThumbnail uri={thumbnailUri} mediaType={item.mediaType} />
         <View style={styles.itemContent}>
@@ -134,14 +144,18 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem}> = ({item}) => {
             </View>
           </View>
           <Text style={styles.itemFileName} numberOfLines={1} ellipsizeMode="middle">📄 {fileName}</Text>
-          <View style={styles.itemSizeRow}>
-            <Text style={styles.itemSize}>{formatBytes(item.inputBytes)}</Text>
-            <Text style={styles.itemArrow}>→</Text>
-            <Text style={[styles.itemSize, ratio < 100 ? styles.sizeReduced : styles.sizeIncreased]}>
-              {formatBytes(item.outputBytes)}
-            </Text>
-            <Text style={styles.itemRatio}>({ratio}%)</Text>
-          </View>
+          {fileExists === false ? (
+            <Text style={styles.fileNotFoundText}>{t('fileNotFound')}</Text>
+          ) : (
+            <View style={styles.itemSizeRow}>
+              <Text style={styles.itemSize}>{formatBytes(item.inputBytes)}</Text>
+              <Text style={styles.itemArrow}>→</Text>
+              <Text style={[styles.itemSize, ratio < 100 ? styles.sizeReduced : styles.sizeIncreased]}>
+                {formatBytes(item.outputBytes)}
+              </Text>
+              <Text style={styles.itemRatio}>({ratio}%)</Text>
+            </View>
+          )}
         </View>
       </View>
     </View>
@@ -314,6 +328,14 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 10,
     gap: 6,
+  },
+  itemCardUnavailable: {
+    opacity: 0.5,
+  },
+  fileNotFoundText: {
+    fontSize: 12,
+    color: ACCENT,
+    fontStyle: 'italic',
   },
   itemRow: {
     flexDirection: 'row',

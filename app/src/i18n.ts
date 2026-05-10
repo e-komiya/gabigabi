@@ -90,6 +90,7 @@ const DICT: Dict = {
   clearHistoryTitle: {ja: '履歴を全削除', en: 'Clear all history'},
   clearHistoryMessage: {ja: '変換履歴をすべて削除しますか？この操作は取り消せません。', en: 'Delete all conversion history? This cannot be undone.'},
   clearHistoryConfirm: {ja: '削除', en: 'Delete'},
+  fileNotFound: {ja: 'ファイルが見つかりません', en: 'File not found'},
   cancel: {ja: 'キャンセル', en: 'Cancel'},
   actionGabigabi: {ja: 'ガビガビ化', en: 'Blocky'},
   actionConvert: {ja: '変換', en: 'Convert'},

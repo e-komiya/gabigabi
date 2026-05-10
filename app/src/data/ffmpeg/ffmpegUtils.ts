@@ -1,6 +1,7 @@
 import { FFmpegSession } from 'ffmpeg-kit-react-native';
 import { Paths } from 'expo-file-system';
 import * as FileSystem from 'expo-file-system/legacy';
+import {getConversionHistory} from '../history/conversionHistory';
 
 /**
  * ユニークなファイル名サフィックスを生成する。
@@ -73,9 +74,19 @@ export async function cleanupCachedTempFiles(): Promise<void> {
     if (!dirInfo.exists) return;
     const result = await FileSystem.readDirectoryAsync(cacheDir);
     const tempPattern = /_(compressed|gabigabi|converted)_|_passlog/;
+
+    // 変換履歴のoutputPathに含まれるファイルはスキップ（案C: #155）
+    const history = await getConversionHistory();
+    const historyFileNames = new Set(
+      history.map(item => {
+        const p = item.outputPath.startsWith('file://') ? item.outputPath.slice(7) : item.outputPath;
+        return p.split('/').pop() ?? '';
+      }).filter(Boolean),
+    );
+
     await Promise.all(
       result
-        .filter(name => tempPattern.test(name))
+        .filter(name => tempPattern.test(name) && !historyFileNames.has(name))
         .map(name => FileSystem.deleteAsync(cacheDir + name, { idempotent: true })),
     );
   } catch {
