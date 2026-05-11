@@ -21,6 +21,7 @@
     "expo-image-picker": "^16.1.4",
     "expo-media-library": "~17.1.6",
     "expo-notifications": "~0.32.12",
+    "expo-sharing": "^55.0.18",
     "expo-video-thumbnails": "~55.0.14",
     "ffmpeg-kit-react-native": "npm:@wokcito/ffmpeg-kit-react-native@^6.1.2",
     "react": "19.2.0",

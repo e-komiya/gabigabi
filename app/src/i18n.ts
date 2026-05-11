@@ -102,6 +102,7 @@ const DICT: Dict = {
   historyParamConvert: {ja: '{inputFmt} → {outputFmt}', en: '{inputFmt} → {outputFmt}'},
   historyParamTargetSize: {ja: '目標: {target} / 結果: {result}', en: 'Target: {target} / Result: {result}'},
   historyParamCompression: {ja: '圧縮率: {rate}% / {format}', en: 'Compression: {rate}% / {format}'},
+  shareHistoryItem: {ja: 'ファイルを共有', en: 'Share file'},
   filterAll: {ja: 'すべて', en: 'All'},
   gifFps: {ja: 'GIF フレームレート', en: 'GIF Frame Rate'},
   gifFpsSlider: {ja: 'GIF フレームレートスライダー', en: 'GIF frame rate slider'},

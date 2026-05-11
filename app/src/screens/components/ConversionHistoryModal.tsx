@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import {
   ConversionHistoryItem,
@@ -146,6 +147,17 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem; onDelete: (id: string)
       .catch(() => setFileExists(false));
   }, [item.outputPath]);
 
+  const handleShare = useCallback(async () => {
+    const path = item.outputPath.startsWith('file://') ? item.outputPath : `file://${item.outputPath}`;
+    try {
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) return;
+      await Sharing.shareAsync(path);
+    } catch {
+      // 共有に失敗した場合は無視
+    }
+  }, [item.outputPath]);
+
   const ratio = item.inputBytes > 0
     ? Math.round((item.outputBytes / item.inputBytes) * 100)
     : 0;
@@ -170,6 +182,15 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem; onDelete: (id: string)
                 accessibilityRole="button"
                 accessibilityLabel={t('deleteHistoryItemTitle')}>
                 <Text style={styles.deleteButtonText}>✕</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleShare}
+                disabled={fileExists !== true}
+                style={[styles.shareButton, fileExists !== true && styles.shareButtonDisabled]}
+                accessibilityRole="button"
+                accessibilityLabel={t('shareHistoryItem')}
+                accessibilityState={{disabled: fileExists !== true}}>
+                <Text style={[styles.shareButtonText, fileExists !== true && styles.shareButtonTextDisabled]}>↑</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -434,6 +455,27 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     lineHeight: 14,
+  },
+  shareButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#103a2a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 4,
+  },
+  shareButtonDisabled: {
+    backgroundColor: '#1e1e1e',
+  },
+  shareButtonText: {
+    color: '#4caf90',
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 15,
+  },
+  shareButtonTextDisabled: {
+    color: '#555',
   },
   itemDate: {
     fontSize: 12,
