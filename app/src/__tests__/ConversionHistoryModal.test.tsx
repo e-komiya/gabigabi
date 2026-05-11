@@ -15,6 +15,17 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
+jest.mock('expo-file-system/legacy', () => ({
+  getInfoAsync: jest.fn().mockResolvedValue({exists: true, isDirectory: false}),
+  deleteAsync: jest.fn().mockResolvedValue(undefined),
+  copyAsync: jest.fn().mockResolvedValue(undefined),
+  readAsStringAsync: jest.fn().mockResolvedValue(''),
+  writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
+  makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
+  documentDirectory: 'file:///document/',
+  cacheDirectory: 'file:///cache/',
+}));
+
 jest.mock('expo-video-thumbnails', () => ({
   getThumbnailAsync: jest.fn().mockResolvedValue({uri: 'file:///thumb.jpg'}),
 }));
@@ -222,6 +233,59 @@ describe('ビデオサムネイル', () => {
   });
 });
 
+
+describe('formatParams 表示ロジック (Issue #166)', () => {
+  it('gabigabi: level + resizePercent + outputFormat がすべて揃うと "Lv.X / Y% / format" で表示される', async () => {
+    const item: ConversionHistoryItem = {
+      id: 'gabi-full',
+      createdAt: '2026-04-01T10:00:00.000Z',
+      inputPath: 'file:///in/a.jpg',
+      outputPath: 'file:///out/a_out.jpeg',
+      inputBytes: 1024,
+      outputBytes: 512,
+      mediaType: 'image',
+      params: {action: 'gabigabi', gabigabiLevel: 4, resizePercent: 50, outputFormat: 'jpeg'},
+    };
+    const renderer = await createWithData([item]);
+    const json = JSON.stringify(renderer.toJSON());
+    expect(json).toContain('Lv.4');
+    expect(json).toContain('50%');
+    expect(json).toContain('jpeg');
+  });
+
+  it('convert: outputFormat が表示される', async () => {
+    const item: ConversionHistoryItem = {
+      id: 'conv-full',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      inputPath: 'file:///in/b.png',
+      outputPath: 'file:///out/b_out.webp',
+      inputBytes: 2048,
+      outputBytes: 1024,
+      mediaType: 'image',
+      params: {action: 'convert', outputFormat: 'webp'},
+    };
+    const renderer = await createWithData([item]);
+    const json = JSON.stringify(renderer.toJSON());
+    expect(json).toContain('webp');
+  });
+
+  it('targetSize: targetBytes から目標サイズ表示が正しい', async () => {
+    const item: ConversionHistoryItem = {
+      id: 'target-full',
+      createdAt: '2026-04-03T10:00:00.000Z',
+      inputPath: 'file:///in/c.jpg',
+      outputPath: 'file:///out/c_out.jpg',
+      inputBytes: 4096,
+      outputBytes: 102400,
+      mediaType: 'image',
+      params: {action: 'targetSize', targetBytes: 204800},
+    };
+    const renderer = await createWithData([item]);
+    const json = JSON.stringify(renderer.toJSON());
+    expect(json).toContain('目標:');
+    expect(json).toContain('結果:');
+  });
+});
 
 describe('フィルタータブ機能', () => {
   const gabiItem: ConversionHistoryItem = {
