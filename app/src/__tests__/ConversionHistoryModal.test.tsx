@@ -26,6 +26,11 @@ jest.mock('expo-file-system/legacy', () => ({
   cacheDirectory: 'file:///cache/',
 }));
 
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: jest.fn().mockResolvedValue(true),
+  shareAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('expo-video-thumbnails', () => ({
   getThumbnailAsync: jest.fn().mockResolvedValue({uri: 'file:///thumb.jpg'}),
 }));
@@ -390,5 +395,67 @@ describe('フィルタータブ機能', () => {
     const gabiTab2 = findFilterTab(renderer, 'Blocky');
     expect(allTab2!.props.accessibilityState?.selected).toBe(true);
     expect(gabiTab2!.props.accessibilityState?.selected).toBe(false);
+  });
+});
+
+describe('共有機能 (Issue #165)', () => {
+  const Sharing = require('expo-sharing');
+  const FileSystemMock = require('expo-file-system/legacy');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    Sharing.isAvailableAsync.mockResolvedValue(true);
+    Sharing.shareAsync.mockResolvedValue(undefined);
+    FileSystemMock.getInfoAsync.mockResolvedValue({exists: true, isDirectory: false});
+  });
+
+  it('ファイルが存在する場合、共有ボタンが有効である', async () => {
+    FileSystemMock.getInfoAsync.mockResolvedValue({exists: true, isDirectory: false});
+    const renderer = await createWithData([sampleItem]);
+    await ReactTestRenderer.act(async () => {});
+
+    const shareBtns = renderer.root.findAll(
+      (node: ReactTestRenderer.ReactTestInstance) =>
+        node.props.accessibilityRole === 'button' &&
+        (node.props.accessibilityLabel === 'Share file' || node.props.accessibilityLabel === 'ファイルを共有'),
+    );
+    expect(shareBtns.length).toBeGreaterThan(0);
+    expect(shareBtns[0].props.accessibilityState?.disabled).toBe(false);
+  });
+
+  it('ファイルが存在しない場合、共有ボタンが無効である', async () => {
+    FileSystemMock.getInfoAsync.mockResolvedValue({exists: false, isDirectory: false});
+    const renderer = await createWithData([sampleItem]);
+    await ReactTestRenderer.act(async () => {});
+
+    const shareBtns = renderer.root.findAll(
+      (node: ReactTestRenderer.ReactTestInstance) =>
+        node.props.accessibilityRole === 'button' &&
+        (node.props.accessibilityLabel === 'Share file' || node.props.accessibilityLabel === 'ファイルを共有'),
+    );
+    expect(shareBtns.length).toBeGreaterThan(0);
+    expect(shareBtns[0].props.accessibilityState?.disabled).toBe(true);
+  });
+
+  it('共有ボタンを押すと Sharing.shareAsync が呼ばれる', async () => {
+    FileSystemMock.getInfoAsync.mockResolvedValue({exists: true, isDirectory: false});
+    const renderer = await createWithData([sampleItem]);
+    await ReactTestRenderer.act(async () => {});
+
+    const shareBtns = renderer.root.findAll(
+      (node: ReactTestRenderer.ReactTestInstance) =>
+        node.props.accessibilityRole === 'button' &&
+        (node.props.accessibilityLabel === 'Share file' || node.props.accessibilityLabel === 'ファイルを共有'),
+    );
+    expect(shareBtns.length).toBeGreaterThan(0);
+
+    await ReactTestRenderer.act(async () => {
+      shareBtns[0].props.onPress?.();
+    });
+
+    expect(Sharing.shareAsync).toHaveBeenCalledWith(
+      expect.stringContaining('sample_out.jpg'),
+    );
   });
 });
