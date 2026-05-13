@@ -189,8 +189,14 @@ describe('ImageInfoBlock', () => {
           <BeforeInfoBlock fileInfo={sampleFileInfo} />,
         );
       });
+      // children が配列の場合（['📄 ', 'sample.jpg']）も考慮してフラット検索する
+      const containsText = (children: unknown, keyword: string): boolean => {
+        if (typeof children === 'string') return children.includes(keyword);
+        if (Array.isArray(children)) return children.some(c => containsText(c, keyword));
+        return false;
+      };
       const nameTexts = renderer!.root.findAll(
-        el => typeof el.props.children === 'string' && (el.props.children as string).includes('sample.jpg'),
+        el => containsText(el.props.children, 'sample.jpg'),
       );
       expect(nameTexts.length).toBeGreaterThan(0);
     });
@@ -242,8 +248,13 @@ describe('ImageInfoBlock', () => {
           />,
         );
       });
+      const containsText2 = (children: unknown, keyword: string): boolean => {
+        if (typeof children === 'string') return children.includes(keyword);
+        if (Array.isArray(children)) return children.some(c => containsText2(c, keyword));
+        return false;
+      };
       const nameTexts = renderer!.root.findAll(
-        el => typeof el.props.children === 'string' && (el.props.children as string).includes('output.webp'),
+        el => containsText2(el.props.children, 'output.webp'),
       );
       expect(nameTexts.length).toBeGreaterThan(0);
     });
@@ -263,8 +274,14 @@ describe('ImageInfoBlock', () => {
         );
       });
       // 1920 * 50 / 100 = 960, 1080 * 50 / 100 = 540
+      const containsText3 = (children: unknown, keyword: string): boolean => {
+        if (typeof children === 'string') return children.includes(keyword);
+        if (typeof children === 'number') return String(children).includes(keyword);
+        if (Array.isArray(children)) return children.some(c => containsText3(c, keyword));
+        return false;
+      };
       const sizeTexts = renderer!.root.findAll(
-        el => typeof el.props.children === 'string' && (el.props.children as string).includes('960'),
+        el => containsText3(el.props.children, '960'),
       );
       expect(sizeTexts.length).toBeGreaterThan(0);
     });
