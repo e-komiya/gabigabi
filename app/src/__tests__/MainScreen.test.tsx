@@ -20,6 +20,11 @@ jest.mock('expo-image-picker', () => ({
   MediaTypeOptions: { All: 'All', Images: 'Images', Videos: 'Videos' },
 }));
 
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: jest.fn().mockResolvedValue(true),
+  shareAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
 jest.mock('expo-file-system/legacy', () => ({
   getInfoAsync: jest.fn().mockResolvedValue({ exists: false, size: 0 }),
   readDirectoryAsync: jest.fn(),
