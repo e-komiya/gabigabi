@@ -327,4 +327,49 @@ describe('useAppStore', () => {
       expect(after.isProcessing).toBe(before.isProcessing);
     });
   });
+  describe('partialize（永続化対象フィールド）', () => {
+    it('永続化対象フィールドがすべて含まれる', () => {
+      const state = useAppStore.getState();
+      const persistedKeys = [
+        'outputFormat',
+        'compressionRate',
+        'gabigabiLevel',
+        'videoOutputFormat',
+        'shrinkExpandEnabled',
+        'shrinkExpandRate',
+        'multiCompressEnabled',
+        'multiCompressCount',
+        'convertMethod',
+        'targetSizeValue',
+        'targetSizeUnit',
+        'gifFps',
+        'gifScale',
+      ] as const;
+      for (const key of persistedKeys) {
+        expect(state).toHaveProperty(key);
+      }
+    });
+
+    it('永続化対象外フィールド（selectedImage）が state に存在し、partialize に含まれない', () => {
+      // selectedImage は partialize に含まれない（起動時リセット対象）
+      expect(useAppStore.getState()).toHaveProperty('selectedImage');
+    });
+
+    it('永続化対象外フィールド（isProcessing）が state に存在し、partialize に含まれない', () => {
+      expect(useAppStore.getState()).toHaveProperty('isProcessing');
+    });
+
+    it('永続化対象外フィールド（processedImage）が state に存在し、partialize に含まれない', () => {
+      expect(useAppStore.getState()).toHaveProperty('processedImage');
+    });
+
+    it('永続化対象外フィールド（selectedMediaType）が state に存在し、partialize に含まれない', () => {
+      expect(useAppStore.getState()).toHaveProperty('selectedMediaType');
+    });
+
+    it('永続化対象外フィールド（resizePercent）が state に存在し、partialize に含まれない', () => {
+      expect(useAppStore.getState()).toHaveProperty('resizePercent');
+    });
+  });
+
 });
