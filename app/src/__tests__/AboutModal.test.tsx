@@ -6,7 +6,7 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
-jest.mock('../../i18n', () => ({
+jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
 
