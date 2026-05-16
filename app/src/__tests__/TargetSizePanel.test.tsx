@@ -6,7 +6,7 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
-jest.mock('../../i18n', () => ({
+jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
 
@@ -75,5 +75,57 @@ describe('TargetSizePanel', () => {
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
+  });
+
+  it('MB ユニットボタンに accessibilityState={{selected: true}} が設定される', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <TargetSizePanel {...defaultProps} targetSizeUnit="MB" />,
+      );
+    });
+    const mbButton = renderer!.root.find(
+      el => el.props.accessibilityLabel === 'unitButtonAccessibility MB',
+    );
+    expect(mbButton.props.accessibilityState).toEqual({selected: true});
+  });
+
+  it('非選択の KB ユニットボタンに accessibilityState={{selected: false}} が設定される', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <TargetSizePanel {...defaultProps} targetSizeUnit="MB" />,
+      );
+    });
+    const kbButton = renderer!.root.find(
+      el => el.props.accessibilityLabel === 'unitButtonAccessibility KB',
+    );
+    expect(kbButton.props.accessibilityState).toEqual({selected: false});
+  });
+
+  it('TextInput に accessibilityLabel が設定される', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <TargetSizePanel {...defaultProps} />,
+      );
+    });
+    const input = renderer!.root.find(
+      el => el.props.accessibilityLabel === 'targetSizeInputAccessibility',
+    );
+    expect(input).toBeTruthy();
+  });
+
+  it('テンプレートボタンに accessibilityRole="button" が設定される', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <TargetSizePanel {...defaultProps} />,
+      );
+    });
+    const discordBtn = renderer!.root.find(
+      el => el.props.accessibilityLabel === 'templateButtonAccessibility Discord 10MB',
+    );
+    expect(discordBtn.props.accessibilityRole).toBe('button');
   });
 });

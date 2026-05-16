@@ -40,13 +40,18 @@ const TargetSizePanel: React.FC<TargetSizePanelProps> = ({
           keyboardType="numeric"
           placeholder="0.0"
           placeholderTextColor="#666"
+          accessibilityLabel={t('targetSizeInputAccessibility')}
+          accessibilityHint={t('targetSizeInputHint')}
         />
         <View style={styles.unitButtons}>
           {(['KB', 'MB', 'GB'] as SizeUnit[]).map(u => (
             <TouchableOpacity
               key={u}
               style={[styles.unitButton, targetSizeUnit === u && styles.unitButtonActive]}
-              onPress={() => onUnitChange(u)}>
+              onPress={() => onUnitChange(u)}
+              accessibilityRole="button"
+              accessibilityLabel={`${t('unitButtonAccessibility')} ${u}`}
+              accessibilityState={{selected: targetSizeUnit === u}}>
               <Text style={[styles.unitButtonText, targetSizeUnit === u && styles.unitButtonTextActive]}>{u}</Text>
             </TouchableOpacity>
           ))}
@@ -59,7 +64,9 @@ const TargetSizePanel: React.FC<TargetSizePanelProps> = ({
           <TouchableOpacity
             key={tmpl.label}
             style={styles.targetSizeTemplate}
-            onPress={() => handleTemplateSelect(tmpl)}>
+            onPress={() => handleTemplateSelect(tmpl)}
+            accessibilityRole="button"
+            accessibilityLabel={`${t('templateButtonAccessibility')} ${tmpl.label}`}>
             <Text style={styles.targetSizeTemplateText}>{tmpl.label}</Text>
           </TouchableOpacity>
         ))}
