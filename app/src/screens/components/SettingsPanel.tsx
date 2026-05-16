@@ -144,7 +144,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   sharedStyles.formatButton,
                   videoOutputFormat === opt.value && sharedStyles.formatButtonActive,
                 ]}
-                onPress={() => onVideoOutputFormatChange(opt.value)}>
+                onPress={() => onVideoOutputFormatChange(opt.value)}
+                accessibilityRole="button"
+                accessibilityLabel={`${t('outputFormatAccessibility')} ${opt.label}`}
+                accessibilityState={{selected: videoOutputFormat === opt.value}}>
                 <Text
                   style={[
                     sharedStyles.formatButtonText,
@@ -172,7 +175,8 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 ]}
                 onPress={() => onOutputFormatChange(opt.value)}
                 accessibilityRole="button"
-                accessibilityLabel={`${t('outputFormatAccessibility')} ${opt.label}`}>
+                accessibilityLabel={`${t('outputFormatAccessibility')} ${opt.label}`}
+                accessibilityState={{selected: outputFormat === opt.value}}>
                 <Text
                   style={[
                     sharedStyles.formatButtonText,

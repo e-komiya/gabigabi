@@ -6,7 +6,7 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
-jest.mock('../../i18n', () => ({
+jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
 
@@ -101,5 +101,44 @@ describe('SettingsPanel', () => {
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
+  });
+
+  it('選択中の出力フォーマットボタンに accessibilityState={{selected: true}} が設定される', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <SettingsPanel {...defaultProps} selectedMediaType="image" outputFormat="png" />,
+      );
+    });
+    const pngButton = renderer!.root.find(
+      el => el.props.accessibilityLabel === 'outputFormatAccessibility PNG',
+    );
+    expect(pngButton.props.accessibilityState).toEqual({selected: true});
+  });
+
+  it('非選択の出力フォーマットボタンに accessibilityState={{selected: false}} が設定される', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <SettingsPanel {...defaultProps} selectedMediaType="image" outputFormat="png" />,
+      );
+    });
+    const jpegButton = renderer!.root.find(
+      el => el.props.accessibilityLabel === 'outputFormatAccessibility JPEG',
+    );
+    expect(jpegButton.props.accessibilityState).toEqual({selected: false});
+  });
+
+  it('選択中の動画フォーマットボタンに accessibilityState={{selected: true}} が設定される', async () => {
+    let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+    await ReactTestRenderer.act(() => {
+      renderer = ReactTestRenderer.create(
+        <SettingsPanel {...defaultProps} selectedMediaType="video" videoOutputFormat="mov" />,
+      );
+    });
+    const movButton = renderer!.root.find(
+      el => el.props.accessibilityLabel === 'outputFormatAccessibility MOV',
+    );
+    expect(movButton.props.accessibilityState).toEqual({selected: true});
   });
 });
