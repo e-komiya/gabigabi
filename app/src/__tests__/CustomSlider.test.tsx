@@ -42,6 +42,51 @@ describe('CustomSlider', () => {
       expect(container.length).toBeGreaterThan(0);
     });
 
+    it('accessibilityValue に min/max/now が反映される', async () => {
+      let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+      await ReactTestRenderer.act(() => {
+        renderer = ReactTestRenderer.create(
+          <CustomSlider
+            minimumValue={0}
+            maximumValue={200}
+            value={75}
+            onValueChange={jest.fn()}
+          />,
+        );
+      });
+      const instance = renderer!.root;
+      const el = instance.find(e => e.props.accessibilityRole === 'adjustable');
+      expect(el.props.accessibilityValue).toEqual({min: 0, max: 200, now: 75});
+    });
+
+    it('値が変更されると accessibilityValue.now が更新される', async () => {
+      let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
+      const onValueChange = jest.fn();
+      await ReactTestRenderer.act(() => {
+        renderer = ReactTestRenderer.create(
+          <CustomSlider
+            minimumValue={0}
+            maximumValue={100}
+            value={30}
+            onValueChange={onValueChange}
+          />,
+        );
+      });
+      await ReactTestRenderer.act(() => {
+        renderer!.update(
+          <CustomSlider
+            minimumValue={0}
+            maximumValue={100}
+            value={80}
+            onValueChange={onValueChange}
+          />,
+        );
+      });
+      const instance = renderer!.root;
+      const el = instance.find(e => e.props.accessibilityRole === 'adjustable');
+      expect(el.props.accessibilityValue).toEqual({min: 0, max: 100, now: 80});
+    });
+
     it('accessibilityLabel が props から反映される', async () => {
       const label = 'リサイズスライダー';
       let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
