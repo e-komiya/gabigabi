@@ -86,6 +86,7 @@ const CustomSlider: React.FC<CustomSliderProps> = ({
       accessibilityRole="adjustable"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
+      accessibilityValue={{min: minimumValue, max: maximumValue, now: value}}
       {...panResponder.panHandlers}>
       <View style={styles.track}>
         <View style={[styles.trackFill, {flex: ratio, backgroundColor: minimumTrackTintColor}]} />
