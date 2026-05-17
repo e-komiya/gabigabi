@@ -1,4 +1,4 @@
-import { compressForDiscord, compressToTargetSize } from '../data/ffmpeg/FfmpegCompressor';
+import { compressForDiscord, compressToTargetSize, resetH264CodecCache } from '../data/ffmpeg/FfmpegCompressor';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -46,6 +46,9 @@ jest.mock('../data/ffmpeg/ffmpegUtils', () => ({
     path: `/cache/${stem}_${suffix}`,
   })),
   getFileSizeBytes: jest.fn().mockImplementation((info: { size?: number }) => info?.size ?? 0),
+  buildFfmpegCommand: jest.fn().mockImplementation((parts: Array<string | number | null | undefined>) =>
+    parts.filter((p) => p != null).join(' ')
+  ),
 }));
 
 // ---------------------------------------------------------------------------
@@ -69,6 +72,9 @@ function setupSuccessSession() {
     path: `/cache/${stem}_${suffix}`,
   }));
   ffmpegUtils.getFileSizeBytes.mockImplementation((info: { size?: number }) => info?.size ?? 0);
+  ffmpegUtils.buildFfmpegCommand.mockImplementation((parts: Array<string | number | null | undefined>) =>
+    parts.filter((p) => p != null).join(' ')
+  );
   ReturnCode.isSuccess.mockReturnValue(true);
   mockGetReturnCode.mockResolvedValue({});
   mockExecute.mockResolvedValue({
@@ -184,6 +190,7 @@ describe('compressForDiscord (image)', () => {
 describe('compressForDiscord (video)', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    resetH264CodecCache();
     mockReadDirectoryAsync.mockResolvedValue([]);
     mockDeleteAsync.mockResolvedValue(undefined);
     setupSuccessSession();
@@ -269,11 +276,10 @@ describe('compressForDiscord (video)', () => {
     });
 
     mockGetInfoAsync
-      .mockResolvedValueOnce({ exists: true, size: 50 * 1024 * 1024 })
-      .mockResolvedValueOnce({ exists: true })
-      .mockResolvedValueOnce({ exists: true, size: 20 * 1024 * 1024 })
-      .mockResolvedValueOnce({ exists: true, size: 18 * 1024 * 1024 })
-      .mockResolvedValueOnce({ exists: true, size: 9 * 1024 * 1024 });
+      .mockResolvedValueOnce({ exists: true, size: 50 * 1024 * 1024 })  // 1. input
+      .mockResolvedValueOnce({ exists: true, size: 20 * 1024 * 1024 }) // 2. CRF出力（目標超過→2パスへ）
+      .mockResolvedValueOnce({ exists: true, size: 18 * 1024 * 1024 }) // 3. 2パス後出力（目標超過→リトライ）
+      .mockResolvedValueOnce({ exists: true, size: 9 * 1024 * 1024 });  // 4. リトライ後出力（目標以下）
 
     await compressToTargetSize('file:///videos/clip.mp4', target);
 
@@ -294,6 +300,7 @@ describe('compressForDiscord (video)', () => {
 describe('compressToTargetSize', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    resetH264CodecCache();
     mockReadDirectoryAsync.mockResolvedValue([]);
     mockDeleteAsync.mockResolvedValue(undefined);
     setupSuccessSession();

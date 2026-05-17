@@ -30,7 +30,16 @@ jest.mock('expo-file-system/legacy', () => ({
   deleteAsync: jest.fn(),
 }));
 
-describe('generateUniqueFileSuffix', () => {
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  getItem: jest.fn().mockResolvedValue(null),
+  setItem: jest.fn().mockResolvedValue(undefined),
+  removeItem: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('../data/history/conversionHistory', () => ({
+  getConversionHistory: jest.fn().mockResolvedValue([]),
+}));
+('generateUniqueFileSuffix', () => {
   it('returns a non-empty string', () => {
     const suffix = generateUniqueFileSuffix();
     expect(typeof suffix).toBe('string');
