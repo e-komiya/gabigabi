@@ -444,3 +444,6 @@ export async function compressToTargetSize(
   }
 }
 
+
+/** @internal テスト用 — コーデックキャッシュをリセットする */
+export function resetH264CodecCache(): void { cachedH264Codec = null; }
