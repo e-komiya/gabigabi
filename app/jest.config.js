@@ -1,4 +1,5 @@
 module.exports = {
+  testTimeout: 15000,
   projects: [
     {
       displayName: 'unit',
@@ -7,7 +8,6 @@ module.exports = {
         'node_modules/(?!(react-native|@react-native|expo|expo-notifications|expo-modules-core|expo-image-picker|expo-media-library|expo-file-system|expo-clipboard|react-native-svg|react-native-share|react-native-safe-area-context|@testing-library|@react-navigation)/)',
       ],
       testMatch: ['<rootDir>/__tests__/**/*.test.{ts,tsx}', '<rootDir>/src/__tests__/**/*.test.{ts,tsx}'],
-      testTimeout: 15000,
     },
     {
       displayName: 'integration',

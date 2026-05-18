@@ -38,23 +38,24 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   multiSet: jest.fn(),
 }));
 
-jest.mock('react-native-svg', () => {
-  const React = require('react');
+jest.mock('react-native-svg', () => ({
+  Svg: 'Svg',
+  Path: 'Path',
+}));
+
+jest.mock('@react-navigation/native', () => {
+  const mockReact = require('react');
   return {
-    Svg: (props: any) => React.createElement('Svg', props),
-    Path: (props: any) => React.createElement('Path', props),
+    NavigationContainer: ({children}: {children: mockReact.ReactNode}) =>
+      children,
+    useNavigation: jest.fn(),
   };
 });
 
-jest.mock('@react-navigation/native', () => ({
-  NavigationContainer: ({children}: any) => children,
-  useNavigation: jest.fn(),
-}));
-
 jest.mock('@react-navigation/native-stack', () => ({
   createNativeStackNavigator: () => ({
-    Navigator: ({children}: any) => children,
-    Screen: ({component: Component}: any) => React.createElement(Component),
+    Navigator: ({children}: {children: any}) => children,
+    Screen: () => null,
   }),
 }));
 
