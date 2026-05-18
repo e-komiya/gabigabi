@@ -6,7 +6,7 @@ module.exports = {
       displayName: 'unit',
       preset: 'react-native',
       transformIgnorePatterns: [
-        'node_modules/(?!(react-native|@react-native|expo|expo-notifications|expo-modules-core|expo-image-picker|expo-media-library|expo-file-system|expo-clipboard|react-native-svg|react-native-share|react-native-safe-area-context|@testing-library|@react-navigation)/)',
+        'node_modules/(?!(react-native|@react-native|expo|expo-notifications|expo-modules-core|expo-image-picker|expo-media-library|expo-file-system|expo-clipboard|react-native-svg|react-native-share|react-native-safe-area-context|@testing-library|@react-navigation|ffmpeg-kit-react-native)/)',
       ],
       testMatch: ['<rootDir>/__tests__/**/*.test.{ts,tsx}', '<rootDir>/src/__tests__/**/*.test.{ts,tsx}'],
     },

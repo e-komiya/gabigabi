@@ -76,6 +76,18 @@ jest.mock('expo-modules-core', () => ({
   requireOptionalNativeModule: jest.fn(),
 }));
 
+jest.mock('ffmpeg-kit-react-native', () => ({
+  FFmpegKit: {
+    executeAsync: jest.fn().mockResolvedValue({getReturnCode: jest.fn()}),
+    cancel: jest.fn(),
+  },
+  ReturnCode: {
+    isSuccess: jest.fn().mockReturnValue(true),
+    isCancel: jest.fn().mockReturnValue(false),
+    getValue: jest.fn().mockReturnValue(0),
+  },
+}));
+
 import App from '../App';
 
 test('renders correctly', async () => {
