@@ -59,6 +59,23 @@ jest.mock('@react-navigation/native-stack', () => ({
   }),
 }));
 
+jest.mock('expo-clipboard', () => ({
+  setStringAsync: jest.fn(),
+  getStringAsync: jest.fn().mockResolvedValue(''),
+  setString: jest.fn(),
+  getString: jest.fn().mockReturnValue(''),
+}));
+
+jest.mock('expo-modules-core', () => ({
+  EventEmitter: class {
+    addListener() { return {remove: () => {}}; }
+    removeAllListeners() {}
+  },
+  NativeModulesProxy: {},
+  requireNativeModule: jest.fn(),
+  requireOptionalNativeModule: jest.fn(),
+}));
+
 import App from '../App';
 
 test('renders correctly', async () => {
