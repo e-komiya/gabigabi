@@ -6,11 +6,15 @@ import {useSaveFeedback} from '../hooks/useSaveFeedback';
 jest.useFakeTimers();
 
 describe('useSaveFeedback', () => {
+  let sequenceCallback: Animated.EndCallback | undefined;
+
   beforeEach(() => {
     jest.clearAllTimers();
-    jest.spyOn(Animated, 'sequence').mockImplementation(animations => ({
+    sequenceCallback = undefined;
+    jest.spyOn(Animated, 'sequence').mockImplementation(_animations => ({
       start: (callback?: Animated.EndCallback) => {
-        if (callback) callback({finished: true});
+        // コールバックを保持するが即時呼ばない（アニメーション中を模倣）
+        sequenceCallback = callback;
       },
       reset: () => {},
       stop: () => {},
@@ -54,12 +58,15 @@ describe('useSaveFeedback', () => {
     act(() => {
       result.current.showSaveFeedback('テストメッセージ');
     });
-    // Animated.sequence のモックがコールバックを即時呼ぶため null にリセットされる
+    expect(result.current.saveMessage).toBe('テストメッセージ');
+    // アニメーション完了コールバックを手動で呼ぶ
+    act(() => {
+      if (sequenceCallback) sequenceCallback({finished: true});
+    });
     expect(result.current.saveMessage).toBeNull();
   });
 
   it('showSaveFeedback を複数回呼んでも最後のメッセージが設定されること', () => {
-    // アニメーションが即時完了するモックなので最後は null になる
     const {result} = renderHook(() => useSaveFeedback());
     act(() => {
       result.current.showSaveFeedback('最初');
@@ -67,6 +74,6 @@ describe('useSaveFeedback', () => {
     act(() => {
       result.current.showSaveFeedback('次のメッセージ');
     });
-    expect(result.current.saveMessage).toBeNull();
+    expect(result.current.saveMessage).toBe('次のメッセージ');
   });
 });

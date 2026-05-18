@@ -1,8 +1,8 @@
-name: Jest Integration Tests
+name: Jest Tests
 
 on:
   push:
-    branches: [master, main, 'feature/**', 'fix/**']
+    branches: [master, main, 'feature/**', 'fix/**', 'feat/**']
   pull_request:
     branches: [master, main]
 
@@ -27,6 +27,10 @@ jobs:
         working-directory: app
         run: npm ci
 
-      - name: Run Jest tests
+      - name: Run unit tests
         working-directory: app
-        run: npx jest --ci src/__tests__/integration.test.ts
+        run: npx jest --ci --selectProjects unit
+
+      - name: Run integration tests
+        working-directory: app
+        run: npx jest --ci --selectProjects integration
