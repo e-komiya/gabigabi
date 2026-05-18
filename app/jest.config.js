@@ -1,5 +1,6 @@
 module.exports = {
   testTimeout: 15000,
+  setupFiles: ['./jest.setup.js'],
   projects: [
     {
       displayName: 'unit',
