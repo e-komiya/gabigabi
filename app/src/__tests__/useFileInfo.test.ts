@@ -1,14 +1,29 @@
 import {renderHook, act} from '@testing-library/react-native';
 import {Image} from 'react-native';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File } from 'expo-file-system';
 import {FFprobeKit} from 'ffmpeg-kit-react-native';
 import {useFileInfo} from '../hooks/useFileInfo';
 import * as ffmpegUtils from '../data/ffmpeg/ffmpegUtils';
 
 // モック設定
-jest.mock('expo-file-system/legacy', () => ({
-  getInfoAsync: jest.fn(),
-}));
+jest.mock('expo-file-system', () => {
+  class MockFile {
+    exists: boolean = true;
+    size: number = 1024;
+    constructor(uri: string) {}
+    delete() {}
+    move(dest: any) {}
+  }
+  return {
+    Paths: { cache: { uri: 'file:///cache/' }, join: (...args: string[]) => args.join('/') },
+    File: MockFile,
+    Directory: class {
+      exists = true;
+      constructor() {}
+      list() { return []; }
+    },
+  };
+});
 
 jest.mock('ffmpeg-kit-react-native', () => ({
   FFprobeKit: {
@@ -20,7 +35,6 @@ jest.mock('../data/ffmpeg/ffmpegUtils', () => ({
   getFileSizeBytes: jest.fn(),
 }));
 
-const mockedGetInfoAsync = FileSystem.getInfoAsync as jest.Mock;
 const mockedGetFileSizeBytes = ffmpegUtils.getFileSizeBytes as jest.Mock;
 const mockedFFprobeKit = FFprobeKit.execute as jest.Mock;
 
@@ -42,7 +56,6 @@ describe('useFileInfo', () => {
   });
 
   it('画像ファイルのとき Image.getSize が呼ばれ正しい fileInfo が返ること', async () => {
-    mockedGetInfoAsync.mockResolvedValue({exists: true, size: 512 * 1024});
     mockedGetFileSizeBytes.mockReturnValue(512 * 1024);
     getSizeSpy.mockImplementation(
       (_uri: string, success: (w: number, h: number) => void) => {
@@ -72,7 +85,6 @@ describe('useFileInfo', () => {
   });
 
   it('動画ファイルのとき FFprobeKit.execute が呼ばれ width/height が取得されること', async () => {
-    mockedGetInfoAsync.mockResolvedValue({exists: true, size: 2 * 1024 * 1024});
     mockedGetFileSizeBytes.mockReturnValue(2 * 1024 * 1024);
     const mockSession = {
       getOutput: jest.fn().mockResolvedValue(
@@ -104,7 +116,6 @@ describe('useFileInfo', () => {
 
   it('ファイルサイズが 1MB 以上のとき MB 表示になること', async () => {
     const bytes = 1.5 * 1024 * 1024;
-    mockedGetInfoAsync.mockResolvedValue({exists: true, size: bytes});
     mockedGetFileSizeBytes.mockReturnValue(bytes);
     getSizeSpy.mockImplementation(
       (_uri: string, success: (w: number, h: number) => void) => {
@@ -125,7 +136,6 @@ describe('useFileInfo', () => {
 
   it('ファイルサイズが 1MB 未満のとき KB 表示になること', async () => {
     const bytes = 256 * 1024;
-    mockedGetInfoAsync.mockResolvedValue({exists: true, size: bytes});
     mockedGetFileSizeBytes.mockReturnValue(bytes);
     getSizeSpy.mockImplementation(
       (_uri: string, success: (w: number, h: number) => void) => {
@@ -146,7 +156,6 @@ describe('useFileInfo', () => {
 
   it('アンマウント時にキャンセルフラグが立ち state 更新が行われないこと', async () => {
     let resolveGetSize: (w: number, h: number) => void = () => {};
-    mockedGetInfoAsync.mockResolvedValue({exists: true, size: 100 * 1024});
     mockedGetFileSizeBytes.mockReturnValue(100 * 1024);
     getSizeSpy.mockImplementation(
       (_uri: string, success: (w: number, h: number) => void) => {

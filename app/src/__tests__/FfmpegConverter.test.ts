@@ -14,24 +14,35 @@ jest.mock('ffmpeg-kit-react-native', () => ({
   },
 }));
 
-const mockGetInfoAsync = jest.fn();
-const mockDeleteAsync = jest.fn().mockResolvedValue(undefined);
+// Per-URI file info store for the File mock
+const mockFileInfoMap = new Map<string, { exists: boolean; size: number }>();
+const mockFileDelete = jest.fn();
 
-jest.mock('expo-file-system/legacy', () => ({
-  getInfoAsync: (...args: unknown[]) => mockGetInfoAsync(...args),
-  deleteAsync: (...args: unknown[]) => mockDeleteAsync(...args),
-}));
+jest.mock('expo-file-system', () => {
+  class MockFile {
+    _uri: string;
+    constructor(uri: string) { this._uri = uri; }
+    get exists() { return mockFileInfoMap.get(this._uri)?.exists ?? true; }
+    get size() { return mockFileInfoMap.get(this._uri)?.size ?? 0; }
+    delete() { mockFileDelete(this._uri); }
+    move(_dest: unknown) {}
+  }
+  return { File: MockFile };
+});
+
+const mockGetFileSizeBytes = jest.fn().mockReturnValue(0);
 
 jest.mock('../data/ffmpeg/ffmpegUtils', () => ({
   buildFfmpegCommand: jest.fn().mockImplementation((args: string[]) => args.filter(Boolean).join(' ')),
   generateUniqueFileSuffix: jest.fn().mockReturnValue('12345_abc'),
   extractErrorFromLogs: jest.fn().mockResolvedValue('mock logs'),
   getCacheDir: jest.fn().mockReturnValue('file:///cache/'),
-  getFileSizeBytes: jest.fn().mockImplementation((info: { size?: number }) => info?.size ?? 0),
+  getFileSizeBytes: (...args: unknown[]) => mockGetFileSizeBytes(...args),
 }));
 
 function setupSuccessSession() {
   const { ReturnCode } = jest.requireMock('ffmpeg-kit-react-native');
+  const ffmpegUtils = jest.requireMock('../data/ffmpeg/ffmpegUtils');
   ReturnCode.isSuccess.mockReturnValue(true);
   mockGetReturnCode.mockResolvedValue({});
   mockExecute.mockResolvedValue({
@@ -39,24 +50,27 @@ function setupSuccessSession() {
     getAllLogsAsString: mockGetAllLogsAsString,
     getOutput: mockGetOutput,
   });
+  ffmpegUtils.buildFfmpegCommand.mockImplementation((args: string[]) => args.filter(Boolean).join(' '));
+  ffmpegUtils.generateUniqueFileSuffix.mockReturnValue('12345_abc');
+  ffmpegUtils.extractErrorFromLogs.mockResolvedValue('mock logs');
+  ffmpegUtils.getCacheDir.mockReturnValue('file:///cache/');
 }
 
 describe('convertImage', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    mockFileInfoMap.clear();
+    mockGetFileSizeBytes.mockReturnValue(500);
     const ffmpegUtils = jest.requireMock('../data/ffmpeg/ffmpegUtils');
     ffmpegUtils.buildFfmpegCommand.mockImplementation((args: string[]) => args.filter(Boolean).join(' '));
     ffmpegUtils.generateUniqueFileSuffix.mockReturnValue('12345_abc');
     ffmpegUtils.extractErrorFromLogs.mockResolvedValue('mock logs');
     ffmpegUtils.getCacheDir.mockReturnValue('file:///cache/');
-    ffmpegUtils.getFileSizeBytes.mockImplementation((info: { size?: number }) => info?.size ?? 0);
     setupSuccessSession();
   });
 
   it('JPEG変換時に -q:v を使う', async () => {
-    mockGetInfoAsync
-      .mockResolvedValueOnce({ exists: true, size: 1000 })
-      .mockResolvedValueOnce({ exists: true, size: 500 });
+    mockGetFileSizeBytes.mockReturnValueOnce(1000).mockReturnValue(500);
 
     const result = await convertImage('file:///photos/in.png', { outputFormat: 'jpeg', quality: 99 });
 
@@ -65,9 +79,7 @@ describe('convertImage', () => {
   });
 
   it('PNG変換時に -compression_level 6 を使う', async () => {
-    mockGetInfoAsync
-      .mockResolvedValueOnce({ exists: true, size: 1000 })
-      .mockResolvedValueOnce({ exists: true, size: 900 });
+    mockGetFileSizeBytes.mockReturnValueOnce(1000).mockReturnValue(900);
 
     await convertImage('file:///photos/in.jpg', { outputFormat: 'png' });
 
@@ -80,9 +92,7 @@ describe('convertImage', () => {
     { format: 'webp', expectedExt: '.webp', qualityArg: '-quality' },
     { format: 'bmp', expectedExt: '.bmp', qualityArg: '' },
   ])('主要フォーマット変換を網羅できる: $format', async ({ format, expectedExt, qualityArg }) => {
-    mockGetInfoAsync
-      .mockResolvedValueOnce({ exists: true, size: 1000 })
-      .mockResolvedValueOnce({ exists: true, size: 600 });
+    mockGetFileSizeBytes.mockReturnValueOnce(1000).mockReturnValue(600);
 
     const result = await convertImage('file:///photos/input.png', { outputFormat: format as 'jpeg' | 'png' | 'webp' | 'bmp' });
     const cmd = mockExecute.mock.calls[0][0] as string;
@@ -94,9 +104,7 @@ describe('convertImage', () => {
   });
 
   it('GIF変換時に2パス実行しパレットを削除する', async () => {
-    mockGetInfoAsync
-      .mockResolvedValueOnce({ exists: true, size: 1000 })
-      .mockResolvedValueOnce({ exists: true, size: 700 });
+    mockGetFileSizeBytes.mockReturnValueOnce(1000).mockReturnValue(700);
 
     const result = await convertImage('file:///photos/in.mp4', { outputFormat: 'gif' });
 
@@ -104,14 +112,13 @@ describe('convertImage', () => {
     expect(mockExecute.mock.calls[0][0]).toContain('fps=10');
     expect(mockExecute.mock.calls[0][0]).toContain('palettegen');
     expect(mockExecute.mock.calls[1][0]).toContain('paletteuse');
-    expect(mockDeleteAsync).toHaveBeenCalledWith('file:///cache/in_converted_12345_abc.gif.palette.png', { idempotent: true });
+    // palette file deletion: new File(`file:///cache/in_converted_12345_abc.gif.palette.png`).delete()
+    expect(mockFileDelete).toHaveBeenCalledWith('file:///cache/in_converted_12345_abc.gif.palette.png');
     expect(result.outputUri).toMatch(/\.gif$/);
   });
 
   it('GIF変換時にfpsとscaleオプションを反映する', async () => {
-    mockGetInfoAsync
-      .mockResolvedValueOnce({ exists: true, size: 1000 })
-      .mockResolvedValueOnce({ exists: true, size: 650 });
+    mockGetFileSizeBytes.mockReturnValueOnce(1000).mockReturnValue(650);
 
     await convertImage('file:///photos/in.mp4', { outputFormat: 'gif', gifFps: 15, gifScale: 50 });
 
@@ -122,22 +129,22 @@ describe('convertImage', () => {
   });
 
   it('入力ファイルが存在しない場合はエラー', async () => {
-    mockGetInfoAsync.mockResolvedValueOnce({ exists: false });
+    mockFileInfoMap.set('file:///photos/in.jpg', { exists: false, size: 0 });
     await expect(convertImage('file:///photos/in.jpg', { outputFormat: 'webp' })).rejects.toThrow('入力ファイルが存在しません');
   });
 
   it('入力ファイルが0バイトの場合はエラー', async () => {
-    mockGetInfoAsync.mockResolvedValueOnce({ exists: true, size: 0 });
+    mockGetFileSizeBytes.mockReturnValue(0);
     await expect(convertImage('file:///photos/in.jpg', { outputFormat: 'webp' })).rejects.toThrow('入力ファイルが空（0バイト）です');
   });
 
   it('FFmpeg失敗時に出力を削除してエラー', async () => {
     const { ReturnCode } = jest.requireMock('ffmpeg-kit-react-native');
     ReturnCode.isSuccess.mockReturnValue(false);
-    mockGetInfoAsync.mockResolvedValueOnce({ exists: true, size: 1000 });
+    mockGetFileSizeBytes.mockReturnValueOnce(1000).mockReturnValue(0);
 
     await expect(convertImage('file:///photos/in.jpg', { outputFormat: 'webp' })).rejects.toThrow('FFmpegフォーマット変換に失敗しました');
-    expect(mockDeleteAsync).toHaveBeenCalledWith('file:///cache/in_converted_12345_abc.webp', { idempotent: true });
+    expect(mockFileDelete).toHaveBeenCalledWith('file:///cache/in_converted_12345_abc.webp');
   });
 
   it.each([
@@ -146,9 +153,7 @@ describe('convertImage', () => {
     { outputFormat: 'webp' as const, expectedExt: '.webp', expectedArg: '-quality' },
     { outputFormat: 'bmp' as const, expectedExt: '.bmp', expectedArg: '-frames:v 1' },
   ])('主要フォーマット変換($outputFormat)で拡張子とコマンドが一致する', async ({ outputFormat, expectedExt, expectedArg }) => {
-    mockGetInfoAsync
-      .mockResolvedValueOnce({ exists: true, size: 1200 })
-      .mockResolvedValueOnce({ exists: true, size: 640 });
+    mockGetFileSizeBytes.mockReturnValueOnce(1200).mockReturnValue(640);
 
     const result = await convertImage('file:///photos/input.png', { outputFormat, quality: 50 });
 
@@ -157,9 +162,7 @@ describe('convertImage', () => {
   });
 
   it('GIF変換で出力拡張子と2-pass経路が一致する', async () => {
-    mockGetInfoAsync
-      .mockResolvedValueOnce({ exists: true, size: 2000 })
-      .mockResolvedValueOnce({ exists: true, size: 800 });
+    mockGetFileSizeBytes.mockReturnValueOnce(2000).mockReturnValue(800);
 
     const result = await convertImage('file:///photos/anim.webp', { outputFormat: 'gif' });
 
@@ -172,14 +175,13 @@ describe('convertImage', () => {
   it('BMP変換: FFmpeg失敗時に出力を削除してエラーをスローする', async () => {
     const { ReturnCode } = jest.requireMock('ffmpeg-kit-react-native');
     ReturnCode.isSuccess.mockReturnValue(false);
-    mockGetInfoAsync.mockResolvedValueOnce({ exists: true, size: 1000 });
+    mockGetFileSizeBytes.mockReturnValueOnce(1000).mockReturnValue(0);
 
     await expect(
       convertImage('file:///photos/in.jpg', { outputFormat: 'bmp' })
     ).rejects.toThrow('FFmpegフォーマット変換に失敗しました');
-    expect(mockDeleteAsync).toHaveBeenCalledWith(
-      'file:///cache/in_converted_12345_abc.bmp',
-      { idempotent: true }
+    expect(mockFileDelete).toHaveBeenCalledWith(
+      'file:///cache/in_converted_12345_abc.bmp'
     );
   });
 
@@ -187,15 +189,14 @@ describe('convertImage', () => {
     const { ReturnCode } = jest.requireMock('ffmpeg-kit-react-native');
     // pass1 失敗、pass2 は呼ばれない
     ReturnCode.isSuccess.mockReturnValueOnce(false);
-    mockGetInfoAsync.mockResolvedValueOnce({ exists: true, size: 1000 });
+    mockGetFileSizeBytes.mockReturnValueOnce(1000);
 
     await expect(
       convertImage('file:///photos/in.mp4', { outputFormat: 'gif' })
     ).rejects.toThrow('GIF パレット生成に失敗しました');
     // finally ブロックでパレットファイルが削除されること
-    expect(mockDeleteAsync).toHaveBeenCalledWith(
-      'file:///cache/in_converted_12345_abc.gif.palette.png',
-      { idempotent: true }
+    expect(mockFileDelete).toHaveBeenCalledWith(
+      'file:///cache/in_converted_12345_abc.gif.palette.png'
     );
     // pass2 は実行されないこと
     expect(mockExecute).toHaveBeenCalledTimes(1);
@@ -208,17 +209,14 @@ describe('convertImage', () => {
 
     for (const fmt of formats) {
       jest.resetAllMocks();
+      mockFileInfoMap.clear();
       const ffmpegUtils = jest.requireMock('../data/ffmpeg/ffmpegUtils');
       ffmpegUtils.buildFfmpegCommand.mockImplementation((args: string[]) => args.filter(Boolean).join(' '));
       ffmpegUtils.generateUniqueFileSuffix.mockReturnValue('12345_abc');
       ffmpegUtils.extractErrorFromLogs.mockResolvedValue('mock logs');
       ffmpegUtils.getCacheDir.mockReturnValue('file:///cache/');
-      ffmpegUtils.getFileSizeBytes.mockImplementation((info: { size?: number }) => info?.size ?? 0);
+      mockGetFileSizeBytes.mockReturnValueOnce(1000).mockReturnValue(500);
       setupSuccessSession();
-
-      mockGetInfoAsync
-        .mockResolvedValueOnce({ exists: true, size: 1000 })
-        .mockResolvedValueOnce({ exists: true, size: 500 });
 
       const result = await convertImage('file:///photos/input.png', { outputFormat: fmt });
       const ext = result.outputUri.replace(/^.*(\.\w+)$/, '$1');
@@ -229,9 +227,7 @@ describe('convertImage', () => {
   });
 
   it('HEIC入力ファイルから JPEG へ変換できる', async () => {
-    mockGetInfoAsync
-      .mockResolvedValueOnce({exists: true, size: 3000})
-      .mockResolvedValueOnce({exists: true, size: 800});
+    mockGetFileSizeBytes.mockReturnValueOnce(3000).mockReturnValue(800);
 
     const result = await convertImage('file:///photos/photo.heic', {
       outputFormat: 'jpeg',
@@ -245,9 +241,7 @@ describe('convertImage', () => {
   });
 
   it('HEIF入力ファイルから PNG へ変換できる', async () => {
-    mockGetInfoAsync
-      .mockResolvedValueOnce({exists: true, size: 3500})
-      .mockResolvedValueOnce({exists: true, size: 1200});
+    mockGetFileSizeBytes.mockReturnValueOnce(3500).mockReturnValue(1200);
 
     const result = await convertImage('file:///photos/photo.heif', {
       outputFormat: 'png',

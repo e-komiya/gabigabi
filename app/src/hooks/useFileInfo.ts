@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Image} from 'react-native';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File } from 'expo-file-system';
 import {FFprobeKit} from 'ffmpeg-kit-react-native';
 import {getFileSizeBytes} from '../data/ffmpeg/ffmpegUtils';
 
@@ -25,8 +25,8 @@ export const useFileInfo = (
     let cancelled = false;
     (async () => {
       try {
-        const info = await FileSystem.getInfoAsync(selectedImage, {size: true});
-        const bytes = getFileSizeBytes(info);
+        const fileInst = new File(selectedImage);
+        const bytes = getFileSizeBytes(selectedImage);
         const sizeStr =
           bytes >= 1024 * 1024
             ? `${(bytes / (1024 * 1024)).toFixed(2)} MB`

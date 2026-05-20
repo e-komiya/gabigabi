@@ -25,17 +25,25 @@ jest.mock('expo-sharing', () => ({
   shareAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('expo-file-system/legacy', () => ({
-  getInfoAsync: jest.fn().mockResolvedValue({ exists: false, size: 0 }),
-  readDirectoryAsync: jest.fn(),
-  deleteAsync: jest.fn(),
-  cacheDirectory: 'file:///cache/',
-}));
-
-jest.mock('expo-file-system', () => ({
-  Paths: { cache: { uri: 'file:///cache/' } },
-  getInfoAsync: jest.fn().mockResolvedValue({ exists: false, size: 0 }),
-}));
+jest.mock('expo-file-system', () => {
+  class MockFile {
+    exists: boolean = false;
+    size: number = 0;
+    uri: string;
+    constructor(uri: string) { this.uri = uri; }
+    delete() {}
+    move(dest: any) {}
+  }
+  return {
+    Paths: { cache: { uri: 'file:///cache/' }, join: (...args: string[]) => args.join('/') },
+    File: MockFile,
+    Directory: class {
+      exists = true;
+      constructor() {}
+      list() { return []; }
+    },
+  };
+});
 
 jest.mock('expo-media-library', () => ({
   requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),

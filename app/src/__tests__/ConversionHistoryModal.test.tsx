@@ -15,16 +15,25 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(),
 }));
 
-jest.mock('expo-file-system/legacy', () => ({
-  getInfoAsync: jest.fn().mockResolvedValue({exists: true, isDirectory: false}),
-  deleteAsync: jest.fn().mockResolvedValue(undefined),
-  copyAsync: jest.fn().mockResolvedValue(undefined),
-  readAsStringAsync: jest.fn().mockResolvedValue(''),
-  writeAsStringAsync: jest.fn().mockResolvedValue(undefined),
-  makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
-  documentDirectory: 'file:///document/',
-  cacheDirectory: 'file:///cache/',
-}));
+jest.mock('expo-file-system', () => {
+  class MockFile {
+    exists: boolean = true;
+    size: number = 1024;
+    uri: string;
+    constructor(uri: string) { this.uri = uri; this.exists = true; }
+    delete() {}
+    move(dest: any) {}
+  }
+  return {
+    Paths: { cache: { uri: 'file:///cache/' }, join: (...args: string[]) => args.join('/') },
+    File: MockFile,
+    Directory: class {
+      exists = true;
+      constructor() {}
+      list() { return []; }
+    },
+  };
+});
 
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn().mockResolvedValue(true),
@@ -400,18 +409,18 @@ describe('フィルタータブ機能', () => {
 
 describe('共有機能 (Issue #165)', () => {
   const Sharing = require('expo-sharing');
-  const FileSystemMock = require('expo-file-system/legacy');
+  const FileSystemMock = require('expo-file-system');
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     Sharing.isAvailableAsync.mockResolvedValue(true);
     Sharing.shareAsync.mockResolvedValue(undefined);
-    FileSystemMock.getInfoAsync.mockResolvedValue({exists: true, isDirectory: false});
+    FileSystemMock.File = class { exists = true; size = 1024; uri: string; constructor(uri: string) { this.uri = uri; } delete() {} move() {} };
   });
 
   it('ファイルが存在する場合、共有ボタンが有効である', async () => {
-    FileSystemMock.getInfoAsync.mockResolvedValue({exists: true, isDirectory: false});
+    FileSystemMock.File = class { exists = true; size = 1024; uri: string; constructor(uri: string) { this.uri = uri; } delete() {} move() {} };
     const renderer = await createWithData([sampleItem]);
     await ReactTestRenderer.act(async () => {});
 
@@ -425,7 +434,7 @@ describe('共有機能 (Issue #165)', () => {
   });
 
   it('ファイルが存在しない場合、共有ボタンが無効である', async () => {
-    FileSystemMock.getInfoAsync.mockResolvedValue({exists: false, isDirectory: false});
+    FileSystemMock.File = class { exists = false; size = 0; uri: string; constructor(uri: string) { this.uri = uri; } delete() {} move() {} };
     const renderer = await createWithData([sampleItem]);
     await ReactTestRenderer.act(async () => {});
 
@@ -439,7 +448,7 @@ describe('共有機能 (Issue #165)', () => {
   });
 
   it('共有ボタンを押すと Sharing.shareAsync が呼ばれる', async () => {
-    FileSystemMock.getInfoAsync.mockResolvedValue({exists: true, isDirectory: false});
+    FileSystemMock.File = class { exists = true; size = 1024; uri: string; constructor(uri: string) { this.uri = uri; } delete() {} move() {} };
     const renderer = await createWithData([sampleItem]);
     await ReactTestRenderer.act(async () => {});
 

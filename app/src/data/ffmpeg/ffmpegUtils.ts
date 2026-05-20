@@ -1,6 +1,5 @@
 import { FFmpegSession } from 'ffmpeg-kit-react-native';
-import { Paths } from 'expo-file-system';
-import * as FileSystem from 'expo-file-system/legacy';
+import { Paths, File, Directory } from 'expo-file-system';
 import {getConversionHistory} from '../history/conversionHistory';
 
 /**
@@ -70,9 +69,9 @@ export function getPasslogConfig(stem: string, suffix: string): { uri: string, p
 export async function cleanupCachedTempFiles(): Promise<void> {
   try {
     const cacheDir = getCacheDir();
-    const dirInfo = await FileSystem.getInfoAsync(cacheDir);
-    if (!dirInfo.exists) return;
-    const result = await FileSystem.readDirectoryAsync(cacheDir);
+    const dirFile = new Directory(cacheDir);
+    if (!dirFile.exists) return;
+    const result = new Directory(cacheDir).list().map(f => f.name);
     const tempPattern = /_(compressed|gabigabi|converted)_|_passlog/;
 
     // 変換履歴のoutputPathに含まれるファイルはスキップ（案C: #155）
@@ -87,7 +86,7 @@ export async function cleanupCachedTempFiles(): Promise<void> {
     await Promise.all(
       result
         .filter(name => tempPattern.test(name) && !historyFileNames.has(name))
-        .map(name => FileSystem.deleteAsync(cacheDir + name, { idempotent: true })),
+        .map(name => { try { new File(cacheDir + name).delete(); } catch {} return Promise.resolve(); }),
     );
   } catch {
     // クリーンアップ失敗は無視して処理を続行する
@@ -95,16 +94,12 @@ export async function cleanupCachedTempFiles(): Promise<void> {
 }
 
 /**
- * expo-file-system の getInfoAsync 結果からファイルサイズを安全に取得する。
- * ファイルが存在しない場合や size プロパティがない場合は 0 を返す。
+ * ファイルURIからファイルサイズを安全に取得する。
+ * ファイルが存在しない場合は 0 を返す。
  */
-function hasNumericSize(info: FileSystem.FileInfo): info is FileSystem.FileInfo & { size: number } {
-  return 'size' in info && typeof info.size === 'number';
-}
-
-export function getFileSizeBytes(info: FileSystem.FileInfo): number {
-  if (!info.exists) return 0;
-  return hasNumericSize(info) ? info.size : 0;
+export function getFileSizeBytes(uri: string): number {
+  const f = new File(uri);
+  return f.exists ? f.size : 0;
 }
 
 

@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import {
@@ -142,9 +142,7 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem; onDelete: (id: string)
 
   useEffect(() => {
     const path = item.outputPath.startsWith('file://') ? item.outputPath : `file://${item.outputPath}`;
-    FileSystem.getInfoAsync(path)
-      .then(info => setFileExists(info.exists))
-      .catch(() => setFileExists(false));
+    setFileExists(new File(path).exists);
   }, [item.outputPath]);
 
   const handleShare = useCallback(async () => {
