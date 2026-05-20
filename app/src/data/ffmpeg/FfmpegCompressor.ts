@@ -1,6 +1,7 @@
 import { FFmpegKit, FFprobeKit, ReturnCode } from 'ffmpeg-kit-react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import { buildFfmpegCommand, generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getPasslogConfig, getFileSizeBytes } from './ffmpegUtils';
+import { VideoFormat } from '../../state/store';
 import { DISCORD_MAX_BYTES } from '../../constants/limits';
 
 export interface CompressResult {
@@ -171,7 +172,7 @@ async function compressImageToTarget(
 async function compressVideoToTarget(
   inputUri: string,
   targetBytes: number,
-  outputFormat: string = 'mp4',
+  outputFormat: VideoFormat = 'mp4',
 ): Promise<CompressResult> {
   // 入力ファイルの存在確認とサイズチェック
   const inputInfo = await FileSystem.getInfoAsync(inputUri, { size: true });
@@ -415,7 +416,7 @@ async function compressVideoToTarget(
  */
 export async function compressForDiscord(
   inputUri: string,
-  videoFormat: string = 'mp4',
+  videoFormat: VideoFormat = 'mp4',
 ): Promise<CompressResult> {
   if (isVideoFile(inputUri)) {
     return compressVideoToTarget(inputUri, DISCORD_MAX_BYTES, videoFormat);
@@ -435,7 +436,7 @@ export async function compressForDiscord(
 export async function compressToTargetSize(
   inputUri: string,
   targetBytes: number,
-  videoFormat: string = 'mp4',
+  videoFormat: VideoFormat = 'mp4',
 ): Promise<CompressResult> {
   if (isVideoFile(inputUri)) {
     return compressVideoToTarget(inputUri, targetBytes, videoFormat);
