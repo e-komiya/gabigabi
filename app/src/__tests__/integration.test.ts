@@ -14,17 +14,21 @@ const FIXTURES_DIR = path.join(__dirname, '..', '..', 'fixtures');
 const INPUT_MP4 = path.join(FIXTURES_DIR, 'test.mp4');
 const INPUT_WEBM = path.join(FIXTURES_DIR, 'test.webm');
 
-describe('ffmpeg integration tests', () => {
+const hasFfmpeg = (() => {
+  try {
+    execSync('ffmpeg -version', { stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+const describeIfFfmpeg = hasFfmpeg ? describe : describe.skip;
+
+describeIfFfmpeg('ffmpeg integration tests', () => {
   let tmpDir: string = '';
 
   beforeAll(() => {
-    // ffmpeg が利用可能か確認
-    try {
-      execSync('ffmpeg -version', { stdio: 'pipe' });
-    } catch {
-      throw new Error('ffmpeg is not installed or not in PATH');
-    }
-
     // fixture ファイルの存在確認
     expect(fs.existsSync(INPUT_MP4)).toBe(true);
     expect(fs.existsSync(INPUT_WEBM)).toBe(true);
