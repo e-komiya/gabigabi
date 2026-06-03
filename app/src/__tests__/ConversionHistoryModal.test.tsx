@@ -54,6 +54,8 @@ import {ConversionHistoryItem} from '../data/history/conversionHistory';
 const mockedGetHistory = getConversionHistory as jest.Mock;
 const mockedClearHistory = clearConversionHistory as jest.Mock;
 
+const mountedRenderers = new Set<ReactTestRenderer.ReactTestRenderer>();
+
 const sampleItem: ConversionHistoryItem = {
   id: 'test-1',
   createdAt: '2026-04-01T10:00:00.000Z',
@@ -91,6 +93,7 @@ async function createWithData(
       <ConversionHistoryModal visible={visible} onClose={onClose} />,
     );
   });
+  mountedRenderers.add(renderer!);
   // useEffect の非同期ロードが完了するまで追加フラッシュ
   await ReactTestRenderer.act(async () => {});
   return renderer!;
@@ -102,6 +105,16 @@ describe('ConversionHistoryModal', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  });
+
+  afterEach(async () => {
+    for (const renderer of mountedRenderers) {
+      await ReactTestRenderer.act(async () => {
+        renderer.unmount();
+      });
+    }
+    mountedRenderers.clear();
+    await ReactTestRenderer.act(async () => {});
   });
 
   it('visible=true のとき正常にレンダリングされる', async () => {
