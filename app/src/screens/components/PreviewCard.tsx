@@ -1,9 +1,8 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, Image} from 'react-native';
-import {StyleSheet} from 'react-native';
+import {View, Text, TouchableOpacity, Image, StyleSheet} from 'react-native';
 import {Svg, Path} from 'react-native-svg';
 import {t} from '../../i18n';
-import {CARD_BG, ACCENT, ACCENT2, TEXT_SECONDARY, BORDER} from './sharedStyles';
+import {CARD_BG, ACCENT, TEXT_SECONDARY, BORDER} from './sharedStyles';
 
 export interface PreviewCardProps {
   label: string;

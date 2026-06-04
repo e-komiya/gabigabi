@@ -1,6 +1,5 @@
 const express = require('express');
 const path = require('path');
-const { createReadStream } = require('fs');
 
 const app = express();
 const PORT = 3000;
@@ -31,6 +30,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(\`🚀 Web server running at http://localhost:\${PORT}\`);
+  console.log(`🚀 Web server running at http://localhost:${PORT}`);
   console.log('📱 convert2gabigabi UI is ready!');
-}); 
+});

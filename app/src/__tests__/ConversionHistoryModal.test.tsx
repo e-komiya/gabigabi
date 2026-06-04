@@ -57,8 +57,11 @@ jest.mock('../data/history/conversionHistory', () => ({
 // ---- インポート ----
 
 import ConversionHistoryModal from '../screens/components/ConversionHistoryModal';
-import {getConversionHistory, clearConversionHistory} from '../data/history/conversionHistory';
-import {ConversionHistoryItem} from '../data/history/conversionHistory';
+import {
+  getConversionHistory,
+  clearConversionHistory,
+  ConversionHistoryItem,
+} from '../data/history/conversionHistory';
 
 const mockedGetHistory = getConversionHistory as jest.Mock;
 const mockedClearHistory = clearConversionHistory as jest.Mock;
