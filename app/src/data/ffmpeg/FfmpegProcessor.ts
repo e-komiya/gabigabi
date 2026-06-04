@@ -1,5 +1,5 @@
 import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File } from 'expo-file-system';
 import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getFileSizeBytes } from './ffmpegUtils';
 import { VideoFormat } from '../../state/store';
 
@@ -93,12 +93,12 @@ export async function processVideoWithFfmpeg(
     throw new Error('compressionRate must be 0-99');
   }
 
-  const inputInfo = await FileSystem.getInfoAsync(inputUri, { size: true });
-  if (!inputInfo.exists) {
+  const inputFileV = new File(inputUri);
+  if (!inputFileV.exists) {
     throw new Error('入力ファイルが存在しません');
   }
-  const inputBytes = getFileSizeBytes(inputInfo);
-  if (inputBytes === 0) {
+  const inputBytesV = getFileSizeBytes(inputUri);
+  if (inputBytesV === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
 
@@ -162,17 +162,17 @@ export async function processVideoWithFfmpeg(
       throw new Error(`FFmpeg処理に失敗しました: ${logs}`);
     }
   } catch (err) {
-    await FileSystem.deleteAsync(outputUri, { idempotent: true });
+    try { new File(outputUri).delete(); } catch {}
     throw err;
   }
 
-  const info = await FileSystem.getInfoAsync(outputUri, { size: true });
-  if (!info.exists) {
+  const outFileV = new File(outputUri);
+  if (!outFileV.exists) {
     throw new Error('FFmpeg出力ファイルが見つかりません');
   }
   return {
     outputUri,
-    outputBytes: getFileSizeBytes(info),
+    outputBytes: getFileSizeBytes(outputUri),
   };
 }
 
@@ -204,11 +204,11 @@ export async function processWithFfmpeg(
   } = options;
 
   // 入力ファイルの存在確認とサイズチェック
-  const inputInfo = await FileSystem.getInfoAsync(inputUri, { size: true });
-  if (!inputInfo.exists) {
+  const inputFileP = new File(inputUri);
+  if (!inputFileP.exists) {
     throw new Error('入力ファイルが存在しません');
   }
-  const inputBytes = getFileSizeBytes(inputInfo);
+  const inputBytes = getFileSizeBytes(inputUri);
   if (inputBytes === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
@@ -264,7 +264,7 @@ export async function processWithFfmpeg(
       throw new Error(`FFmpeg処理に失敗しました: ${logs}`);
     }
   } catch (err) {
-    await FileSystem.deleteAsync(outputUri, { idempotent: true });
+    try { new File(outputUri).delete(); } catch {}
     throw err;
   }
 
@@ -304,7 +304,7 @@ export async function processWithFfmpeg(
         // moveAsync 完了前に outputUri を削除すると moveAsync 失敗時にデータが消失する
         // リスクがある（Issue #195, #201）。
         if (currentInput !== outputUri) {
-          await FileSystem.deleteAsync(currentInput, { idempotent: true });
+          try { new File(currentInput).delete(); } catch {}
         }
         currentInput = passUri;
         finalTempUri = passUri;
@@ -314,24 +314,24 @@ export async function processWithFfmpeg(
       // moveAsync の前に outputUri を削除しておくことで上書きを保証する。
       // この時点で currentInput !== outputUri が保証されているため安全に削除できる。
       if (finalTempUri) {
-        await FileSystem.deleteAsync(outputUri, { idempotent: true });
-        await FileSystem.moveAsync({ from: finalTempUri, to: outputUri });
+        try { new File(outputUri).delete(); } catch {}
+        new File(finalTempUri).move(new File(outputUri));
         finalTempUri = null; // move 成功
       }
     } finally {
       // エラー発生時、または move 失敗時に残存した一時ファイルをクリーンアップする
       if (finalTempUri && finalTempUri !== outputUri) {
-        await FileSystem.deleteAsync(finalTempUri, { idempotent: true });
+        try { new File(finalTempUri).delete(); } catch {}
       }
     }
   }
 
-  const info = await FileSystem.getInfoAsync(outputUri, { size: true });
-  if (!info.exists) {
+  const outFileP2 = new File(outputUri);
+  if (!outFileP2.exists) {
     throw new Error('FFmpeg出力ファイルが見つかりません');
   }
   return {
     outputUri,
-    outputBytes: getFileSizeBytes(info),
+    outputBytes: getFileSizeBytes(outputUri),
   };
 }

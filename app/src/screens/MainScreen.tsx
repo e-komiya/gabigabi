@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
 import Share from 'react-native-share';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File } from 'expo-file-system';
 import ErrorModal from '../components/ErrorModal';
 import ImageModal from '../components/ImageModal';
 import {useAppStore} from '../state/store';
@@ -242,8 +242,8 @@ const MainScreen = () => {
       let historyAction: 'gabigabi' | 'convert' = 'gabigabi';
       let inputBytes = 0;
 
-      const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
-      inputBytes = getFileSizeBytes(inputInfo);
+      const inputInfo = new File(selectedImage);
+      inputBytes = getFileSizeBytes(selectedImage);
       processingNotificationId = await notifyProcessingUpdate(t('notifyInputAnalyzed'), processingNotificationId);
 
       if (selectedMediaType === 'video') {
@@ -379,8 +379,8 @@ const MainScreen = () => {
     setProcessingAction('targetSize');
     let processingNotificationId = await notifyProcessingStarted(t('notifyCompressStarted'));
     try {
-      const inputInfo = await FileSystem.getInfoAsync(selectedImage, {size: true});
-      const inputBytes = getFileSizeBytes(inputInfo);
+      const inputInfo2 = new File(selectedImage);
+      const inputBytes = getFileSizeBytes(selectedImage);
       processingNotificationId = await notifyProcessingUpdate(t('notifyCompressProcessing'), processingNotificationId);
       const result = await compressToTargetSize(selectedImage, targetBytes, videoOutputFormat);
       setProcessedImage(result.outputUri);

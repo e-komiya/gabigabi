@@ -1,5 +1,5 @@
 import { FFmpegKit, FFprobeKit, ReturnCode } from 'ffmpeg-kit-react-native';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File } from 'expo-file-system';
 import { buildFfmpegCommand, generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getPasslogConfig, getFileSizeBytes } from './ffmpegUtils';
 import { VideoFormat } from '../../state/store';
 import { DISCORD_MAX_BYTES } from '../../constants/limits';
@@ -65,11 +65,11 @@ async function compressImageToTarget(
   forceJpeg: boolean = false,
 ): Promise<CompressResult> {
   // 入力ファイルの存在確認とサイズチェック
-  const inputInfo = await FileSystem.getInfoAsync(inputUri, { size: true });
-  if (!inputInfo.exists) {
+  const inputFile = new File(inputUri);
+  if (!inputFile.exists) {
     throw new Error('入力ファイルが存在しません');
   }
-  const originalBytes = getFileSizeBytes(inputInfo);
+  const originalBytes = getFileSizeBytes(inputUri);
   if (originalBytes === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
@@ -116,8 +116,7 @@ async function compressImageToTarget(
       throw new Error('FFmpeg画像圧縮に失敗しました');
     }
 
-    const outInfo = await FileSystem.getInfoAsync(outputUri, { size: true });
-  const outBytes = getFileSizeBytes(outInfo);
+    const outBytes = getFileSizeBytes(outputUri);
 
     if (outBytes <= targetBytes) {
       bestQv = mid;
@@ -144,13 +143,12 @@ async function compressImageToTarget(
     if (!ReturnCode.isSuccess(rc)) {
       throw new Error('FFmpeg画像圧縮（スケールダウン）に失敗しました');
     }
-    const outInfo = await FileSystem.getInfoAsync(outputUri, { size: true });
-    bestBytes = getFileSizeBytes(outInfo);
+    bestBytes = getFileSizeBytes(outputUri);
   }
 
   // リトライ後も目標サイズを超えている場合はエラーを投げる (#290)
   if (bestBytes > targetBytes) {
-    await FileSystem.deleteAsync(outputUri, { idempotent: true });
+    try { new File(outputUri).delete(); } catch {}
     const targetMB = (targetBytes / (1024 * 1024)).toFixed(1);
     throw new Error(`画像を目標サイズ（${targetMB}MB）以下に圧縮できませんでした。`);
   }
@@ -175,11 +173,11 @@ async function compressVideoToTarget(
   outputFormat: VideoFormat = 'mp4',
 ): Promise<CompressResult> {
   // 入力ファイルの存在確認とサイズチェック
-  const inputInfo = await FileSystem.getInfoAsync(inputUri, { size: true });
-  if (!inputInfo.exists) {
+  const inputFile2 = new File(inputUri);
+  if (!inputFile2.exists) {
     throw new Error('入力ファイルが存在しません');
   }
-  const originalBytes = getFileSizeBytes(inputInfo);
+  const originalBytes = getFileSizeBytes(inputUri);
   if (originalBytes === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
@@ -217,9 +215,8 @@ async function compressVideoToTarget(
   const { uri: passlogUri, path: passlogFilesystemPath } = getPasslogConfig(stem, suffix);
 
   // pass1 開始前に古い passlog ファイルを削除して再試行時の混入を防ぐ (#216)
-  // deleteAsync は file:// URI が必要なため passlogUri を使用する (#276)
-  await FileSystem.deleteAsync(`${passlogUri}-0.log`, { idempotent: true });
-  await FileSystem.deleteAsync(`${passlogUri}-0.log.mbtree`, { idempotent: true });
+  try { new File(`${passlogUri}-0.log`).delete(); } catch {}
+  try { new File(`${passlogUri}-0.log.mbtree`).delete(); } catch {}
 
   // コーデック設定: webm の場合は libvpx-vp9/libopus, それ以外は libx264/aac
   const isWebm = outputFormat.toLowerCase() === 'webm';
@@ -255,8 +252,7 @@ async function compressVideoToTarget(
     const crfSession = await FFmpegKit.execute(crfCmd);
     const crfRc = await crfSession.getReturnCode();
     if (ReturnCode.isSuccess(crfRc)) {
-      const crfInfo = await FileSystem.getInfoAsync(outputUri, { size: true });
-      const crfBytes = getFileSizeBytes(crfInfo);
+      const crfBytes = getFileSizeBytes(outputUri);
       if (crfBytes > 0 && crfBytes <= targetBytes) {
         useTwoPass = false;
       }
@@ -307,17 +303,16 @@ async function compressVideoToTarget(
         throw new Error(`FFmpeg 2パス目に失敗しました: ${logs}`);
       }
     } catch (err) {
-      await FileSystem.deleteAsync(outputUri, { idempotent: true });
+      try { new File(outputUri).delete(); } catch {}
       throw err;
     } finally {
       // 成功・失敗・キャンセルいずれの場合も passlog 一時ファイルを削除する (#234)
-      await FileSystem.deleteAsync(`${passlogUri}-0.log`, { idempotent: true });
-      await FileSystem.deleteAsync(`${passlogUri}-0.log.mbtree`, { idempotent: true });
+      try { new File(`${passlogUri}-0.log`).delete(); } catch {}
+      try { new File(`${passlogUri}-0.log.mbtree`).delete(); } catch {}
     }
   }
 
-  let outInfo = await FileSystem.getInfoAsync(outputUri, { size: true });
-  let outputBytes = getFileSizeBytes(outInfo);
+  let outputBytes = getFileSizeBytes(outputUri);
   let currentOutputUri = outputUri;
 
   // 出力サイズ検証: 目標を超えていたらビットレートを下げてリトライ（最大10回）
@@ -363,39 +358,37 @@ async function compressVideoToTarget(
     const r1 = await FFmpegKit.execute(retry1Cmd);
     if (!ReturnCode.isSuccess(await r1.getReturnCode())) {
       // passlog を確実に削除してから次のリトライへ
-      await FileSystem.deleteAsync(`${retryPasslogUri}-0.log`, { idempotent: true });
-      await FileSystem.deleteAsync(`${retryPasslogUri}-0.log.mbtree`, { idempotent: true });
+      try { new File(`${retryPasslogUri}-0.log`).delete(); } catch {}
+      try { new File(`${retryPasslogUri}-0.log.mbtree`).delete(); } catch {}
       continue;
     }
     const r2 = await FFmpegKit.execute(retry2Cmd);
     // リトライの passlog 一時ファイルを削除（成功・失敗いずれも）(#234)
-    await FileSystem.deleteAsync(`${retryPasslogUri}-0.log`, { idempotent: true });
-    await FileSystem.deleteAsync(`${retryPasslogUri}-0.log.mbtree`, { idempotent: true });
+    try { new File(`${retryPasslogUri}-0.log`).delete(); } catch {}
+    try { new File(`${retryPasslogUri}-0.log.mbtree`).delete(); } catch {}
     if (!ReturnCode.isSuccess(await r2.getReturnCode())) {
-      await FileSystem.deleteAsync(retryOutputUri, { idempotent: true });
+      try { new File(retryOutputUri).delete(); } catch {}
       continue;
     }
 
-    const retryInfo = await FileSystem.getInfoAsync(retryOutputUri, { size: true });
-    const retryBytes = getFileSizeBytes(retryInfo);
+    const retryBytes = getFileSizeBytes(retryOutputUri);
     if (retryBytes > 0) {
       outputBytes = retryBytes;
-      outInfo = retryInfo;
       currentOutputUri = retryOutputUri;
     } else {
       // 0バイトの無効な出力ファイルを削除してキャッシュに残らないようにする
-      await FileSystem.deleteAsync(retryOutputUri, { idempotent: true });
+      try { new File(retryOutputUri).delete(); } catch {}
     }
   }
 
   // リトライ成功により初回出力ファイルが不要になった場合は削除する (#206)
   if (currentOutputUri !== outputUri) {
-    await FileSystem.deleteAsync(outputUri, { idempotent: true });
+    try { new File(outputUri).delete(); } catch {}
   }
 
   // リトライ後も目標サイズを超えている場合はエラーを投げてサイレント超過を防ぐ (#286)
   if (outputBytes > targetBytes) {
-    await FileSystem.deleteAsync(currentOutputUri, { idempotent: true });
+    try { new File(currentOutputUri).delete(); } catch {}
     const targetMB = Math.round(targetBytes / (1024 * 1024));
     throw new Error(`リトライを繰り返しましたが、目標サイズ（${targetMB}MB）以下に圧縮できませんでした。`);
   }

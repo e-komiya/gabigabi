@@ -1,5 +1,5 @@
 import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File } from 'expo-file-system';
 import { buildFfmpegCommand, generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getFileSizeBytes } from './ffmpegUtils';
 
 export type ImageFormat = 'jpeg' | 'png' | 'webp' | 'bmp' | 'gif';
@@ -36,11 +36,11 @@ export async function convertImage(
   options: ConvertOptions,
 ): Promise<FfmpegConvertResult> {
   // 入力ファイルの存在確認とサイズチェック
-  const inputInfo = await FileSystem.getInfoAsync(inputUri, { size: true });
-  if (!inputInfo.exists) {
+  const inputFile = new File(inputUri);
+  if (!inputFile.exists) {
     throw new Error('入力ファイルが存在しません');
   }
-  const inputBytes = getFileSizeBytes(inputInfo);
+  const inputBytes = getFileSizeBytes(inputUri);
   if (inputBytes === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
@@ -136,7 +136,7 @@ export async function convertImage(
       rc = await session.getReturnCode();
     } finally {
       // パレットファイルをクリーンアップ（結果に関わらず）
-      await FileSystem.deleteAsync(`file://${palettePath}`, { idempotent: true });
+      try { new File(`file://${palettePath}`).delete(); } catch {}
     }
   } else {
     const cmd = buildFfmpegCommand([
@@ -154,16 +154,16 @@ export async function convertImage(
 
   if (!ReturnCode.isSuccess(rc)) {
     const logs = await extractErrorFromLogs(session);
-    await FileSystem.deleteAsync(outputUri, { idempotent: true });
+    try { new File(outputUri).delete(); } catch {}
     throw new Error(`FFmpegフォーマット変換に失敗しました: ${logs}`);
   }
 
-  const info = await FileSystem.getInfoAsync(outputUri, { size: true });
-  if (!info.exists) {
+  const outFile = new File(outputUri);
+  if (!outFile.exists) {
     throw new Error('FFmpeg出力ファイルが見つかりません');
   }
   return {
     outputUri,
-    outputBytes: getFileSizeBytes(info),
+    outputBytes: getFileSizeBytes(outputUri),
   };
 }

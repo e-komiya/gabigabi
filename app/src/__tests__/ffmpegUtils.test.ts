@@ -15,20 +15,29 @@ jest.mock('ffmpeg-kit-react-native', () => ({
 }));
 
 // Mock expo-file-system
-jest.mock('expo-file-system', () => ({
-  Paths: {
-    get cache() {
-      return { uri: 'file:///cache/' };
+jest.mock('expo-file-system', () => {
+  class MockFile {
+    exists: boolean;
+    size: number;
+    constructor(uri: string) { this.exists = true; this.size = 1024; }
+    delete() {}
+    move(dest: any) {}
+  }
+  class MockDirectory {
+    exists: boolean;
+    constructor(uri: string) { this.exists = true; }
+    list() { return []; }
+  }
+  return {
+    Paths: {
+      get cache() {
+        return { uri: 'file:///cache/' };
+      },
     },
-  },
-}));
-
-// Mock expo-file-system/legacy
-jest.mock('expo-file-system/legacy', () => ({
-  getInfoAsync: jest.fn(),
-  readDirectoryAsync: jest.fn(),
-  deleteAsync: jest.fn(),
-}));
+    File: MockFile,
+    Directory: MockDirectory,
+  };
+});
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn().mockResolvedValue(null),
@@ -133,65 +142,129 @@ describe('getCacheDir', () => {
 });
 
 describe('cleanupCachedTempFiles', () => {
-  let getInfoAsync: jest.Mock;
-  let readDirectoryAsync: jest.Mock;
-  let deleteAsync: jest.Mock;
+  let mockDirectoryExists: boolean;
+  let mockFileList: string[];
+  let mockFileDelete: jest.Mock;
 
   beforeEach(() => {
-    const FileSystem = require('expo-file-system/legacy');
-    getInfoAsync = FileSystem.getInfoAsync as jest.Mock;
-    readDirectoryAsync = FileSystem.readDirectoryAsync as jest.Mock;
-    deleteAsync = FileSystem.deleteAsync as jest.Mock;
+    mockDirectoryExists = true;
+    mockFileList = [];
+    mockFileDelete = jest.fn();
+    const fs = require('expo-file-system');
+    fs.Directory.mockImplementation = undefined;
+    // Override MockDirectory and MockFile for each test
+    fs.Directory = class {
+      exists: boolean;
+      constructor() { this.exists = mockDirectoryExists; }
+      list() { return mockFileList.map(name => ({ name })); }
+    };
+    fs.File = class {
+      exists: boolean;
+      size: number;
+      constructor() { this.exists = true; this.size = 1024; }
+      delete() { mockFileDelete(); }
+      move() {}
+    };
     jest.clearAllMocks();
+    mockFileDelete = jest.fn();
   });
 
   it('キャッシュディレクトリが存在しない場合は何もしない', async () => {
-    getInfoAsync.mockResolvedValue({ exists: false });
+    const fs = require('expo-file-system');
+    mockDirectoryExists = false;
+    fs.Directory = class {
+      exists = false;
+      list() { return []; }
+    };
+    const listSpy = jest.spyOn(fs.Directory.prototype, 'list');
     await cleanupCachedTempFiles();
-    expect(readDirectoryAsync).not.toHaveBeenCalled();
-    expect(deleteAsync).not.toHaveBeenCalled();
+    expect(listSpy).not.toHaveBeenCalled();
   });
 
   it('対象パターンに一致するファイルを削除する', async () => {
-    getInfoAsync.mockResolvedValue({ exists: true });
-    readDirectoryAsync.mockResolvedValue([
-      'video_compressed_123.mp4',
-      'image_gabigabi_456.jpg',
-      'output_converted_789.png',
-      'video_passlog.log',
-    ]);
-    deleteAsync.mockResolvedValue(undefined);
+    const fs = require('expo-file-system');
+    const deletedFiles: string[] = [];
+    fs.Directory = class {
+      exists = true;
+      list() {
+        return [
+          'video_compressed_123.mp4',
+          'image_gabigabi_456.jpg',
+          'output_converted_789.png',
+          'video_passlog.log',
+        ].map(name => ({ name }));
+      }
+    };
+    fs.File = class {
+      uri: string;
+      exists = true;
+      size = 1024;
+      constructor(uri: string) { this.uri = uri; }
+      delete() { deletedFiles.push(this.uri); }
+      move() {}
+    };
     await cleanupCachedTempFiles();
-    expect(deleteAsync).toHaveBeenCalledTimes(4);
+    expect(deletedFiles).toHaveLength(4);
   });
 
   it('対象外のファイルは削除しない', async () => {
-    getInfoAsync.mockResolvedValue({ exists: true });
-    readDirectoryAsync.mockResolvedValue([
-      'photo.jpg',
-      'document.pdf',
-      'video_compressed_123.mp4',
-    ]);
-    deleteAsync.mockResolvedValue(undefined);
+    const fs = require('expo-file-system');
+    const deletedFiles: string[] = [];
+    fs.Directory = class {
+      exists = true;
+      list() {
+        return [
+          'photo.jpg',
+          'document.pdf',
+          'video_compressed_123.mp4',
+        ].map(name => ({ name }));
+      }
+    };
+    fs.File = class {
+      uri: string;
+      exists = true;
+      size = 1024;
+      constructor(uri: string) { this.uri = uri; }
+      delete() { deletedFiles.push(this.uri); }
+      move() {}
+    };
     await cleanupCachedTempFiles();
-    expect(deleteAsync).toHaveBeenCalledTimes(1);
-    expect(deleteAsync).toHaveBeenCalledWith(
-      expect.stringContaining('video_compressed_123.mp4'),
-      { idempotent: true },
-    );
+    expect(deletedFiles).toHaveLength(1);
+    expect(deletedFiles[0]).toContain('video_compressed_123.mp4');
   });
 
-  it('deleteAsyncが失敗してもエラーを投げない', async () => {
-    getInfoAsync.mockResolvedValue({ exists: true });
-    readDirectoryAsync.mockResolvedValue(['video_gabigabi_123.mp4']);
-    deleteAsync.mockRejectedValue(new Error('delete failed'));
+  it('deleteが失敗してもエラーを投げない', async () => {
+    const fs = require('expo-file-system');
+    fs.Directory = class {
+      exists = true;
+      list() { return [{ name: 'video_gabigabi_123.mp4' }]; }
+    };
+    fs.File = class {
+      exists = true;
+      size = 1024;
+      constructor() {}
+      delete() { throw new Error('delete failed'); }
+      move() {}
+    };
     await expect(cleanupCachedTempFiles()).resolves.toBeUndefined();
   });
 
   it('空のキャッシュディレクトリでも正常終了する', async () => {
-    getInfoAsync.mockResolvedValue({ exists: true });
-    readDirectoryAsync.mockResolvedValue([]);
+    const fs = require('expo-file-system');
+    const deletedFiles: string[] = [];
+    fs.Directory = class {
+      exists = true;
+      list() { return []; }
+    };
+    fs.File = class {
+      exists = true;
+      size = 1024;
+      uri: string;
+      constructor(uri: string) { this.uri = uri; }
+      delete() { deletedFiles.push(this.uri); }
+      move() {}
+    };
     await cleanupCachedTempFiles();
-    expect(deleteAsync).not.toHaveBeenCalled();
+    expect(deletedFiles).toHaveLength(0);
   });
 });
