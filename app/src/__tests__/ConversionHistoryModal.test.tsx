@@ -7,6 +7,43 @@ import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import {Alert} from 'react-native';
 
+jest.mock('react-native/Libraries/Lists/FlatList', () => {
+  const React = require('react');
+  const {View} = require('react-native');
+
+  const MockFlatList = ({
+    data,
+    renderItem,
+    keyExtractor,
+    ListEmptyComponent,
+    contentContainerStyle,
+    ...props
+  }: any) => React.createElement(
+    View,
+    {...props, style: contentContainerStyle},
+    Array.isArray(data) && data.length > 0
+      ? data.map((item, index) => React.createElement(
+        React.Fragment,
+        {key: keyExtractor ? keyExtractor(item, index) : String(index)},
+        renderItem({
+          item,
+          index,
+          separators: {
+            highlight: jest.fn(),
+            unhighlight: jest.fn(),
+            updateProps: jest.fn(),
+          },
+        }),
+      ))
+      : ListEmptyComponent ?? null,
+  );
+
+  return {
+    __esModule: true,
+    default: MockFlatList,
+  };
+});
+
 // ---- モック ----
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -115,6 +152,7 @@ async function createWithData(
 
 describe('ConversionHistoryModal', () => {
   beforeEach(() => {
+    jest.useFakeTimers();
     jest.clearAllMocks();
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   });
@@ -126,7 +164,10 @@ describe('ConversionHistoryModal', () => {
       });
     }
     mountedRenderers.clear();
-    await ReactTestRenderer.act(async () => {});
+    await ReactTestRenderer.act(async () => {
+      jest.runOnlyPendingTimers();
+    });
+    jest.useRealTimers();
   });
 
   it('visible=true のとき正常にレンダリングされる', async () => {
