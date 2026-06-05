@@ -16,7 +16,6 @@ import { File } from 'expo-file-system';
 import ErrorModal from '../components/ErrorModal';
 import ImageModal from '../components/ImageModal';
 import {useAppStore} from '../state/store';
-import {ConvertMethod} from '../state/store';
 import {resizeImage} from '../domain/useResizeImage';
 import {compressToTargetSize} from '../domain/useDiscordCompress';
 import {convertImage, formatBytes, ImageFormat} from '../domain/convertImage';
