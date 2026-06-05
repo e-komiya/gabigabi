@@ -1,6 +1,7 @@
-import {create} from 'zustand';
-import {persist, createJSONStorage} from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
 import { ImageFormat } from '../domain/convertImage';
 
 export type VideoFormat = 'mp4' | 'mov' | 'mkv' | 'webm';
@@ -28,7 +29,7 @@ interface AppState {
   // #138 GIF options
   gifFps: number;
   gifScale: number;
-  
+
   setSelectedImage: (image: string | null) => void;
   setSelectedMediaType: (mediaType: 'image' | 'video' | null) => void;
   setResizePercent: (percent: number) => void;
@@ -73,24 +74,25 @@ export const useAppStore = create<AppState>()(
       gifFps: 10,
       gifScale: 100,
 
-      setSelectedImage: image => set({selectedImage: image}),
-      setSelectedMediaType: mediaType => set({selectedMediaType: mediaType}),
-      setResizePercent: percent => set({resizePercent: percent}),
-      setProcessedImage: image => set({processedImage: image}),
-      setIsProcessing: processing => set({isProcessing: processing}),
-      setOutputFormat: format => set({outputFormat: format}),
-      setCompressionRate: rate => set({compressionRate: rate}),
-      setGabigabiLevel: level => set({gabigabiLevel: level}),
-      setVideoOutputFormat: format => set({videoOutputFormat: format}),
-      setShrinkExpandEnabled: enabled => set({shrinkExpandEnabled: enabled}),
-      setShrinkExpandRate: rate => set({shrinkExpandRate: rate}),
-      setMultiCompressEnabled: enabled => set({multiCompressEnabled: enabled}),
-      setMultiCompressCount: count => set({multiCompressCount: count}),
-      setConvertMethod: method => set({convertMethod: method}),
-      setTargetSizeValue: value => set({targetSizeValue: value}),
-      setTargetSizeUnit: unit => set({targetSizeUnit: unit}),
-      setGifFps: fps => set({gifFps: fps}),
-      setGifScale: scale => set({gifScale: scale}),
+      setSelectedImage: image => set({ selectedImage: image }),
+      setSelectedMediaType: mediaType => set({ selectedMediaType: mediaType }),
+      setResizePercent: percent => set({ resizePercent: percent }),
+      setProcessedImage: image => set({ processedImage: image }),
+      setIsProcessing: processing => set({ isProcessing: processing }),
+      setOutputFormat: format => set({ outputFormat: format }),
+      setCompressionRate: rate => set({ compressionRate: rate }),
+      setGabigabiLevel: level => set({ gabigabiLevel: level }),
+      setVideoOutputFormat: format => set({ videoOutputFormat: format }),
+      setShrinkExpandEnabled: enabled => set({ shrinkExpandEnabled: enabled }),
+      setShrinkExpandRate: rate => set({ shrinkExpandRate: rate }),
+      setMultiCompressEnabled: enabled =>
+        set({ multiCompressEnabled: enabled }),
+      setMultiCompressCount: count => set({ multiCompressCount: count }),
+      setConvertMethod: method => set({ convertMethod: method }),
+      setTargetSizeValue: value => set({ targetSizeValue: value }),
+      setTargetSizeUnit: unit => set({ targetSizeUnit: unit }),
+      setGifFps: fps => set({ gifFps: fps }),
+      setGifScale: scale => set({ gifScale: scale }),
     }),
     {
       name: 'gabigabi-app-settings',
