@@ -1,38 +1,34 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, Switch} from 'react-native';
+import { View, Text, TouchableOpacity, Switch } from 'react-native';
+
+import { sharedStyles, ACCENT, ACCENT2, BORDER } from './sharedStyles';
 import CustomSlider from '../../components/CustomSlider';
 import ResizeSlider from '../../components/ResizeSlider';
-import {VideoFormat} from '../../state/store';
-import {ImageFormat} from '../../domain/convertImage';
-import {t} from '../../i18n';
-import {
-  sharedStyles,
-  ACCENT,
-  ACCENT2,
-  BORDER,
-} from './sharedStyles';
+import { ImageFormat } from '../../domain/convertImage';
+import { t } from '../../i18n';
+import { VideoFormat } from '../../state/store';
 
-const FORMAT_OPTIONS: {label: string; value: ImageFormat}[] = [
-  {label: 'JPEG', value: 'jpeg'},
-  {label: 'PNG', value: 'png'},
-  {label: 'WebP', value: 'webp'},
-  {label: 'BMP', value: 'bmp'},
-  {label: 'GIF', value: 'gif'},
+const FORMAT_OPTIONS: { label: string; value: ImageFormat }[] = [
+  { label: 'JPEG', value: 'jpeg' },
+  { label: 'PNG', value: 'png' },
+  { label: 'WebP', value: 'webp' },
+  { label: 'BMP', value: 'bmp' },
+  { label: 'GIF', value: 'gif' },
 ];
 
-const VIDEO_FORMAT_OPTIONS: {label: string; value: VideoFormat}[] = [
-  {label: 'MP4', value: 'mp4'},
-  {label: 'MOV', value: 'mov'},
-  {label: 'MKV', value: 'mkv'},
-  {label: 'WebM', value: 'webm'},
+const VIDEO_FORMAT_OPTIONS: { label: string; value: VideoFormat }[] = [
+  { label: 'MP4', value: 'mp4' },
+  { label: 'MOV', value: 'mov' },
+  { label: 'MKV', value: 'mkv' },
+  { label: 'WebM', value: 'webm' },
 ];
 
-const GABIGABI_LEVELS: {label: string; value: number}[] = [
-  {label: '1', value: 1},
-  {label: '2', value: 2},
-  {label: '3', value: 3},
-  {label: '4', value: 4},
-  {label: '5', value: 5},
+const GABIGABI_LEVELS: { label: string; value: number }[] = [
+  { label: '1', value: 1 },
+  { label: '2', value: 2 },
+  { label: '3', value: 3 },
+  { label: '4', value: 4 },
+  { label: '5', value: 5 },
 ];
 
 interface SettingsPanelProps {
@@ -95,21 +91,27 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
     <View style={sharedStyles.sectionContainer}>
       <Text style={sharedStyles.sectionTitle}>{t('template')}</Text>
       <View style={sharedStyles.templateBlock}>
-        <Text style={sharedStyles.templateBlockLabel}>{t('gabigabiLevel')}</Text>
+        <Text style={sharedStyles.templateBlockLabel}>
+          {t('gabigabiLevel')}
+        </Text>
         <View style={sharedStyles.formatRow}>
           {GABIGABI_LEVELS.map(item => (
             <TouchableOpacity
               key={item.value}
               style={[
                 sharedStyles.formatButton,
-                gabigabiLevel === item.value && sharedStyles.gabigabiButtonActive,
+                gabigabiLevel === item.value &&
+                  sharedStyles.gabigabiButtonActive,
               ]}
-              onPress={() => onTemplateSelect(item.value)}>
+              onPress={() => onTemplateSelect(item.value)}
+            >
               <Text
                 style={[
                   sharedStyles.formatButtonText,
-                  gabigabiLevel === item.value && sharedStyles.formatButtonTextActive,
-                ]}>
+                  gabigabiLevel === item.value &&
+                    sharedStyles.formatButtonTextActive,
+                ]}
+              >
                 {item.label}
               </Text>
             </TouchableOpacity>
@@ -142,17 +144,25 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 key={opt.value}
                 style={[
                   sharedStyles.formatButton,
-                  videoOutputFormat === opt.value && sharedStyles.formatButtonActive,
+                  videoOutputFormat === opt.value &&
+                    sharedStyles.formatButtonActive,
                 ]}
                 onPress={() => onVideoOutputFormatChange(opt.value)}
                 accessibilityRole="button"
-                accessibilityLabel={`${t('outputFormatAccessibility')} ${opt.label}`}
-                accessibilityState={{selected: videoOutputFormat === opt.value}}>
+                accessibilityLabel={`${t('outputFormatAccessibility')} ${
+                  opt.label
+                }`}
+                accessibilityState={{
+                  selected: videoOutputFormat === opt.value,
+                }}
+              >
                 <Text
                   style={[
                     sharedStyles.formatButtonText,
-                    videoOutputFormat === opt.value && sharedStyles.formatButtonTextActive,
-                  ]}>
+                    videoOutputFormat === opt.value &&
+                      sharedStyles.formatButtonTextActive,
+                  ]}
+                >
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -163,7 +173,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
       {selectedMediaType !== 'video' && (
         <>
           {selectedMediaType === null && (
-            <Text style={[sharedStyles.formatGroupLabel, {marginTop: 12}]}>{t('image')}</Text>
+            <Text style={[sharedStyles.formatGroupLabel, { marginTop: 12 }]}>
+              {t('image')}
+            </Text>
           )}
           <View style={sharedStyles.formatRow}>
             {FORMAT_OPTIONS.map(opt => (
@@ -175,13 +187,18 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 ]}
                 onPress={() => onOutputFormatChange(opt.value)}
                 accessibilityRole="button"
-                accessibilityLabel={`${t('outputFormatAccessibility')} ${opt.label}`}
-                accessibilityState={{selected: outputFormat === opt.value}}>
+                accessibilityLabel={`${t('outputFormatAccessibility')} ${
+                  opt.label
+                }`}
+                accessibilityState={{ selected: outputFormat === opt.value }}
+              >
                 <Text
                   style={[
                     sharedStyles.formatButtonText,
-                    outputFormat === opt.value && sharedStyles.formatButtonTextActive,
-                  ]}>
+                    outputFormat === opt.value &&
+                      sharedStyles.formatButtonTextActive,
+                  ]}
+                >
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -230,10 +247,14 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </View>
         </>
       )}
-      {((selectedMediaType !== 'video' && (outputFormat === 'jpeg' || outputFormat === 'webp')) || selectedMediaType === 'video') && (
+      {((selectedMediaType !== 'video' &&
+        (outputFormat === 'jpeg' || outputFormat === 'webp')) ||
+        selectedMediaType === 'video') && (
         <View style={sharedStyles.qualityRow}>
           <View style={sharedStyles.qualityLabelRow}>
-            <Text style={sharedStyles.qualityLabel}>{t('compressionRate')}</Text>
+            <Text style={sharedStyles.qualityLabel}>
+              {t('compressionRate')}
+            </Text>
             <Text style={sharedStyles.qualityValue}>{compressionRate}%</Text>
           </View>
           <CustomSlider
@@ -243,8 +264,16 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
             step={1}
             value={compressionRate}
             onValueChange={(v: number) => onQualityChange(Math.round(v))}
-            accessibilityLabel={selectedMediaType === 'video' ? t('videoCompressionSlider') : t('imageCompressionSlider')}
-            accessibilityHint={selectedMediaType === 'video' ? t('videoCompressionSliderHint') : t('imageCompressionSliderHint')}
+            accessibilityLabel={
+              selectedMediaType === 'video'
+                ? t('videoCompressionSlider')
+                : t('imageCompressionSlider')
+            }
+            accessibilityHint={
+              selectedMediaType === 'video'
+                ? t('videoCompressionSliderHint')
+                : t('imageCompressionSliderHint')
+            }
             minimumTrackTintColor={ACCENT2}
             maximumTrackTintColor={BORDER}
             thumbTintColor={ACCENT2}
@@ -264,7 +293,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <Switch
           value={shrinkExpandEnabled}
           onValueChange={onShrinkExpandToggle}
-          trackColor={{false: BORDER, true: ACCENT}}
+          trackColor={{ false: BORDER, true: ACCENT }}
           thumbColor={shrinkExpandEnabled ? '#fff' : '#888'}
         />
       </View>
@@ -302,7 +331,7 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <Switch
           value={multiCompressEnabled}
           onValueChange={onMultiCompressToggle}
-          trackColor={{false: BORDER, true: ACCENT}}
+          trackColor={{ false: BORDER, true: ACCENT }}
           thumbColor={multiCompressEnabled ? '#fff' : '#888'}
         />
       </View>
@@ -310,7 +339,10 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <View style={sharedStyles.qualityRow}>
           <View style={sharedStyles.qualityLabelRow}>
             <Text style={sharedStyles.qualityLabel}>{t('compressCount')}</Text>
-            <Text style={sharedStyles.qualityValue}>{multiCompressCount}{t('timesSuffix')}</Text>
+            <Text style={sharedStyles.qualityValue}>
+              {multiCompressCount}
+              {t('timesSuffix')}
+            </Text>
           </View>
           <CustomSlider
             style={sharedStyles.qualitySlider}

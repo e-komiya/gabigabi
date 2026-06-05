@@ -1,14 +1,25 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, TextInput, StyleSheet} from 'react-native';
-import {SizeUnit} from '../../state/store';
-import {t} from '../../i18n';
-import {sharedStyles, BORDER, TEXT_SECONDARY, DARK_BG} from './sharedStyles';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+} from 'react-native';
 
-const TARGET_SIZE_TEMPLATES: {label: string; value: string; unit: SizeUnit}[] = [
-  {label: 'Discord 10MB', value: '10', unit: 'MB'},
-  {label: 'X (Twitter) 5MB', value: '5', unit: 'MB'},
-  {label: 'LINE 10MB', value: '10', unit: 'MB'},
-  {label: 'Instagram 8MB', value: '8', unit: 'MB'},
+import { sharedStyles, BORDER, TEXT_SECONDARY } from './sharedStyles';
+import { t } from '../../i18n';
+import { SizeUnit } from '../../state/store';
+
+const TARGET_SIZE_TEMPLATES: {
+  label: string;
+  value: string;
+  unit: SizeUnit;
+}[] = [
+  { label: 'Discord 10MB', value: '10', unit: 'MB' },
+  { label: 'X (Twitter) 5MB', value: '5', unit: 'MB' },
+  { label: 'LINE 10MB', value: '10', unit: 'MB' },
+  { label: 'Instagram 8MB', value: '8', unit: 'MB' },
 ];
 
 interface TargetSizePanelProps {
@@ -24,7 +35,7 @@ const TargetSizePanel: React.FC<TargetSizePanelProps> = ({
   onValueChange,
   onUnitChange,
 }) => {
-  const handleTemplateSelect = (tmpl: typeof TARGET_SIZE_TEMPLATES[0]) => {
+  const handleTemplateSelect = (tmpl: (typeof TARGET_SIZE_TEMPLATES)[0]) => {
     onValueChange(tmpl.value);
     onUnitChange(tmpl.unit);
   };
@@ -47,18 +58,31 @@ const TargetSizePanel: React.FC<TargetSizePanelProps> = ({
           {(['KB', 'MB', 'GB'] as SizeUnit[]).map(u => (
             <TouchableOpacity
               key={u}
-              style={[styles.unitButton, targetSizeUnit === u && styles.unitButtonActive]}
+              style={[
+                styles.unitButton,
+                targetSizeUnit === u && styles.unitButtonActive,
+              ]}
               onPress={() => onUnitChange(u)}
               accessibilityRole="button"
               accessibilityLabel={`${t('unitButtonAccessibility')} ${u}`}
-              accessibilityState={{selected: targetSizeUnit === u}}>
-              <Text style={[styles.unitButtonText, targetSizeUnit === u && styles.unitButtonTextActive]}>{u}</Text>
+              accessibilityState={{ selected: targetSizeUnit === u }}
+            >
+              <Text
+                style={[
+                  styles.unitButtonText,
+                  targetSizeUnit === u && styles.unitButtonTextActive,
+                ]}
+              >
+                {u}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      <Text style={[sharedStyles.sectionTitle, styles.templateTitle]}>{t('template')}</Text>
+      <Text style={[sharedStyles.sectionTitle, styles.templateTitle]}>
+        {t('template')}
+      </Text>
       <View style={styles.targetSizeTemplates}>
         {TARGET_SIZE_TEMPLATES.map(tmpl => (
           <TouchableOpacity
@@ -66,15 +90,16 @@ const TargetSizePanel: React.FC<TargetSizePanelProps> = ({
             style={styles.targetSizeTemplate}
             onPress={() => handleTemplateSelect(tmpl)}
             accessibilityRole="button"
-            accessibilityLabel={`${t('templateButtonAccessibility')} ${tmpl.label}`}>
+            accessibilityLabel={`${t('templateButtonAccessibility')} ${
+              tmpl.label
+            }`}
+          >
             <Text style={styles.targetSizeTemplateText}>{tmpl.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <Text style={styles.noteText}>
-        {t('targetSizeNote')}
-      </Text>
+      <Text style={styles.noteText}>{t('targetSizeNote')}</Text>
     </View>
   );
 };
