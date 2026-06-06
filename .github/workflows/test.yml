@@ -27,6 +27,17 @@ jobs:
         working-directory: app
         run: npm ci
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run Rust tests
+        working-directory: rust_core
+        run: cargo test
+
+      - name: Run Rust clippy
+        working-directory: rust_core
+        run: cargo clippy --all-targets -- -D warnings
+
       - name: Run unit tests
         working-directory: app
         run: npx jest --ci --selectProjects unit
