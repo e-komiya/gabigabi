@@ -1,5 +1,6 @@
-import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
+import React from 'react';
+
 import MainScreen from '../screens/MainScreen';
 
 // Mock all native dependencies
@@ -15,7 +16,9 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 jest.mock('expo-image-picker', () => ({
-  requestMediaLibraryPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  requestMediaLibraryPermissionsAsync: jest
+    .fn()
+    .mockResolvedValue({ status: 'granted' }),
   launchImageLibraryAsync: jest.fn().mockResolvedValue({ canceled: true }),
   MediaTypeOptions: { All: 'All', Images: 'Images', Videos: 'Videos' },
 }));
@@ -30,17 +33,23 @@ jest.mock('expo-file-system', () => {
     exists: boolean = false;
     size: number = 0;
     uri: string;
-    constructor(uri: string) { this.uri = uri; }
+    constructor(uri: string) {
+      this.uri = uri;
+    }
     delete() {}
     move(dest: any) {}
   }
   return {
-    Paths: { cache: { uri: 'file:///cache/' }, join: (...args: string[]) => args.join('/') },
+    Paths: {
+      cache: { uri: 'file:///cache/' },
+      join: (...args: string[]) => args.join('/'),
+    },
     File: MockFile,
     Directory: class {
       exists = true;
-      constructor() {}
-      list() { return []; }
+      list() {
+        return [];
+      }
     },
   };
 });
@@ -90,7 +99,10 @@ jest.mock('expo-video-thumbnails', () => ({
 }));
 
 jest.mock('../domain/useDiscordCompress', () => ({
-  compressToTargetSize: jest.fn().mockResolvedValue({ outputUri: 'file:///out/result.jpg', outputBytes: 100 * 1024 }),
+  compressToTargetSize: jest.fn().mockResolvedValue({
+    outputUri: 'file:///out/result.jpg',
+    outputBytes: 100 * 1024,
+  }),
 }));
 
 jest.mock('../data/ffmpeg/ffmpegUtils', () => ({
@@ -128,7 +140,9 @@ describe('MainScreen', () => {
   it('変換ボタンが初期状態では無効', () => {
     const { getByRole } = render(<MainScreen />);
     const btn = getByRole('button', { name: 'Run blocky effect' });
-    expect(btn.props.accessibilityState?.disabled ?? btn.props.disabled).toBeTruthy();
+    expect(
+      btn.props.accessibilityState?.disabled ?? btn.props.disabled,
+    ).toBeTruthy();
   });
 
   it('目標サイズ未達の警告エリアは初期状態では表示されない', () => {

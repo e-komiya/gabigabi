@@ -5,6 +5,7 @@
 
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
+
 import CustomSlider from '../components/CustomSlider';
 
 describe('CustomSlider', () => {
@@ -32,7 +33,10 @@ describe('CustomSlider', () => {
       let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
       await ReactTestRenderer.act(() => {
         renderer = ReactTestRenderer.create(
-          <CustomSlider {...defaultProps} accessibilityLabel="テストスライダー" />,
+          <CustomSlider
+            {...defaultProps}
+            accessibilityLabel="テストスライダー"
+          />,
         );
       });
       const instance = renderer!.root;
@@ -56,7 +60,11 @@ describe('CustomSlider', () => {
       });
       const instance = renderer!.root;
       const el = instance.find(e => e.props.accessibilityRole === 'adjustable');
-      expect(el.props.accessibilityValue).toEqual({min: 0, max: 200, now: 75});
+      expect(el.props.accessibilityValue).toEqual({
+        min: 0,
+        max: 200,
+        now: 75,
+      });
     });
 
     it('値が変更されると accessibilityValue.now が更新される', async () => {
@@ -84,7 +92,11 @@ describe('CustomSlider', () => {
       });
       const instance = renderer!.root;
       const el = instance.find(e => e.props.accessibilityRole === 'adjustable');
-      expect(el.props.accessibilityValue).toEqual({min: 0, max: 100, now: 80});
+      expect(el.props.accessibilityValue).toEqual({
+        min: 0,
+        max: 100,
+        now: 80,
+      });
     });
 
     it('accessibilityLabel が props から反映される', async () => {
@@ -151,12 +163,10 @@ describe('CustomSlider', () => {
           />,
         );
       });
-      const json = renderer!.toJSON() as any;
       // thumb の backgroundColor は thumbTintColor
       const thumb = renderer!.root.findAll(
         el =>
-          el.props.style &&
-          JSON.stringify(el.props.style).includes('#ff0000'),
+          el.props.style && JSON.stringify(el.props.style).includes('#ff0000'),
       );
       expect(thumb.length).toBeGreaterThan(0);
     });

@@ -1,4 +1,5 @@
-import React, {useState, useCallback} from 'react';
+import * as Clipboard from 'expo-clipboard';
+import React, { useState, useCallback } from 'react';
 import {
   Modal,
   View,
@@ -7,9 +8,16 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
-import {t} from '../i18n';
-import {DARK_BG, CARD_BG, ACCENT, TEXT_PRIMARY, TEXT_SECONDARY, BORDER} from '../screens/components/sharedStyles';
+
+import { t } from '../i18n';
+import {
+  DARK_BG,
+  CARD_BG,
+  ACCENT,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  BORDER,
+} from '../screens/components/sharedStyles';
 
 interface ErrorModalProps {
   visible: boolean;
@@ -38,19 +46,23 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
       transparent
       animationType="fade"
       onRequestClose={onClose}
-      accessibilityViewIsModal={true}>
+      accessibilityViewIsModal
+    >
       <View style={styles.overlay}>
         <View style={styles.dialog}>
           {/* Title */}
           <View style={styles.titleRow}>
-            <Text style={styles.titleText} accessibilityRole="header">{title}</Text>
+            <Text style={styles.titleText} accessibilityRole="header">
+              {title}
+            </Text>
           </View>
 
           {/* Scrollable error body */}
           <ScrollView
             style={styles.bodyScroll}
             contentContainerStyle={styles.bodyContent}
-            showsVerticalScrollIndicator>
+            showsVerticalScrollIndicator
+          >
             <Text selectable style={styles.messageText}>
               {message}
             </Text>
@@ -63,7 +75,8 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
               onPress={handleCopy}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel={copied ? t('copied') : t('copy')}>
+              accessibilityLabel={copied ? t('copied') : t('copy')}
+            >
               <Text style={styles.copyButtonText}>
                 {copied ? t('copied') : t('copy')}
               </Text>
@@ -74,7 +87,8 @@ const ErrorModal: React.FC<ErrorModalProps> = ({
               onPress={onClose}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel={t('close')}>
+              accessibilityLabel={t('close')}
+            >
               <Text style={styles.closeButtonText}>{t('close')}</Text>
             </TouchableOpacity>
           </View>

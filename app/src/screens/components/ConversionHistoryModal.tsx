@@ -1,4 +1,7 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import { File } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import * as VideoThumbnails from 'expo-video-thumbnails';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Modal,
   View,
@@ -10,9 +13,16 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import { File } from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
-import * as VideoThumbnails from 'expo-video-thumbnails';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import {
+  DARK_BG,
+  CARD_BG,
+  ACCENT,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  BORDER,
+} from './sharedStyles';
 import {
   ConversionHistoryItem,
   ConversionAction,
@@ -20,16 +30,13 @@ import {
   deleteConversionHistoryItem,
   getConversionHistory,
 } from '../../data/history/conversionHistory';
-import {t} from '../../i18n';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {DARK_BG, CARD_BG, ACCENT, TEXT_PRIMARY, TEXT_SECONDARY, BORDER} from './sharedStyles';
-import {formatBytes} from '../../utils/formatBytes';
+import { t } from '../../i18n';
+import { formatBytes } from '../../utils/formatBytes';
 
 interface ConversionHistoryModalProps {
   visible: boolean;
   onClose: () => void;
 }
-
 
 function formatDate(iso: string): string {
   try {
@@ -45,12 +52,18 @@ function formatDate(iso: string): string {
   }
 }
 
-function actionLabel(action: ConversionHistoryItem['params']['action']): string {
+function actionLabel(
+  action: ConversionHistoryItem['params']['action'],
+): string {
   switch (action) {
-    case 'gabigabi': return t('actionGabigabi');
-    case 'convert': return t('actionConvert');
-    case 'targetSize': return t('actionTargetSize');
-    default: return String(action);
+    case 'gabigabi':
+      return t('actionGabigabi');
+    case 'convert':
+      return t('actionConvert');
+    case 'targetSize':
+      return t('actionTargetSize');
+    default:
+      return String(action);
   }
 }
 
@@ -74,7 +87,10 @@ function formatParams(item: ConversionHistoryItem): string | null {
   return null;
 }
 
-const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'}> = ({uri, mediaType}) => {
+const HistoryItemThumbnail: React.FC<{
+  uri: string;
+  mediaType?: 'image' | 'video';
+}> = ({ uri, mediaType }) => {
   const [error, setError] = useState(false);
   const [videoThumbUri, setVideoThumbUri] = useState<string | null>(null);
   const [videoThumbLoading, setVideoThumbLoading] = useState(false);
@@ -83,8 +99,8 @@ const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'
     if (mediaType !== 'video') return;
     let cancelled = false;
     setVideoThumbLoading(true);
-    VideoThumbnails.getThumbnailAsync(uri, {time: 0})
-      .then(({uri: thumbUri}) => {
+    VideoThumbnails.getThumbnailAsync(uri, { time: 0 })
+      .then(({ uri: thumbUri }) => {
         if (!cancelled) setVideoThumbUri(thumbUri);
       })
       .catch(() => {
@@ -93,13 +109,18 @@ const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'
       .finally(() => {
         if (!cancelled) setVideoThumbLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [uri, mediaType]);
 
   if (mediaType === 'video') {
     if (videoThumbLoading) {
       return (
-        <View style={styles.thumbnail} accessibilityLabel="動画サムネイル読み込み中">
+        <View
+          style={styles.thumbnail}
+          accessibilityLabel="動画サムネイル読み込み中"
+        >
           <ActivityIndicator size="small" color="#aaa" />
         </View>
       );
@@ -107,7 +128,7 @@ const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'
     if (videoThumbUri && !error) {
       return (
         <Image
-          source={{uri: videoThumbUri}}
+          source={{ uri: videoThumbUri }}
           style={styles.thumbnail}
           accessibilityLabel="変換後動画のサムネイル"
           onError={() => setError(true)}
@@ -115,21 +136,27 @@ const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'
       );
     }
     return (
-      <View style={styles.thumbnail} accessibilityLabel="変換後動画のサムネイル">
+      <View
+        style={styles.thumbnail}
+        accessibilityLabel="変換後動画のサムネイル"
+      >
         <Text style={styles.thumbnailFallback}>🎬</Text>
       </View>
     );
   }
   if (error) {
     return (
-      <View style={styles.thumbnail} accessibilityLabel="変換後画像のサムネイル">
+      <View
+        style={styles.thumbnail}
+        accessibilityLabel="変換後画像のサムネイル"
+      >
         <Text style={styles.thumbnailFallback}>📷</Text>
       </View>
     );
   }
   return (
     <Image
-      source={{uri}}
+      source={{ uri }}
       style={styles.thumbnail}
       accessibilityLabel="変換後画像のサムネイル"
       onError={() => setError(true)}
@@ -137,16 +164,23 @@ const HistoryItemThumbnail: React.FC<{uri: string; mediaType?: 'image' | 'video'
   );
 };
 
-const HistoryItem: React.FC<{item: ConversionHistoryItem; onDelete: (id: string) => void}> = ({item, onDelete}) => {
+const HistoryItem: React.FC<{
+  item: ConversionHistoryItem;
+  onDelete: (id: string) => void;
+}> = ({ item, onDelete }) => {
   const [fileExists, setFileExists] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const path = item.outputPath.startsWith('file://') ? item.outputPath : `file://${item.outputPath}`;
+    const path = item.outputPath.startsWith('file://')
+      ? item.outputPath
+      : `file://${item.outputPath}`;
     setFileExists(new File(path).exists);
   }, [item.outputPath]);
 
   const handleShare = useCallback(async () => {
-    const path = item.outputPath.startsWith('file://') ? item.outputPath : `file://${item.outputPath}`;
+    const path = item.outputPath.startsWith('file://')
+      ? item.outputPath
+      : `file://${item.outputPath}`;
     try {
       const isAvailable = await Sharing.isAvailableAsync();
       if (!isAvailable) return;
@@ -156,45 +190,88 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem; onDelete: (id: string)
     }
   }, [item.outputPath]);
 
-  const ratio = item.inputBytes > 0
-    ? Math.round((item.outputBytes / item.inputBytes) * 100)
-    : 0;
+  const ratio =
+    item.inputBytes > 0
+      ? Math.round((item.outputBytes / item.inputBytes) * 100)
+      : 0;
   const fileName = item.outputPath.split('/').pop() ?? '—';
-  const a11yLabel = `${actionLabel(item.params.action)} ${formatDate(item.createdAt)} ${formatBytes(item.inputBytes)} → ${formatBytes(item.outputBytes)} (${ratio}%)`;
-  const thumbnailUri = item.outputPath.startsWith('file://') ? item.outputPath : `file://${item.outputPath}`;
+  const a11yLabel = `${actionLabel(item.params.action)} ${formatDate(
+    item.createdAt,
+  )} ${formatBytes(item.inputBytes)} → ${formatBytes(
+    item.outputBytes,
+  )} (${ratio}%)`;
+  const thumbnailUri = item.outputPath.startsWith('file://')
+    ? item.outputPath
+    : `file://${item.outputPath}`;
 
   return (
-    <View style={[styles.itemCard, fileExists === false && styles.itemCardUnavailable]} accessible={true} accessibilityLabel={a11yLabel}>
+    <View
+      style={[
+        styles.itemCard,
+        fileExists === false && styles.itemCardUnavailable,
+      ]}
+      accessible
+      accessibilityLabel={a11yLabel}
+    >
       <View style={styles.itemRow}>
         <HistoryItemThumbnail uri={thumbnailUri} mediaType={item.mediaType} />
         <View style={styles.itemContent}>
           <View style={styles.itemHeader}>
             <Text style={styles.itemDate}>{formatDate(item.createdAt)}</Text>
             <View style={styles.itemHeaderRight}>
-              <View style={[styles.actionBadge, item.params.action === 'gabigabi' && styles.actionBadgeGabi]}>
-                <Text style={styles.actionBadgeText}>{actionLabel(item.params.action)}</Text>
+              <View
+                style={[
+                  styles.actionBadge,
+                  item.params.action === 'gabigabi' && styles.actionBadgeGabi,
+                ]}
+              >
+                <Text style={styles.actionBadgeText}>
+                  {actionLabel(item.params.action)}
+                </Text>
               </View>
               <TouchableOpacity
                 onPress={() => onDelete(item.id)}
                 style={styles.deleteButton}
                 accessibilityRole="button"
-                accessibilityLabel={t('deleteHistoryItemTitle')}>
+                accessibilityLabel={t('deleteHistoryItemTitle')}
+              >
                 <Text style={styles.deleteButtonText}>✕</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleShare}
                 disabled={fileExists !== true}
-                style={[styles.shareButton, fileExists !== true && styles.shareButtonDisabled]}
+                style={[
+                  styles.shareButton,
+                  fileExists !== true && styles.shareButtonDisabled,
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel={t('shareHistoryItem')}
-                accessibilityState={{disabled: fileExists !== true}}>
-                <Text style={[styles.shareButtonText, fileExists !== true && styles.shareButtonTextDisabled]}>↑</Text>
+                accessibilityState={{ disabled: fileExists !== true }}
+              >
+                <Text
+                  style={[
+                    styles.shareButtonText,
+                    fileExists !== true && styles.shareButtonTextDisabled,
+                  ]}
+                >
+                  ↑
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
-          <Text style={styles.itemFileName} numberOfLines={1} ellipsizeMode="middle">📄 {fileName}</Text>
+          <Text
+            style={styles.itemFileName}
+            numberOfLines={1}
+            ellipsizeMode="middle"
+          >
+            📄 {fileName}
+          </Text>
           {formatParams(item) !== null && (
-            <Text style={styles.itemParams} numberOfLines={1} ellipsizeMode="tail">
+            <Text
+              style={styles.itemParams}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {formatParams(item)}
             </Text>
           )}
@@ -202,9 +279,16 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem; onDelete: (id: string)
             <Text style={styles.fileNotFoundText}>{t('fileNotFound')}</Text>
           ) : (
             <View style={styles.itemSizeRow}>
-              <Text style={styles.itemSize}>{formatBytes(item.inputBytes)}</Text>
+              <Text style={styles.itemSize}>
+                {formatBytes(item.inputBytes)}
+              </Text>
               <Text style={styles.itemArrow}>→</Text>
-              <Text style={[styles.itemSize, ratio < 100 ? styles.sizeReduced : styles.sizeIncreased]}>
+              <Text
+                style={[
+                  styles.itemSize,
+                  ratio < 100 ? styles.sizeReduced : styles.sizeIncreased,
+                ]}
+              >
                 {formatBytes(item.outputBytes)}
               </Text>
               <Text style={styles.itemRatio}>({ratio}%)</Text>
@@ -216,11 +300,16 @@ const HistoryItem: React.FC<{item: ConversionHistoryItem; onDelete: (id: string)
   );
 };
 
-const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible, onClose}) => {
+const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({
+  visible,
+  onClose,
+}) => {
   const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<ConversionHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filterAction, setFilterAction] = useState<'all' | ConversionAction>('all');
+  const [filterAction, setFilterAction] = useState<'all' | ConversionAction>(
+    'all',
+  );
 
   const loadHistory = useCallback(async () => {
     setLoading(true);
@@ -239,77 +328,84 @@ const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible,
   }, [visible, loadHistory]);
 
   const handleDeleteItem = useCallback((id: string) => {
-    Alert.alert(
-      t('deleteHistoryItemTitle'),
-      t('deleteHistoryItemMessage'),
-      [
-        {text: t('cancel'), style: 'cancel'},
-        {
-          text: t('deleteHistoryItemConfirm'),
-          style: 'destructive',
-          onPress: async () => {
-            await deleteConversionHistoryItem(id);
-            setHistory(prev => prev.filter(item => item.id !== id));
-          },
+    Alert.alert(t('deleteHistoryItemTitle'), t('deleteHistoryItemMessage'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('deleteHistoryItemConfirm'),
+        style: 'destructive',
+        onPress: async () => {
+          await deleteConversionHistoryItem(id);
+          setHistory(prev => prev.filter(item => item.id !== id));
         },
-      ],
-    );
+      },
+    ]);
   }, []);
 
   const handleClear = useCallback(() => {
-    Alert.alert(
-      t('clearHistoryTitle'),
-      t('clearHistoryMessage'),
-      [
-        {text: t('cancel'), style: 'cancel'},
-        {
-          text: t('clearHistoryConfirm'),
-          style: 'destructive',
-          onPress: async () => {
-            await clearConversionHistory();
-            setHistory([]);
-          },
+    Alert.alert(t('clearHistoryTitle'), t('clearHistoryMessage'), [
+      { text: t('cancel'), style: 'cancel' },
+      {
+        text: t('clearHistoryConfirm'),
+        style: 'destructive',
+        onPress: async () => {
+          await clearConversionHistory();
+          setHistory([]);
         },
-      ],
-    );
+      },
+    ]);
   }, []);
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={styles.container}>
         {/* Header */}
-        <View style={[styles.header, {paddingTop: insets.top + 12}]}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <Text style={styles.headerTitle}>{t('conversionHistoryTitle')}</Text>
           <TouchableOpacity
             onPress={onClose}
             style={styles.closeButton}
             accessibilityRole="button"
-            accessibilityLabel={t('close')}>
+            accessibilityLabel={t('close')}
+          >
             <Text style={styles.closeButtonText}>{t('close')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* Filter tabs */}
         <View style={styles.filterRow}>
-          {(['all', 'gabigabi', 'convert', 'targetSize'] as const).map(action => (
-            <TouchableOpacity
-              key={action}
-              style={[styles.filterTab, filterAction === action && styles.filterTabActive]}
-              onPress={() => setFilterAction(action)}
-              accessibilityRole="tab"
-              accessibilityState={{selected: filterAction === action}}>
-              <Text style={[styles.filterTabText, filterAction === action && styles.filterTabTextActive]}>
-                {action === 'all' ? t('filterAll') : actionLabel(action as ConversionAction)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {(['all', 'gabigabi', 'convert', 'targetSize'] as const).map(
+            action => (
+              <TouchableOpacity
+                key={action}
+                style={[
+                  styles.filterTab,
+                  filterAction === action && styles.filterTabActive,
+                ]}
+                onPress={() => setFilterAction(action)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: filterAction === action }}
+              >
+                <Text
+                  style={[
+                    styles.filterTabText,
+                    filterAction === action && styles.filterTabTextActive,
+                  ]}
+                >
+                  {action === 'all'
+                    ? t('filterAll')
+                    : actionLabel(action as ConversionAction)}
+                </Text>
+              </TouchableOpacity>
+            ),
+          )}
         </View>
 
         {/* Content */}
         {(() => {
-          const filteredHistory = filterAction === 'all'
-            ? history
-            : history.filter(item => item.params.action === filterAction);
+          const filteredHistory =
+            filterAction === 'all'
+              ? history
+              : history.filter(item => item.params.action === filterAction);
           return loading ? (
             <View style={styles.emptyContainer}>
               <ActivityIndicator color={ACCENT} size="large" />
@@ -322,10 +418,12 @@ const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible,
             <FlatList
               data={filteredHistory}
               keyExtractor={item => item.id}
-              renderItem={({item}) => <HistoryItem item={item} onDelete={handleDeleteItem} />}
+              renderItem={({ item }) => (
+                <HistoryItem item={item} onDelete={handleDeleteItem} />
+              )}
               contentContainerStyle={styles.listContent}
               showsVerticalScrollIndicator={false}
-              accessible={true}
+              accessible
               accessibilityLabel={t('conversionHistoryTitle')}
             />
           );
@@ -338,8 +436,11 @@ const ConversionHistoryModal: React.FC<ConversionHistoryModalProps> = ({visible,
               style={styles.clearButton}
               onPress={handleClear}
               accessibilityRole="button"
-              accessibilityLabel={t('clearHistoryTitle')}>
-              <Text style={styles.clearButtonText}>{t('clearHistoryTitle')}</Text>
+              accessibilityLabel={t('clearHistoryTitle')}
+            >
+              <Text style={styles.clearButtonText}>
+                {t('clearHistoryTitle')}
+              </Text>
             </TouchableOpacity>
           </View>
         )}

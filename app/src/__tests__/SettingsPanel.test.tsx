@@ -6,11 +6,11 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+import SettingsPanel from '../screens/components/SettingsPanel';
+
 jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
-
-import SettingsPanel from '../screens/components/SettingsPanel';
 
 const defaultProps = {
   selectedMediaType: null as 'image' | 'video' | null,
@@ -44,9 +44,7 @@ describe('SettingsPanel', () => {
   it('デフォルト props で正常にレンダリングされる', async () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
-      renderer = ReactTestRenderer.create(
-        <SettingsPanel {...defaultProps} />,
-      );
+      renderer = ReactTestRenderer.create(<SettingsPanel {...defaultProps} />);
     });
     expect(renderer!.toJSON()).not.toBeNull();
   });
@@ -58,7 +56,9 @@ describe('SettingsPanel', () => {
         <SettingsPanel {...defaultProps} selectedMediaType="image" />,
       );
     });
-    const jpegButtons = renderer!.root.findAll(el => el.props.children === 'JPEG');
+    const jpegButtons = renderer!.root.findAll(
+      el => el.props.children === 'JPEG',
+    );
     expect(jpegButtons.length).toBeGreaterThan(0);
   });
 
@@ -69,7 +69,9 @@ describe('SettingsPanel', () => {
         <SettingsPanel {...defaultProps} selectedMediaType="video" />,
       );
     });
-    const mp4Buttons = renderer!.root.findAll(el => el.props.children === 'MP4');
+    const mp4Buttons = renderer!.root.findAll(
+      el => el.props.children === 'MP4',
+    );
     expect(mp4Buttons.length).toBeGreaterThan(0);
   });
 
@@ -77,7 +79,7 @@ describe('SettingsPanel', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <SettingsPanel {...defaultProps} shrinkExpandEnabled={true} />,
+        <SettingsPanel {...defaultProps} shrinkExpandEnabled />,
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
@@ -87,7 +89,7 @@ describe('SettingsPanel', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <SettingsPanel {...defaultProps} multiCompressEnabled={true} />,
+        <SettingsPanel {...defaultProps} multiCompressEnabled />,
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
@@ -107,38 +109,50 @@ describe('SettingsPanel', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <SettingsPanel {...defaultProps} selectedMediaType="image" outputFormat="png" />,
+        <SettingsPanel
+          {...defaultProps}
+          selectedMediaType="image"
+          outputFormat="png"
+        />,
       );
     });
     const pngButton = renderer!.root.find(
       el => el.props.accessibilityLabel === 'outputFormatAccessibility PNG',
     );
-    expect(pngButton.props.accessibilityState).toEqual({selected: true});
+    expect(pngButton.props.accessibilityState).toEqual({ selected: true });
   });
 
   it('非選択の出力フォーマットボタンに accessibilityState={{selected: false}} が設定される', async () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <SettingsPanel {...defaultProps} selectedMediaType="image" outputFormat="png" />,
+        <SettingsPanel
+          {...defaultProps}
+          selectedMediaType="image"
+          outputFormat="png"
+        />,
       );
     });
     const jpegButton = renderer!.root.find(
       el => el.props.accessibilityLabel === 'outputFormatAccessibility JPEG',
     );
-    expect(jpegButton.props.accessibilityState).toEqual({selected: false});
+    expect(jpegButton.props.accessibilityState).toEqual({ selected: false });
   });
 
   it('選択中の動画フォーマットボタンに accessibilityState={{selected: true}} が設定される', async () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <SettingsPanel {...defaultProps} selectedMediaType="video" videoOutputFormat="mov" />,
+        <SettingsPanel
+          {...defaultProps}
+          selectedMediaType="video"
+          videoOutputFormat="mov"
+        />,
       );
     });
     const movButton = renderer!.root.find(
       el => el.props.accessibilityLabel === 'outputFormatAccessibility MOV',
     );
-    expect(movButton.props.accessibilityState).toEqual({selected: true});
+    expect(movButton.props.accessibilityState).toEqual({ selected: true });
   });
 });

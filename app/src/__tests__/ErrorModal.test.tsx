@@ -6,6 +6,8 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+import ErrorModal from '../components/ErrorModal';
+
 jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
@@ -13,15 +15,13 @@ jest.mock('expo-clipboard', () => ({
   setStringAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
-import ErrorModal from '../components/ErrorModal';
-
 describe('ErrorModal', () => {
   it('visible=true のとき正常にレンダリングされる', async () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
         <ErrorModal
-          visible={true}
+          visible
           message="テストエラーメッセージ"
           onClose={jest.fn()}
         />,
@@ -49,14 +49,16 @@ describe('ErrorModal', () => {
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
         <ErrorModal
-          visible={true}
+          visible
           title="カスタムタイトル"
           message="エラー内容"
           onClose={jest.fn()}
         />,
       );
     });
-    const texts = renderer!.root.findAll(el => el.props.children === 'カスタムタイトル');
+    const texts = renderer!.root.findAll(
+      el => el.props.children === 'カスタムタイトル',
+    );
     expect(texts.length).toBeGreaterThan(0);
   });
 
@@ -65,7 +67,7 @@ describe('ErrorModal', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <ErrorModal visible={true} message={msg} onClose={jest.fn()} />,
+        <ErrorModal visible message={msg} onClose={jest.fn()} />,
       );
     });
     const texts = renderer!.root.findAll(el => el.props.children === msg);
@@ -76,7 +78,7 @@ describe('ErrorModal', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <ErrorModal visible={true} message="エラー" onClose={jest.fn()} />,
+        <ErrorModal visible message="エラー" onClose={jest.fn()} />,
       );
     });
     // t('error') → 'error' (モック)

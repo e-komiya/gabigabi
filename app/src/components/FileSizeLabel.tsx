@@ -1,16 +1,17 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
 import { getFileSizeBytes } from '../data/ffmpeg/ffmpegUtils';
-import { formatBytes } from '../utils/formatBytes';
 import { TEXT_SECONDARY, ACCENT2 } from '../screens/components/sharedStyles';
+import { formatBytes } from '../utils/formatBytes';
 
 interface FileSizeLabelProps {
   label: string;
   uri: string;
 }
 
-const FileSizeLabel: React.FC<FileSizeLabelProps> = ({label, uri}) => {
+const FileSizeLabel: React.FC<FileSizeLabelProps> = ({ label, uri }) => {
   const [size, setSize] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,10 +37,15 @@ const FileSizeLabel: React.FC<FileSizeLabelProps> = ({label, uri}) => {
   return (
     <View
       style={styles.container}
-      accessible={true}
-      accessibilityLabel={`${label} ${size}`}>
-      <Text style={styles.label} accessibilityElementsHidden={true}>{label}</Text>
-      <Text style={styles.value} accessibilityElementsHidden={true}>{size}</Text>
+      accessible
+      accessibilityLabel={`${label} ${size}`}
+    >
+      <Text style={styles.label} accessibilityElementsHidden>
+        {label}
+      </Text>
+      <Text style={styles.value} accessibilityElementsHidden>
+        {size}
+      </Text>
     </View>
   );
 };

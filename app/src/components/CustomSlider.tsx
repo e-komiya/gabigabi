@@ -1,5 +1,11 @@
-import React, {useRef, useCallback} from 'react';
-import {View, PanResponder, StyleSheet, LayoutChangeEvent, ViewStyle} from 'react-native';
+import React, { useRef, useCallback } from 'react';
+import {
+  View,
+  PanResponder,
+  StyleSheet,
+  LayoutChangeEvent,
+  ViewStyle,
+} from 'react-native';
 
 interface CustomSliderProps {
   minimumValue: number;
@@ -35,7 +41,8 @@ const CustomSlider: React.FC<CustomSliderProps> = ({
   const clamp = (v: number) => {
     let clamped = Math.min(maximumValue, Math.max(minimumValue, v));
     if (step > 0) {
-      clamped = Math.round((clamped - minimumValue) / step) * step + minimumValue;
+      clamped =
+        Math.round((clamped - minimumValue) / step) * step + minimumValue;
     }
     return clamped;
   };
@@ -49,7 +56,7 @@ const CustomSlider: React.FC<CustomSliderProps> = ({
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt) => {
+      onPanResponderGrant: evt => {
         const x = evt.nativeEvent.locationX;
         if (!isNaN(x)) {
           onValueChange(getValueFromX(x));
@@ -86,13 +93,29 @@ const CustomSlider: React.FC<CustomSliderProps> = ({
       accessibilityRole="adjustable"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      accessibilityValue={{min: minimumValue, max: maximumValue, now: value}}
-      {...panResponder.panHandlers}>
+      accessibilityValue={{ min: minimumValue, max: maximumValue, now: value }}
+      {...panResponder.panHandlers}
+    >
       <View style={styles.track}>
-        <View style={[styles.trackFill, {flex: ratio, backgroundColor: minimumTrackTintColor}]} />
-        <View style={[styles.trackEmpty, {flex: 1 - ratio, backgroundColor: maximumTrackTintColor}]} />
+        <View
+          style={[
+            styles.trackFill,
+            { flex: ratio, backgroundColor: minimumTrackTintColor },
+          ]}
+        />
+        <View
+          style={[
+            styles.trackEmpty,
+            { flex: 1 - ratio, backgroundColor: maximumTrackTintColor },
+          ]}
+        />
       </View>
-      <View style={[styles.thumb, {left: `${ratio * 100}%`, backgroundColor: thumbTintColor}]} />
+      <View
+        style={[
+          styles.thumb,
+          { left: `${ratio * 100}%`, backgroundColor: thumbTintColor },
+        ]}
+      />
     </View>
   );
 };
@@ -123,7 +146,7 @@ const styles = StyleSheet.create({
     top: 8,
     elevation: 3,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
   },

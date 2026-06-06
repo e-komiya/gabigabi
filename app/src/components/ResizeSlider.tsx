@@ -1,8 +1,22 @@
-import React, {useState, useEffect} from 'react';
-import {View, Text, TextInput, StyleSheet, TouchableOpacity} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
+
 import CustomSlider from './CustomSlider';
-import {t} from '../i18n';
-import {ACCENT, ACCENT2, TEXT_PRIMARY, TEXT_SECONDARY, BORDER, INPUT_BG} from '../screens/components/sharedStyles';
+import { t } from '../i18n';
+import {
+  ACCENT,
+  ACCENT2,
+  TEXT_PRIMARY,
+  TEXT_SECONDARY,
+  BORDER,
+  INPUT_BG,
+} from '../screens/components/sharedStyles';
 
 interface ResizeSliderProps {
   value: number;
@@ -11,29 +25,50 @@ interface ResizeSliderProps {
   originalHeight?: number;
 }
 
-
 type TabMode = 'percent' | 'resolution';
 
-const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, originalWidth, originalHeight}) => {
-  const hasOriginal = originalWidth != null && originalHeight != null && originalWidth > 0 && originalHeight > 0;
+const ResizeSlider: React.FC<ResizeSliderProps> = ({
+  value,
+  onValueChange,
+  originalWidth,
+  originalHeight,
+}) => {
+  const hasOriginal =
+    originalWidth != null &&
+    originalHeight != null &&
+    originalWidth > 0 &&
+    originalHeight > 0;
   const [activeTab, setActiveTab] = useState<TabMode>('percent');
   const [widthText, setWidthText] = useState('');
   const [heightText, setHeightText] = useState('');
 
   // Sync direct inputs when value or original dimensions change
   useEffect(() => {
-    if (hasOriginal && originalWidth != null && originalHeight != null && activeTab === 'resolution') {
-      setWidthText(String(Math.round(originalWidth * value / 100)));
-      setHeightText(String(Math.round(originalHeight * value / 100)));
+    if (
+      hasOriginal &&
+      originalWidth != null &&
+      originalHeight != null &&
+      activeTab === 'resolution'
+    ) {
+      setWidthText(String(Math.round((originalWidth * value) / 100)));
+      setHeightText(String(Math.round((originalHeight * value) / 100)));
     }
   }, [value, activeTab, hasOriginal, originalWidth, originalHeight]);
 
   const handleWidthChange = (text: string) => {
     setWidthText(text);
     const w = parseInt(text, 10);
-    if (hasOriginal && originalWidth != null && originalHeight != null && w > 0) {
-      const pct = Math.min(100, Math.max(1, Math.round((w / originalWidth) * 100)));
-      setHeightText(String(Math.round(originalHeight * pct / 100)));
+    if (
+      hasOriginal &&
+      originalWidth != null &&
+      originalHeight != null &&
+      w > 0
+    ) {
+      const pct = Math.min(
+        100,
+        Math.max(1, Math.round((w / originalWidth) * 100)),
+      );
+      setHeightText(String(Math.round((originalHeight * pct) / 100)));
       onValueChange(pct);
     }
   };
@@ -41,9 +76,17 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
   const handleHeightChange = (text: string) => {
     setHeightText(text);
     const h = parseInt(text, 10);
-    if (hasOriginal && originalWidth != null && originalHeight != null && h > 0) {
-      const pct = Math.min(100, Math.max(1, Math.round((h / originalHeight) * 100)));
-      setWidthText(String(Math.round(originalWidth * pct / 100)));
+    if (
+      hasOriginal &&
+      originalWidth != null &&
+      originalHeight != null &&
+      h > 0
+    ) {
+      const pct = Math.min(
+        100,
+        Math.max(1, Math.round((h / originalHeight) * 100)),
+      );
+      setWidthText(String(Math.round((originalWidth * pct) / 100)));
       onValueChange(pct);
     }
   };
@@ -58,8 +101,16 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
           activeOpacity={0.7}
           accessibilityRole="tab"
           accessibilityLabel={t('resizePercentTab')}
-          accessibilityState={{selected: activeTab === 'percent'}}>
-          <Text style={[styles.tabText, activeTab === 'percent' && styles.tabTextActive]}>{t('resizePercentTab')}</Text>
+          accessibilityState={{ selected: activeTab === 'percent' }}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'percent' && styles.tabTextActive,
+            ]}
+          >
+            {t('resizePercentTab')}
+          </Text>
         </TouchableOpacity>
         {hasOriginal && (
           <TouchableOpacity
@@ -68,8 +119,16 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
             activeOpacity={0.7}
             accessibilityRole="tab"
             accessibilityLabel={t('resizeResolutionTab')}
-            accessibilityState={{selected: activeTab === 'resolution'}}>
-            <Text style={[styles.tabText, activeTab === 'resolution' && styles.tabTextActive]}>{t('resizeResolutionTab')}</Text>
+            accessibilityState={{ selected: activeTab === 'resolution' }}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === 'resolution' && styles.tabTextActive,
+              ]}
+            >
+              {t('resizeResolutionTab')}
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -99,7 +158,8 @@ const ResizeSlider: React.FC<ResizeSliderProps> = ({value, onValueChange, origin
           />
           {hasOriginal && originalWidth != null && originalHeight != null && (
             <Text style={styles.resolutionHint}>
-              → {Math.round(originalWidth * value / 100)} × {Math.round(originalHeight * value / 100)} px
+              → {Math.round((originalWidth * value) / 100)} ×{' '}
+              {Math.round((originalHeight * value) / 100)} px
             </Text>
           )}
         </View>

@@ -6,16 +6,18 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+import ImagePicker from '../components/ImagePicker';
+
 jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
 
 jest.mock('expo-image-picker', () => ({
-  requestMediaLibraryPermissionsAsync: jest.fn().mockResolvedValue({status: 'granted'}),
-  launchImageLibraryAsync: jest.fn().mockResolvedValue({canceled: true}),
+  requestMediaLibraryPermissionsAsync: jest
+    .fn()
+    .mockResolvedValue({ status: 'granted' }),
+  launchImageLibraryAsync: jest.fn().mockResolvedValue({ canceled: true }),
 }));
-
-import ImagePicker from '../components/ImagePicker';
 
 describe('ImagePicker', () => {
   it('selectedImage なしで正常にレンダリングされる', async () => {

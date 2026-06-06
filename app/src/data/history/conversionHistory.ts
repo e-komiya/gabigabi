@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {ImageFormat} from '../../domain/convertImage';
-import {VideoFormat} from '../../state/store';
+
+import { ImageFormat } from '../../domain/convertImage';
+import { VideoFormat } from '../../state/store';
 
 const STORAGE_KEY = 'conversion-history-v1';
 const MAX_ITEMS = 50;
@@ -39,7 +40,9 @@ export async function getConversionHistory(): Promise<ConversionHistoryItem[]> {
   }
 }
 
-export async function saveConversionHistoryItem(item: ConversionHistoryItem): Promise<void> {
+export async function saveConversionHistoryItem(
+  item: ConversionHistoryItem,
+): Promise<void> {
   const current = await getConversionHistory();
   const next = [item, ...current].slice(0, MAX_ITEMS);
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));

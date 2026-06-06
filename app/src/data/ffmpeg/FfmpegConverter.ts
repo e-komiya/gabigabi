@@ -1,6 +1,13 @@
-import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
 import { File } from 'expo-file-system';
-import { buildFfmpegCommand, generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getFileSizeBytes } from './ffmpegUtils';
+import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
+
+import {
+  buildFfmpegCommand,
+  generateUniqueFileSuffix,
+  extractErrorFromLogs,
+  getCacheDir,
+  getFileSizeBytes,
+} from './ffmpegUtils';
 
 export type ImageFormat = 'jpeg' | 'png' | 'webp' | 'bmp' | 'gif';
 
@@ -101,17 +108,20 @@ export async function convertImage(
   if (outputFormat === 'gif') {
     const fps = Math.max(1, Math.min(30, Math.round(gifFps)));
     const scalePercent = Math.max(1, Math.min(100, Math.round(gifScale)));
-    const scaleFilter = scalePercent === 100
-      ? 'scale=iw:ih:flags=lanczos'
-      : `scale=trunc(iw*${scalePercent}/100/2)*2:trunc(ih*${scalePercent}/100/2)*2:flags=lanczos`;
+    const scaleFilter =
+      scalePercent === 100
+        ? 'scale=iw:ih:flags=lanczos'
+        : `scale=trunc(iw*${scalePercent}/100/2)*2:trunc(ih*${scalePercent}/100/2)*2:flags=lanczos`;
     const paletteFilter = `fps=${fps},${scaleFilter},palettegen`;
     const renderFilter = `fps=${fps},${scaleFilter} [x]; [x][1:v] paletteuse`;
     // GIF はパレット生成の2パス方式でアニメーションを保持する
     const palettePath = `${outputPath}.palette.png`;
     const pass1 = buildFfmpegCommand([
       '-y',
-      '-i', `"${inputPath}"`,
-      '-vf', `"${paletteFilter}"`,
+      '-i',
+      `"${inputPath}"`,
+      '-vf',
+      `"${paletteFilter}"`,
       `"${palettePath}"`,
     ]);
 
@@ -126,9 +136,12 @@ export async function convertImage(
 
       const pass2 = buildFfmpegCommand([
         '-y',
-        '-i', `"${inputPath}"`,
-        '-i', `"${palettePath}"`,
-        '-lavfi', `"${renderFilter}"`,
+        '-i',
+        `"${inputPath}"`,
+        '-i',
+        `"${palettePath}"`,
+        '-lavfi',
+        `"${renderFilter}"`,
         `"${outputPath}"`,
       ]);
 
@@ -136,15 +149,20 @@ export async function convertImage(
       rc = await session.getReturnCode();
     } finally {
       // パレットファイルをクリーンアップ（結果に関わらず）
-      try { new File(`file://${palettePath}`).delete(); } catch {}
+      try {
+        new File(`file://${palettePath}`).delete();
+      } catch {}
     }
   } else {
     const cmd = buildFfmpegCommand([
       '-y',
-      '-i', `"${inputPath}"`,
+      '-i',
+      `"${inputPath}"`,
       qualityArgs,
-      '-update', '1',
-      '-frames:v', '1',
+      '-update',
+      '1',
+      '-frames:v',
+      '1',
       `"${outputPath}"`,
     ]);
 
@@ -154,7 +172,9 @@ export async function convertImage(
 
   if (!ReturnCode.isSuccess(rc)) {
     const logs = await extractErrorFromLogs(session);
-    try { new File(outputUri).delete(); } catch {}
+    try {
+      new File(outputUri).delete();
+    } catch {}
     throw new Error(`FFmpegフォーマット変換に失敗しました: ${logs}`);
   }
 

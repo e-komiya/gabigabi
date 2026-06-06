@@ -1,5 +1,12 @@
-import {StyleSheet} from 'react-native';
-import {DARK_BG, ACCENT, ACCENT2, TEXT_SECONDARY, BORDER} from './sharedStyles';
+import { StyleSheet } from 'react-native';
+
+import {
+  DARK_BG,
+  ACCENT,
+  ACCENT2,
+  TEXT_SECONDARY,
+  BORDER,
+} from './sharedStyles';
 
 export const mainScreenStyles = StyleSheet.create({
   container: {
@@ -133,7 +140,7 @@ export const mainScreenStyles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     shadowColor: ACCENT,
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 6,
@@ -144,7 +151,7 @@ export const mainScreenStyles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     shadowColor: '#5865F2',
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 6,
@@ -187,7 +194,7 @@ export const mainScreenStyles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     shadowColor: '#2ecc71',
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 6,
@@ -199,7 +206,7 @@ export const mainScreenStyles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     shadowColor: '#3498db',
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 6,

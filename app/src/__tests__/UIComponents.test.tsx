@@ -6,6 +6,14 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+// ---- インポート ----
+
+import ErrorModal from '../components/ErrorModal';
+import FileSizeLabel from '../components/FileSizeLabel';
+import ImageModal from '../components/ImageModal';
+import ImagePicker from '../components/ImagePicker';
+import ResizeSlider from '../components/ResizeSlider';
+
 // ---- モック ----
 
 jest.mock('../i18n', () => ({
@@ -16,7 +24,7 @@ jest.mock('expo-clipboard', () => ({
 }));
 
 jest.mock('expo-file-system', () => ({
-  getInfoAsync: jest.fn().mockResolvedValue({exists: true, size: 2048}),
+  getInfoAsync: jest.fn().mockResolvedValue({ exists: true, size: 2048 }),
 }));
 
 jest.mock('../data/ffmpeg/ffmpegUtils', () => ({
@@ -24,17 +32,11 @@ jest.mock('../data/ffmpeg/ffmpegUtils', () => ({
 }));
 
 jest.mock('expo-image-picker', () => ({
-  requestMediaLibraryPermissionsAsync: jest.fn().mockResolvedValue({status: 'granted'}),
-  launchImageLibraryAsync: jest.fn().mockResolvedValue({canceled: true}),
+  requestMediaLibraryPermissionsAsync: jest
+    .fn()
+    .mockResolvedValue({ status: 'granted' }),
+  launchImageLibraryAsync: jest.fn().mockResolvedValue({ canceled: true }),
 }));
-
-// ---- インポート ----
-
-import ErrorModal from '../components/ErrorModal';
-import FileSizeLabel from '../components/FileSizeLabel';
-import ImageModal from '../components/ImageModal';
-import ImagePicker from '../components/ImagePicker';
-import ResizeSlider from '../components/ResizeSlider';
 
 // ---- ErrorModal ----
 
@@ -44,7 +46,7 @@ describe('ErrorModal', () => {
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
         <ErrorModal
-          visible={true}
+          visible
           message="テストエラーメッセージ"
           onClose={jest.fn()}
         />,
@@ -73,14 +75,16 @@ describe('ErrorModal', () => {
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
         <ErrorModal
-          visible={true}
+          visible
           title="カスタムタイトル"
           message="エラー内容"
           onClose={jest.fn()}
         />,
       );
     });
-    const texts = renderer!.root.findAll(el => el.props.children === 'カスタムタイトル');
+    const texts = renderer!.root.findAll(
+      el => el.props.children === 'カスタムタイトル',
+    );
     expect(texts.length).toBeGreaterThan(0);
   });
 
@@ -89,7 +93,7 @@ describe('ErrorModal', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <ErrorModal visible={true} message={msg} onClose={jest.fn()} />,
+        <ErrorModal visible message={msg} onClose={jest.fn()} />,
       );
     });
     const texts = renderer!.root.findAll(el => el.props.children === msg);
@@ -111,7 +115,7 @@ describe('FileSizeLabel', () => {
   });
 
   it('uri が指定されているとき getInfoAsync を呼び出す', async () => {
-    const {getInfoAsync} = require('expo-file-system');
+    const { getInfoAsync } = require('expo-file-system');
     await ReactTestRenderer.act(async () => {
       ReactTestRenderer.create(
         <FileSizeLabel label="元のサイズ" uri="file:///test/image.jpg" />,
@@ -128,13 +132,15 @@ describe('FileSizeLabel', () => {
       );
     });
     // size=2048 → "2.0 KB"
-    const texts = renderer!.root.findAll(el => el.props.children === '元のサイズ');
+    const texts = renderer!.root.findAll(
+      el => el.props.children === '元のサイズ',
+    );
     // size が取得されると label が表示される
     expect(texts.length).toBeGreaterThanOrEqual(0); // non-crash check
   });
 
   it('getInfoAsync が失敗したとき "—" を表示する', async () => {
-    const {getInfoAsync} = require('expo-file-system');
+    const { getInfoAsync } = require('expo-file-system');
     getInfoAsync.mockRejectedValueOnce(new Error('fail'));
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(async () => {
@@ -163,11 +169,7 @@ describe('ImageModal', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <ImageModal
-          uri="file:///test/image.jpg"
-          visible={true}
-          onClose={jest.fn()}
-        />,
+        <ImageModal uri="file:///test/image.jpg" visible onClose={jest.fn()} />,
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
@@ -309,7 +311,9 @@ describe('ResizeSlider', () => {
     });
     const instance = renderer!.root;
     const percentTab = instance.findAll(
-      (node) => node.props.accessibilityRole === 'tab' && typeof node.props.onPress === 'function',
+      node =>
+        node.props.accessibilityRole === 'tab' &&
+        typeof node.props.onPress === 'function',
     );
     expect(percentTab.length).toBeGreaterThan(0);
     expect(percentTab[0].props.accessibilityRole).toBe('tab');
@@ -324,10 +328,12 @@ describe('ResizeSlider', () => {
     });
     const instance = renderer!.root;
     const percentTab = instance.findAll(
-      (node) => node.props.accessibilityRole === 'tab' && typeof node.props.onPress === 'function',
+      node =>
+        node.props.accessibilityRole === 'tab' &&
+        typeof node.props.onPress === 'function',
     )[0];
     expect(percentTab.props.accessibilityState).toEqual(
-      expect.objectContaining({selected: true}),
+      expect.objectContaining({ selected: true }),
     );
   });
 
@@ -346,7 +352,8 @@ describe('ResizeSlider', () => {
     const instance = renderer!.root;
     // accessibilityLabel で解像度タブを特定する
     const resolutionTab = instance.findAll(
-      (node) => node.props.accessibilityRole === 'tab' &&
+      node =>
+        node.props.accessibilityRole === 'tab' &&
         node.props.accessibilityLabel === 'resizeResolutionTab',
     );
     expect(resolutionTab.length).toBeGreaterThan(0);
@@ -366,30 +373,34 @@ describe('ResizeSlider', () => {
       );
     });
     const instance = renderer!.root;
-    const findPercentTab = () => instance.findAll(
-      (node) => node.props.accessibilityRole === 'tab' &&
-        node.props.accessibilityLabel === 'resizePercentTab',
-    )[0];
-    const findResolutionTab = () => instance.findAll(
-      (node) => node.props.accessibilityRole === 'tab' &&
-        node.props.accessibilityLabel === 'resizeResolutionTab',
-    )[0];
+    const findPercentTab = () =>
+      instance.findAll(
+        node =>
+          node.props.accessibilityRole === 'tab' &&
+          node.props.accessibilityLabel === 'resizePercentTab',
+      )[0];
+    const findResolutionTab = () =>
+      instance.findAll(
+        node =>
+          node.props.accessibilityRole === 'tab' &&
+          node.props.accessibilityLabel === 'resizeResolutionTab',
+      )[0];
     // 初期: パーセントタブが selected
     expect(findPercentTab().props.accessibilityState).toEqual(
-      expect.objectContaining({selected: true}),
+      expect.objectContaining({ selected: true }),
     );
     expect(findResolutionTab().props.accessibilityState).toEqual(
-      expect.objectContaining({selected: false}),
+      expect.objectContaining({ selected: false }),
     );
     // 解像度タブを選択
     await ReactTestRenderer.act(() => {
       findResolutionTab().props.onPress();
     });
     expect(findPercentTab().props.accessibilityState).toEqual(
-      expect.objectContaining({selected: false}),
+      expect.objectContaining({ selected: false }),
     );
     expect(findResolutionTab().props.accessibilityState).toEqual(
-      expect.objectContaining({selected: true}),
+      expect.objectContaining({ selected: true }),
     );
   });
 });

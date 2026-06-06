@@ -6,11 +6,11 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+import ResizeSlider from '../components/ResizeSlider';
+
 jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
-
-import ResizeSlider from '../components/ResizeSlider';
 
 describe('ResizeSlider', () => {
   it('originalWidth/Height なしで正常にレンダリングされる', async () => {
@@ -71,7 +71,9 @@ describe('ResizeSlider', () => {
       );
     });
     const tabs = renderer!.root.findAll(
-      node => node.props.accessibilityRole === 'tab' && typeof node.props.onPress === 'function',
+      node =>
+        node.props.accessibilityRole === 'tab' &&
+        typeof node.props.onPress === 'function',
     );
     expect(tabs.length).toBeGreaterThan(0);
   });
@@ -84,10 +86,12 @@ describe('ResizeSlider', () => {
       );
     });
     const percentTab = renderer!.root.findAll(
-      node => node.props.accessibilityRole === 'tab' && typeof node.props.onPress === 'function',
+      node =>
+        node.props.accessibilityRole === 'tab' &&
+        typeof node.props.onPress === 'function',
     )[0];
     expect(percentTab.props.accessibilityState).toEqual(
-      expect.objectContaining({selected: true}),
+      expect.objectContaining({ selected: true }),
     );
   });
 
@@ -138,10 +142,10 @@ describe('ResizeSlider', () => {
       )[0];
 
     expect(findPercentTab().props.accessibilityState).toEqual(
-      expect.objectContaining({selected: true}),
+      expect.objectContaining({ selected: true }),
     );
     expect(findResolutionTab().props.accessibilityState).toEqual(
-      expect.objectContaining({selected: false}),
+      expect.objectContaining({ selected: false }),
     );
 
     await ReactTestRenderer.act(() => {
@@ -149,10 +153,10 @@ describe('ResizeSlider', () => {
     });
 
     expect(findPercentTab().props.accessibilityState).toEqual(
-      expect.objectContaining({selected: false}),
+      expect.objectContaining({ selected: false }),
     );
     expect(findResolutionTab().props.accessibilityState).toEqual(
-      expect.objectContaining({selected: true}),
+      expect.objectContaining({ selected: true }),
     );
   });
 });

@@ -1,8 +1,8 @@
-import {useEffect, useState} from 'react';
-import {Image} from 'react-native';
-import { File } from 'expo-file-system';
-import {FFprobeKit} from 'ffmpeg-kit-react-native';
-import {getFileSizeBytes} from '../data/ffmpeg/ffmpegUtils';
+import { FFprobeKit } from 'ffmpeg-kit-react-native';
+import { useEffect, useState } from 'react';
+import { Image } from 'react-native';
+
+import { getFileSizeBytes } from '../data/ffmpeg/ffmpegUtils';
 
 export interface FileInfo {
   name: string;
@@ -25,7 +25,6 @@ export const useFileInfo = (
     let cancelled = false;
     (async () => {
       try {
-        const fileInst = new File(selectedImage);
         const bytes = getFileSizeBytes(selectedImage);
         const sizeStr =
           bytes >= 1024 * 1024
@@ -44,7 +43,7 @@ export const useFileInfo = (
             try {
               const streams = JSON.parse(output ?? '{}').streams ?? [];
               const videoStream = streams.find(
-                (s: {codec_type: string}) => s.codec_type === 'video',
+                (s: { codec_type: string }) => s.codec_type === 'video',
               );
               if (videoStream) {
                 width = videoStream.width ?? 0;
@@ -53,18 +52,21 @@ export const useFileInfo = (
             } catch {
               // JSON parse失敗時はwidth/height=0のまま
             }
-            if (!cancelled) setFileInfo({name, size: sizeStr, width, height});
+            if (!cancelled) setFileInfo({ name, size: sizeStr, width, height });
           } catch {
-            if (!cancelled) setFileInfo({name, size: sizeStr, width: 0, height: 0});
+            if (!cancelled)
+              setFileInfo({ name, size: sizeStr, width: 0, height: 0 });
           }
         } else {
           Image.getSize(
             selectedImage,
             (width, height) => {
-              if (!cancelled) setFileInfo({name, size: sizeStr, width, height});
+              if (!cancelled)
+                setFileInfo({ name, size: sizeStr, width, height });
             },
             () => {
-              if (!cancelled) setFileInfo({name, size: sizeStr, width: 0, height: 0});
+              if (!cancelled)
+                setFileInfo({ name, size: sizeStr, width: 0, height: 0 });
             },
           );
         }
@@ -77,5 +79,5 @@ export const useFileInfo = (
     };
   }, [selectedImage, selectedMediaType]);
 
-  return {fileInfo};
+  return { fileInfo };
 };

@@ -1,4 +1,4 @@
-import {StyleSheet} from 'react-native';
+import { StyleSheet } from 'react-native';
 
 export const DARK_BG = '#0d0d0d';
 export const CARD_BG = '#1a1a1a';

@@ -1,8 +1,14 @@
-import React from 'react';
-import {View, TouchableOpacity, Text, StyleSheet, Alert} from 'react-native';
 import * as ExpoImagePicker from 'expo-image-picker';
-import {t} from '../i18n';
-import {ACCENT, CARD_BG, BORDER, TEXT_SECONDARY} from '../screens/components/sharedStyles';
+import React from 'react';
+import { TouchableOpacity, Text, StyleSheet, Alert } from 'react-native';
+
+import { t } from '../i18n';
+import {
+  ACCENT,
+  CARD_BG,
+  BORDER,
+  TEXT_SECONDARY,
+} from '../screens/components/sharedStyles';
 
 interface ImagePickerProps {
   onImageSelect: (imageUri: string, mediaType: 'image' | 'video') => void;
@@ -22,7 +28,8 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
   selectedMediaType,
 }) => {
   const handlePress = async () => {
-    const { status } = await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } =
+      await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(t('permissionRequired'), t('galleryPermissionMessage'));
       return;
@@ -55,7 +62,8 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
             ? t('changeVideo')
             : t('changeImage')
           : t('pickImageOrVideo')
-      }>
+      }
+    >
       <Text style={styles.icon}>{isVideo ? '🎬' : '🖼️'}</Text>
       <Text style={styles.buttonText}>
         {selectedImage

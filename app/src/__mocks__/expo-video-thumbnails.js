@@ -1,3 +1,7 @@
 module.exports = {
-  getThumbnailAsync: jest.fn().mockResolvedValue({uri: 'file:///mock/thumbnail.jpg', width: 100, height: 100}),
+  getThumbnailAsync: jest.fn().mockResolvedValue({
+    uri: 'file:///mock/thumbnail.jpg',
+    width: 100,
+    height: 100,
+  }),
 };

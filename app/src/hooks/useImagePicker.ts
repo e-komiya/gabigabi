@@ -1,9 +1,12 @@
-import {useCallback} from 'react';
-import {Alert} from 'react-native';
 import * as ExpoImagePicker from 'expo-image-picker';
-import {t} from '../i18n';
+import { useCallback } from 'react';
+import { Alert } from 'react-native';
 
-const resolvePickerMediaTypes = (selectedMediaType?: 'image' | 'video' | null) => {
+import { t } from '../i18n';
+
+const resolvePickerMediaTypes = (
+  selectedMediaType?: 'image' | 'video' | null,
+) => {
   if (selectedMediaType === 'video') return ['videos'] as const;
   if (selectedMediaType === 'image') return ['images'] as const;
   return ['images', 'videos'] as const;
@@ -22,7 +25,8 @@ export const useImagePicker = ({
 }: UseImagePickerOptions) => {
   const handleOpenPicker = useCallback(async () => {
     if (isProcessing) return;
-    const {status} = await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
+    const { status } =
+      await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(t('permissionRequired'), t('galleryPermissionMessage'));
       return;
@@ -41,5 +45,5 @@ export const useImagePicker = ({
     }
   }, [isProcessing, selectedMediaType, onSelect]);
 
-  return {handleOpenPicker};
+  return { handleOpenPicker };
 };

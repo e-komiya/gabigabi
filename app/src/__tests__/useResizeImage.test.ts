@@ -62,6 +62,8 @@ describe('resizeImage', () => {
 
   it('propagates error when processWithFfmpeg throws', async () => {
     mockProcessWithFfmpeg.mockRejectedValue(new Error('FFmpeg error'));
-    await expect(resizeImage('file:///input/test.jpg', 50, 2)).rejects.toThrow('FFmpeg error');
+    await expect(resizeImage('file:///input/test.jpg', 50, 2)).rejects.toThrow(
+      'FFmpeg error',
+    );
   });
 });

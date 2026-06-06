@@ -27,6 +27,10 @@ jobs:
         working-directory: app
         run: npm ci
 
+      - name: Run lint
+        working-directory: app
+        run: npm run lint -- --max-warnings 0
+
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 

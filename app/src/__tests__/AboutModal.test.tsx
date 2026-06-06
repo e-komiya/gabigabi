@@ -6,18 +6,18 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+import AboutModal from '../screens/components/AboutModal';
+
 jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
-
-import AboutModal from '../screens/components/AboutModal';
 
 describe('AboutModal', () => {
   it('visible=true のとき正常にレンダリングされる', async () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <AboutModal visible={true} onClose={jest.fn()} />,
+        <AboutModal visible onClose={jest.fn()} />,
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
@@ -37,19 +37,19 @@ describe('AboutModal', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <AboutModal visible={true} onClose={jest.fn()} />,
+        <AboutModal visible onClose={jest.fn()} />,
       );
     });
-    const texts = renderer!.root.findAll(el => el.props.children === 'GabiGabi');
+    const texts = renderer!.root.findAll(
+      el => el.props.children === 'GabiGabi',
+    );
     expect(texts.length).toBeGreaterThan(0);
   });
 
   it('onClose は閉じるボタン用に渡される', async () => {
     const onClose = jest.fn();
     await ReactTestRenderer.act(() => {
-      ReactTestRenderer.create(
-        <AboutModal visible={true} onClose={onClose} />,
-      );
+      ReactTestRenderer.create(<AboutModal visible onClose={onClose} />);
     });
     expect(onClose).not.toHaveBeenCalled();
   });

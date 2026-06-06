@@ -1,6 +1,6 @@
-import {useCallback, useEffect, useState} from 'react';
-import {Platform} from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { useCallback, useEffect } from 'react';
+import { Platform } from 'react-native';
 
 export const useProcessingNotification = () => {
   const ensureNotificationPermission = useCallback(async () => {
@@ -32,7 +32,11 @@ export const useProcessingNotification = () => {
           body,
           sound: false,
           ...(Platform.OS === 'android'
-            ? {channelId: 'processing-status', sticky: true, autoDismiss: false}
+            ? {
+                channelId: 'processing-status',
+                sticky: true,
+                autoDismiss: false,
+              }
             : {}),
         },
         trigger: null,
@@ -46,7 +50,9 @@ export const useProcessingNotification = () => {
       const granted = await ensureNotificationPermission();
       if (!granted) return activeNotificationId ?? null;
       if (activeNotificationId) {
-        await Notifications.dismissNotificationAsync(activeNotificationId).catch(() => {});
+        await Notifications.dismissNotificationAsync(
+          activeNotificationId,
+        ).catch(() => {});
       }
       return Notifications.scheduleNotificationAsync({
         content: {
@@ -54,7 +60,11 @@ export const useProcessingNotification = () => {
           body,
           sound: false,
           ...(Platform.OS === 'android'
-            ? {channelId: 'processing-status', sticky: true, autoDismiss: false}
+            ? {
+                channelId: 'processing-status',
+                sticky: true,
+                autoDismiss: false,
+              }
             : {}),
         },
         trigger: null,
@@ -68,14 +78,18 @@ export const useProcessingNotification = () => {
       const granted = await ensureNotificationPermission();
       if (!granted) return;
       if (activeNotificationId) {
-        await Notifications.dismissNotificationAsync(activeNotificationId).catch(() => {});
+        await Notifications.dismissNotificationAsync(
+          activeNotificationId,
+        ).catch(() => {});
       }
       await Notifications.scheduleNotificationAsync({
         content: {
           title: 'GabiGabi',
           body,
           sound: false,
-          ...(Platform.OS === 'android' ? {channelId: 'processing-status'} : {}),
+          ...(Platform.OS === 'android'
+            ? { channelId: 'processing-status' }
+            : {}),
         },
         trigger: null,
       });
@@ -83,5 +97,9 @@ export const useProcessingNotification = () => {
     [ensureNotificationPermission],
   );
 
-  return {notifyProcessingStarted, notifyProcessingUpdate, notifyProcessingResult};
+  return {
+    notifyProcessingStarted,
+    notifyProcessingUpdate,
+    notifyProcessingResult,
+  };
 };

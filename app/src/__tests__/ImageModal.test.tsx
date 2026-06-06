@@ -6,11 +6,11 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+import ImageModal from '../components/ImageModal';
+
 jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
-
-import ImageModal from '../components/ImageModal';
 
 describe('ImageModal', () => {
   it('uri=null のとき null をレンダリングする', async () => {
@@ -27,11 +27,7 @@ describe('ImageModal', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <ImageModal
-          uri="file:///test/image.jpg"
-          visible={true}
-          onClose={jest.fn()}
-        />,
+        <ImageModal uri="file:///test/image.jpg" visible onClose={jest.fn()} />,
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
@@ -56,7 +52,7 @@ describe('ImageModal', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <ImageModal uri="file:///test/image.jpg" visible={true} onClose={onClose} />,
+        <ImageModal uri="file:///test/image.jpg" visible onClose={onClose} />,
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();

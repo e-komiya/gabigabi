@@ -4,6 +4,8 @@
  */
 
 // AsyncStorage をモック
+import { useAppStore } from '../state/store';
+
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
 );
@@ -17,8 +19,6 @@ jest.mock('zustand/middleware', () => {
     createJSONStorage: actual.createJSONStorage,
   };
 });
-
-import {useAppStore} from '../state/store';
 
 describe('useAppStore', () => {
   beforeEach(() => {
@@ -319,7 +319,7 @@ describe('useAppStore', () => {
 
   describe('他のstateへの影響なし', () => {
     it('setSelectedImage は他の state を変更しない', () => {
-      const before = {...useAppStore.getState()};
+      const before = { ...useAppStore.getState() };
       useAppStore.getState().setSelectedImage('file:///new.jpg');
       const after = useAppStore.getState();
       expect(after.resizePercent).toBe(before.resizePercent);
@@ -371,5 +371,4 @@ describe('useAppStore', () => {
       expect(useAppStore.getState()).toHaveProperty('resizePercent');
     });
   });
-
 });

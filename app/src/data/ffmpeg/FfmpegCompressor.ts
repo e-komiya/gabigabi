@@ -1,8 +1,16 @@
-import { FFmpegKit, FFprobeKit, ReturnCode } from 'ffmpeg-kit-react-native';
 import { File } from 'expo-file-system';
-import { buildFfmpegCommand, generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getPasslogConfig, getFileSizeBytes } from './ffmpegUtils';
-import { VideoFormat } from '../../state/store';
+import { FFmpegKit, FFprobeKit, ReturnCode } from 'ffmpeg-kit-react-native';
+
+import {
+  buildFfmpegCommand,
+  generateUniqueFileSuffix,
+  extractErrorFromLogs,
+  getCacheDir,
+  getPasslogConfig,
+  getFileSizeBytes,
+} from './ffmpegUtils';
 import { DISCORD_MAX_BYTES } from '../../constants/limits';
+import { VideoFormat } from '../../state/store';
 
 export interface CompressResult {
   outputUri: string;
@@ -20,7 +28,9 @@ async function resolveH264Codec(): Promise<'libx264' | 'h264_mediacodec'> {
   try {
     const hardwareConfig = await FFmpegKit.execute('-encoders');
     const output = await hardwareConfig.getOutput();
-    cachedH264Codec = output.includes('h264_mediacodec') ? 'h264_mediacodec' : 'libx264';
+    cachedH264Codec = output.includes('h264_mediacodec')
+      ? 'h264_mediacodec'
+      : 'libx264';
   } catch {
     cachedH264Codec = 'libx264';
   }
@@ -84,7 +94,11 @@ async function compressImageToTarget(
     };
   }
 
-  const stem = inputPath.split('/').pop()?.replace(/\.[^.]+$/, '') ?? 'image';
+  const stem =
+    inputPath
+      .split('/')
+      .pop()
+      ?.replace(/\.[^.]+$/, '') ?? 'image';
   // forceJpeg が false の場合は入力ファイルの拡張子を保持する
   const inputExt = inputPath.split('.').pop()?.toLowerCase() ?? 'jpg';
   const outputExt = forceJpeg ? 'jpg' : inputExt;
@@ -95,7 +109,6 @@ async function compressImageToTarget(
 
   let lo = 1;
   let hi = 31; // FFmpeg -q:v range: 1 (best) to 31 (worst)
-  let bestQv = hi;
   let bestBytes = 0;
 
   // バイナリサーチで targetBytes 以下に収まる最高品質を探す
@@ -103,10 +116,14 @@ async function compressImageToTarget(
     const mid = Math.floor((lo + hi) / 2);
     const cmd = buildFfmpegCommand([
       '-y',
-      '-i', `"${inputPath}"`,
-      '-q:v', String(mid),
-      '-update', '1',
-      '-frames:v', '1',
+      '-i',
+      `"${inputPath}"`,
+      '-q:v',
+      String(mid),
+      '-update',
+      '1',
+      '-frames:v',
+      '1',
       `"${outputPath}"`,
     ]);
 
@@ -119,7 +136,6 @@ async function compressImageToTarget(
     const outBytes = getFileSizeBytes(outputUri);
 
     if (outBytes <= targetBytes) {
-      bestQv = mid;
       bestBytes = outBytes;
       hi = mid - 1; // より高品質（低い qv）を試す
     } else {
@@ -131,11 +147,16 @@ async function compressImageToTarget(
     // 最低品質でも超えてしまう場合はスケールダウンも加える
     const cmd = buildFfmpegCommand([
       '-y',
-      '-i', `"${inputPath}"`,
-      '-vf', '"scale=iw*0.5:ih*0.5"',
-      '-q:v', '31',
-      '-update', '1',
-      '-frames:v', '1',
+      '-i',
+      `"${inputPath}"`,
+      '-vf',
+      '"scale=iw*0.5:ih*0.5"',
+      '-q:v',
+      '31',
+      '-update',
+      '1',
+      '-frames:v',
+      '1',
       `"${outputPath}"`,
     ]);
     const session = await FFmpegKit.execute(cmd);
@@ -148,9 +169,13 @@ async function compressImageToTarget(
 
   // リトライ後も目標サイズを超えている場合はエラーを投げる (#290)
   if (bestBytes > targetBytes) {
-    try { new File(outputUri).delete(); } catch {}
+    try {
+      new File(outputUri).delete();
+    } catch {}
     const targetMB = (targetBytes / (1024 * 1024)).toFixed(1);
-    throw new Error(`画像を目標サイズ（${targetMB}MB）以下に圧縮できませんでした。`);
+    throw new Error(
+      `画像を目標サイズ（${targetMB}MB）以下に圧縮できませんでした。`,
+    );
   }
 
   return {
@@ -199,24 +224,36 @@ async function compressVideoToTarget(
 
   // 目標ビットレートを計算（オーバーヘッド10%マージン + オーディオビットレート分を差し引く）
   const audioBitrateKbps = 64;
-  const targetBits = targetBytes * 8 * 0.90;
-  const videoBitrateKbps = Math.floor(targetBits / durationSec / 1000) - audioBitrateKbps;
+  const targetBits = targetBytes * 8 * 0.9;
+  const videoBitrateKbps =
+    Math.floor(targetBits / durationSec / 1000) - audioBitrateKbps;
 
   if (videoBitrateKbps < 50) {
     const targetMB = Math.round(targetBytes / (1024 * 1024));
     throw new Error(`動画が長すぎて${targetMB}MB以下には圧縮できません`);
   }
 
-  const stem = inputPath.split('/').pop()?.replace(/\.[^.]+$/, '') ?? 'video';
+  const stem =
+    inputPath
+      .split('/')
+      .pop()
+      ?.replace(/\.[^.]+$/, '') ?? 'video';
   const cacheDir = getCacheDir();
   const suffix = generateUniqueFileSuffix();
   const outputUri = `${cacheDir}${stem}_compressed_${suffix}.${outputFormat}`;
   const outputPath = outputUri.replace('file://', '');
-  const { uri: passlogUri, path: passlogFilesystemPath } = getPasslogConfig(stem, suffix);
+  const { uri: passlogUri, path: passlogFilesystemPath } = getPasslogConfig(
+    stem,
+    suffix,
+  );
 
   // pass1 開始前に古い passlog ファイルを削除して再試行時の混入を防ぐ (#216)
-  try { new File(`${passlogUri}-0.log`).delete(); } catch {}
-  try { new File(`${passlogUri}-0.log.mbtree`).delete(); } catch {}
+  try {
+    new File(`${passlogUri}-0.log`).delete();
+  } catch {}
+  try {
+    new File(`${passlogUri}-0.log.mbtree`).delete();
+  } catch {}
 
   // コーデック設定: webm の場合は libvpx-vp9/libopus, それ以外は libx264/aac
   const isWebm = outputFormat.toLowerCase() === 'webm';
@@ -233,17 +270,22 @@ async function compressVideoToTarget(
   // 目標サイズ比が厳しいケースでは ultrafast を優先して速度を上げる
   const targetRatio = targetBytes / originalBytes;
   const h264Preset = targetRatio <= 0.35 ? 'ultrafast' : 'superfast';
-  const preset = (vcodec === 'libx264') ? ['-preset', h264Preset] : [];
+  const preset = vcodec === 'libx264' ? ['-preset', h264Preset] : [];
 
   // 1パス目: CRFモードで高速圧縮を試行 (CRF=28をデフォルトとする)
   const crfCmd = buildFfmpegCommand([
     '-y',
-    '-i', `"${inputPath}"`,
-    '-c:v', vcodec,
+    '-i',
+    `"${inputPath}"`,
+    '-c:v',
+    vcodec,
     ...preset,
-    '-crf', '28',
-    '-c:a', acodec,
-    '-b:a', '64k',
+    '-crf',
+    '28',
+    '-c:a',
+    acodec,
+    '-b:a',
+    '64k',
     `"${outputPath}"`,
   ]);
 
@@ -257,7 +299,7 @@ async function compressVideoToTarget(
         useTwoPass = false;
       }
     }
-  } catch (e) {
+  } catch {
     // CRF試行に失敗した場合は2パスにフォールバック
   }
 
@@ -265,26 +307,40 @@ async function compressVideoToTarget(
     // 2パスエンコードで精度の高いビットレート制御
     const pass1Cmd = buildFfmpegCommand([
       '-y',
-      '-i', `"${inputPath}"`,
-      '-c:v', vcodec,
+      '-i',
+      `"${inputPath}"`,
+      '-c:v',
+      vcodec,
       ...preset,
-      '-b:v', `${videoBitrateKbps}k`,
-      '-pass', '1',
-      '-passlogfile', `"${passlogFilesystemPath}"`,
+      '-b:v',
+      `${videoBitrateKbps}k`,
+      '-pass',
+      '1',
+      '-passlogfile',
+      `"${passlogFilesystemPath}"`,
       '-an',
-      '-f', isWebm ? 'webm' : 'null', isWebm ? '/dev/null' : '/dev/null',
+      '-f',
+      isWebm ? 'webm' : 'null',
+      isWebm ? '/dev/null' : '/dev/null',
     ]);
 
     const pass2Cmd = buildFfmpegCommand([
       '-y',
-      '-i', `"${inputPath}"`,
-      '-c:v', vcodec,
+      '-i',
+      `"${inputPath}"`,
+      '-c:v',
+      vcodec,
       ...preset,
-      '-b:v', `${videoBitrateKbps}k`,
-      '-pass', '2',
-      '-passlogfile', `"${passlogFilesystemPath}"`,
-      '-c:a', acodec,
-      '-b:a', '64k',
+      '-b:v',
+      `${videoBitrateKbps}k`,
+      '-pass',
+      '2',
+      '-passlogfile',
+      `"${passlogFilesystemPath}"`,
+      '-c:a',
+      acodec,
+      '-b:a',
+      '64k',
       `"${outputPath}"`,
     ]);
 
@@ -303,12 +359,18 @@ async function compressVideoToTarget(
         throw new Error(`FFmpeg 2パス目に失敗しました: ${logs}`);
       }
     } catch (err) {
-      try { new File(outputUri).delete(); } catch {}
+      try {
+        new File(outputUri).delete();
+      } catch {}
       throw err;
     } finally {
       // 成功・失敗・キャンセルいずれの場合も passlog 一時ファイルを削除する (#234)
-      try { new File(`${passlogUri}-0.log`).delete(); } catch {}
-      try { new File(`${passlogUri}-0.log.mbtree`).delete(); } catch {}
+      try {
+        new File(`${passlogUri}-0.log`).delete();
+      } catch {}
+      try {
+        new File(`${passlogUri}-0.log.mbtree`).delete();
+      } catch {}
     }
   }
 
@@ -328,46 +390,85 @@ async function compressVideoToTarget(
       scaleFactor *= 0.75;
     }
 
-    const scaleFilter = scaleFactor < 1.0 ? ['-vf', `scale=iw*${scaleFactor.toFixed(2)}:ih*${scaleFactor.toFixed(2)}`] : [];
+    const scaleFilter =
+      scaleFactor < 1.0
+        ? [
+            '-vf',
+            `scale=iw*${scaleFactor.toFixed(2)}:ih*${scaleFactor.toFixed(2)}`,
+          ]
+        : [];
 
     const retrySuffix = generateUniqueFileSuffix();
     const retryOutputUri = `${cacheDir}${stem}_compressed_${retrySuffix}.${outputFormat}`;
     const retryOutputPath = retryOutputUri.replace('file://', '');
-    const { uri: retryPasslogUri, path: retryPasslogPath } = getPasslogConfig(stem, retrySuffix);
+    const { uri: retryPasslogUri, path: retryPasslogPath } = getPasslogConfig(
+      stem,
+      retrySuffix,
+    );
 
     const retry1Cmd = buildFfmpegCommand([
-      '-y', '-i', `"${inputPath}"`,
-      '-c:v', vcodec,
+      '-y',
+      '-i',
+      `"${inputPath}"`,
+      '-c:v',
+      vcodec,
       ...preset,
       ...scaleFilter,
-      '-b:v', `${retryBitrate}k`,
-      '-pass', '1', '-passlogfile', `"${retryPasslogPath}"`,
-      '-an', '-f', isWebm ? 'webm' : 'null', isWebm ? '/dev/null' : '/dev/null',
+      '-b:v',
+      `${retryBitrate}k`,
+      '-pass',
+      '1',
+      '-passlogfile',
+      `"${retryPasslogPath}"`,
+      '-an',
+      '-f',
+      isWebm ? 'webm' : 'null',
+      isWebm ? '/dev/null' : '/dev/null',
     ]);
     const retry2Cmd = buildFfmpegCommand([
-      '-y', '-i', `"${inputPath}"`,
-      '-c:v', vcodec,
+      '-y',
+      '-i',
+      `"${inputPath}"`,
+      '-c:v',
+      vcodec,
       ...preset,
       ...scaleFilter,
-      '-b:v', `${retryBitrate}k`,
-      '-pass', '2', '-passlogfile', `"${retryPasslogPath}"`,
-      '-c:a', acodec, '-b:a', '64k',
+      '-b:v',
+      `${retryBitrate}k`,
+      '-pass',
+      '2',
+      '-passlogfile',
+      `"${retryPasslogPath}"`,
+      '-c:a',
+      acodec,
+      '-b:a',
+      '64k',
       `"${retryOutputPath}"`,
     ]);
 
     const r1 = await FFmpegKit.execute(retry1Cmd);
     if (!ReturnCode.isSuccess(await r1.getReturnCode())) {
       // passlog を確実に削除してから次のリトライへ
-      try { new File(`${retryPasslogUri}-0.log`).delete(); } catch {}
-      try { new File(`${retryPasslogUri}-0.log.mbtree`).delete(); } catch {}
+      try {
+        new File(`${retryPasslogUri}-0.log`).delete();
+      } catch {}
+      try {
+        new File(`${retryPasslogUri}-0.log.mbtree`).delete();
+      } catch {}
       continue;
     }
     const r2 = await FFmpegKit.execute(retry2Cmd);
     // リトライの passlog 一時ファイルを削除（成功・失敗いずれも）(#234)
-    try { new File(`${retryPasslogUri}-0.log`).delete(); } catch {}
-    try { new File(`${retryPasslogUri}-0.log.mbtree`).delete(); } catch {}
+    try {
+      new File(`${retryPasslogUri}-0.log`).delete();
+    } catch {}
+    try {
+      new File(`${retryPasslogUri}-0.log.mbtree`).delete();
+    } catch {}
     if (!ReturnCode.isSuccess(await r2.getReturnCode())) {
-      try { new File(retryOutputUri).delete(); } catch {}
+      try {
+        new File(retryOutputUri).delete();
+      } catch {}
       continue;
     }
 
@@ -377,20 +478,28 @@ async function compressVideoToTarget(
       currentOutputUri = retryOutputUri;
     } else {
       // 0バイトの無効な出力ファイルを削除してキャッシュに残らないようにする
-      try { new File(retryOutputUri).delete(); } catch {}
+      try {
+        new File(retryOutputUri).delete();
+      } catch {}
     }
   }
 
   // リトライ成功により初回出力ファイルが不要になった場合は削除する (#206)
   if (currentOutputUri !== outputUri) {
-    try { new File(outputUri).delete(); } catch {}
+    try {
+      new File(outputUri).delete();
+    } catch {}
   }
 
   // リトライ後も目標サイズを超えている場合はエラーを投げてサイレント超過を防ぐ (#286)
   if (outputBytes > targetBytes) {
-    try { new File(currentOutputUri).delete(); } catch {}
+    try {
+      new File(currentOutputUri).delete();
+    } catch {}
     const targetMB = Math.round(targetBytes / (1024 * 1024));
-    throw new Error(`リトライを繰り返しましたが、目標サイズ（${targetMB}MB）以下に圧縮できませんでした。`);
+    throw new Error(
+      `リトライを繰り返しましたが、目標サイズ（${targetMB}MB）以下に圧縮できませんでした。`,
+    );
   }
 
   return {
@@ -438,6 +547,7 @@ export async function compressToTargetSize(
   }
 }
 
-
 /** @internal テスト用 — コーデックキャッシュをリセットする */
-export function resetH264CodecCache(): void { cachedH264Codec = null; }
+export function resetH264CodecCache(): void {
+  cachedH264Codec = null;
+}

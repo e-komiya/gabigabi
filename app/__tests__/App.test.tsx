@@ -3,17 +3,25 @@
  * @jest-environment node
  */
 
+import { render } from '@testing-library/react-native';
 import React from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import App from '../App';
 
 // ネイティブモジュールのモック（jest.mock はホイスティングが必要なため test ファイルに記述）
 jest.mock('expo-modules-core', () => ({
   NativeModulesProxy: {},
   EventEmitter: class EventEmitter {
-    addListener() { return {remove: () => {}}; }
+    addListener() {
+      return { remove: () => {} };
+    }
     removeListener() {}
     emit() {}
     removeAllListeners() {}
-    listenerCount() { return 0; }
+    listenerCount() {
+      return 0;
+    }
   },
   requireNativeModule: jest.fn(() => ({})),
   requireOptionalNativeModule: jest.fn(() => null),
@@ -30,9 +38,11 @@ jest.mock('expo-file-system', () => ({
   copyAsync: jest.fn().mockResolvedValue(undefined),
   makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
   readDirectoryAsync: jest.fn().mockResolvedValue([]),
-  getInfoAsync: jest.fn().mockResolvedValue({exists: false, isDirectory: false}),
-  downloadAsync: jest.fn().mockResolvedValue({uri: '', status: 200}),
-  EncodingType: {UTF8: 'utf8', Base64: 'base64'},
+  getInfoAsync: jest
+    .fn()
+    .mockResolvedValue({ exists: false, isDirectory: false }),
+  downloadAsync: jest.fn().mockResolvedValue({ uri: '', status: 200 }),
+  EncodingType: { UTF8: 'utf8', Base64: 'base64' },
 }));
 
 jest.mock('expo-file-system/legacy', () => ({
@@ -45,9 +55,11 @@ jest.mock('expo-file-system/legacy', () => ({
   copyAsync: jest.fn().mockResolvedValue(undefined),
   makeDirectoryAsync: jest.fn().mockResolvedValue(undefined),
   readDirectoryAsync: jest.fn().mockResolvedValue([]),
-  getInfoAsync: jest.fn().mockResolvedValue({exists: false, isDirectory: false}),
-  downloadAsync: jest.fn().mockResolvedValue({uri: '', status: 200}),
-  EncodingType: {UTF8: 'utf8', Base64: 'base64'},
+  getInfoAsync: jest
+    .fn()
+    .mockResolvedValue({ exists: false, isDirectory: false }),
+  downloadAsync: jest.fn().mockResolvedValue({ uri: '', status: 200 }),
+  EncodingType: { UTF8: 'utf8', Base64: 'base64' },
 }));
 
 jest.mock('ffmpeg-kit-react-native', () => ({
@@ -73,21 +85,25 @@ jest.mock('ffmpeg-kit-react-native', () => ({
     isCancel: jest.fn().mockReturnValue(false),
     SUCCESS: 0,
   },
-  LogLevel: {INFO: 0, AV_LOG_STDERR: 16},
+  LogLevel: { INFO: 0, AV_LOG_STDERR: 16 },
 }));
 
 jest.mock('expo-media-library', () => ({
-  requestPermissionsAsync: jest.fn().mockResolvedValue({status: 'granted'}),
+  requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
   saveToLibraryAsync: jest.fn().mockResolvedValue(undefined),
-  getPermissionsAsync: jest.fn().mockResolvedValue({status: 'granted'}),
-  MediaType: {video: 'video', photo: 'photo'},
+  getPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
+  MediaType: { video: 'video', photo: 'photo' },
   createAlbumAsync: jest.fn().mockResolvedValue({}),
 }));
 
 jest.mock('expo-image-picker', () => ({
-  launchImageLibraryAsync: jest.fn().mockResolvedValue({canceled: true, assets: []}),
-  requestMediaLibraryPermissionsAsync: jest.fn().mockResolvedValue({status: 'granted'}),
-  MediaTypeOptions: {All: 'All', Images: 'Images', Videos: 'Videos'},
+  launchImageLibraryAsync: jest
+    .fn()
+    .mockResolvedValue({ canceled: true, assets: [] }),
+  requestMediaLibraryPermissionsAsync: jest
+    .fn()
+    .mockResolvedValue({ status: 'granted' }),
+  MediaTypeOptions: { All: 'All', Images: 'Images', Videos: 'Videos' },
 }));
 
 jest.mock('expo-clipboard', () => ({
@@ -98,32 +114,36 @@ jest.mock('expo-clipboard', () => ({
 jest.mock('react-native-share', () => ({
   __esModule: true,
   default: {
-    open: jest.fn().mockResolvedValue({success: true}),
-    shareSingle: jest.fn().mockResolvedValue({success: true}),
+    open: jest.fn().mockResolvedValue({ success: true }),
+    shareSingle: jest.fn().mockResolvedValue({ success: true }),
   },
 }));
 
 jest.mock('react-native-safe-area-context', () => {
   const React = require('react');
-  const insets = {top: 0, bottom: 0, left: 0, right: 0};
-  const frame = {x: 0, y: 0, width: 375, height: 812};
+  const insets = { top: 0, bottom: 0, left: 0, right: 0 };
+  const frame = { x: 0, y: 0, width: 375, height: 812 };
   const SafeAreaInsetsContext = React.createContext(insets);
   const SafeAreaFrameContext = React.createContext(frame);
   return {
     useSafeAreaInsets: jest.fn().mockReturnValue(insets),
     useSafeAreaFrame: jest.fn().mockReturnValue(frame),
-    SafeAreaProvider: ({children, initialMetrics}: any) => {
+    SafeAreaProvider: ({ children, initialMetrics }: any) => {
       return React.createElement(
         SafeAreaInsetsContext.Provider,
-        {value: insets},
-        React.createElement(SafeAreaFrameContext.Provider, {value: frame}, children),
+        { value: insets },
+        React.createElement(
+          SafeAreaFrameContext.Provider,
+          { value: frame },
+          children,
+        ),
       );
     },
     SafeAreaConsumer: SafeAreaInsetsContext.Consumer,
-    SafeAreaView: ({children}: any) => children,
+    SafeAreaView: ({ children }: any) => children,
     SafeAreaInsetsContext,
     SafeAreaFrameContext,
-    initialWindowMetrics: {frame, insets},
+    initialWindowMetrics: { frame, insets },
   };
 });
 
@@ -135,16 +155,12 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   multiSet: jest.fn().mockResolvedValue(undefined),
 }));
 
-import {render} from '@testing-library/react-native';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
-import App from '../App';
-
 describe('App', () => {
   it('renders correctly', () => {
-    const {toJSON} = render(
+    const { toJSON } = render(
       <SafeAreaProvider>
         <App />
-      </SafeAreaProvider>
+      </SafeAreaProvider>,
     );
     expect(toJSON()).not.toBeNull();
   });

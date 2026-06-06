@@ -6,11 +6,14 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+import {
+  BeforeInfoBlock,
+  AfterInfoBlock,
+} from '../screens/components/ImageInfoBlock';
+
 jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
-
-import {BeforeInfoBlock, AfterInfoBlock} from '../screens/components/ImageInfoBlock';
 
 const sampleFileInfo = {
   name: 'sample.jpg',
@@ -22,7 +25,8 @@ const sampleFileInfo = {
 const containsText = (children: unknown, keyword: string): boolean => {
   if (typeof children === 'string') return children.includes(keyword);
   if (typeof children === 'number') return String(children).includes(keyword);
-  if (Array.isArray(children)) return children.some(c => containsText(c, keyword));
+  if (Array.isArray(children))
+    return children.some(c => containsText(c, keyword));
   return false;
 };
 
@@ -44,8 +48,8 @@ describe('BeforeInfoBlock', () => {
         <BeforeInfoBlock fileInfo={sampleFileInfo} />,
       );
     });
-    const nameTexts = renderer!.root.findAll(
-      el => containsText(el.props.children, 'sample.jpg'),
+    const nameTexts = renderer!.root.findAll(el =>
+      containsText(el.props.children, 'sample.jpg'),
     );
     expect(nameTexts.length).toBeGreaterThan(0);
   });
@@ -54,11 +58,15 @@ describe('BeforeInfoBlock', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <BeforeInfoBlock fileInfo={{...sampleFileInfo, width: 0, height: 0}} />,
+        <BeforeInfoBlock
+          fileInfo={{ ...sampleFileInfo, width: 0, height: 0 }}
+        />,
       );
     });
     const sizeTexts = renderer!.root.findAll(
-      el => typeof el.props.children === 'string' && el.props.children.includes('0 × 0 px'),
+      el =>
+        typeof el.props.children === 'string' &&
+        el.props.children.includes('0 × 0 px'),
     );
     expect(sizeTexts.length).toBe(0);
   });
@@ -96,8 +104,8 @@ describe('AfterInfoBlock', () => {
         />,
       );
     });
-    const nameTexts = renderer!.root.findAll(
-      el => containsText(el.props.children, 'output.webp'),
+    const nameTexts = renderer!.root.findAll(el =>
+      containsText(el.props.children, 'output.webp'),
     );
     expect(nameTexts.length).toBeGreaterThan(0);
   });
@@ -117,8 +125,8 @@ describe('AfterInfoBlock', () => {
       );
     });
     // 1920 * 50 / 100 = 960
-    const sizeTexts = renderer!.root.findAll(
-      el => containsText(el.props.children, '960'),
+    const sizeTexts = renderer!.root.findAll(el =>
+      containsText(el.props.children, '960'),
     );
     expect(sizeTexts.length).toBeGreaterThan(0);
   });

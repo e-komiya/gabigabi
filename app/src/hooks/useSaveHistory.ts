@@ -1,6 +1,10 @@
-import {useCallback} from 'react';
-import {saveConversionHistoryItem, ConversionAction} from '../data/history/conversionHistory';
-import {ImageFormat} from '../domain/convertImage';
+import { useCallback } from 'react';
+
+import {
+  saveConversionHistoryItem,
+  ConversionAction,
+} from '../data/history/conversionHistory';
+import { ImageFormat } from '../domain/convertImage';
 
 interface UseSaveHistoryOptions {
   selectedMediaType: 'image' | 'video' | null;
@@ -57,5 +61,5 @@ export const useSaveHistory = ({
     ],
   );
 
-  return {saveHistory};
+  return { saveHistory };
 };
