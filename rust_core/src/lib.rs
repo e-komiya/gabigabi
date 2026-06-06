@@ -4,8 +4,7 @@
 //! Core image resize library for convert2gabigabi.
 //! 現状はバイト列入力・倍率(%)指定でリサイズした JPEG/PNG バイト列を返す。
 
-use image::{DynamicImage, GenericImageView, ImageFormat};
-use std::io::Cursor;
+use image::GenericImageView;
 use std::slice;
 
 /// Resize the image bytes by `scale_pct` (e.g., 50.0 = 50%) keeping aspect ratio.
@@ -182,7 +181,4 @@ pub extern "C" fn rust_free_buffer(ptr: *mut u8) {
         }
     }
 }
-
-fn detect_format(data: &[u8]) -> anyhow::Result<ImageFormat> {
-    image::guess_format(data).map_err(|e| anyhow::anyhow!(e))
-} 
+ 
