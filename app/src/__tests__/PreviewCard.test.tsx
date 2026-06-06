@@ -6,6 +6,8 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+import PreviewCard from '../screens/components/PreviewCard';
+
 jest.mock('../i18n', () => ({
   t: (key: string) => key,
 }));
@@ -13,14 +15,13 @@ jest.mock('../i18n', () => ({
 jest.mock('react-native-svg', () => {
   const React = require('react');
   return {
-    Svg: ({children}: {children: React.ReactNode}) => React.createElement('Svg', null, children),
+    Svg: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('Svg', null, children),
     Path: () => null,
     Rect: () => null,
     G: () => null,
   };
 });
-
-import PreviewCard from '../screens/components/PreviewCard';
 
 describe('PreviewCard', () => {
   it('uri=null のとき空のピッカーボタンがレンダリングされる', async () => {

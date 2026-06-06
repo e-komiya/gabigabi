@@ -1,5 +1,5 @@
-import {useState, useCallback} from 'react';
-import {Animated} from 'react-native';
+import { useState, useCallback } from 'react';
+import { Animated } from 'react-native';
 
 export const useSaveFeedback = () => {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -25,5 +25,5 @@ export const useSaveFeedback = () => {
     [saveMessageOpacity],
   );
 
-  return {saveMessage, saveMessageOpacity, showSaveFeedback};
+  return { saveMessage, saveMessageOpacity, showSaveFeedback };
 };

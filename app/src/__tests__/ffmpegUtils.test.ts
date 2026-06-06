@@ -1,3 +1,5 @@
+import { Paths } from 'expo-file-system';
+
 import {
   generateUniqueFileSuffix,
   extractErrorFromLogs,
@@ -5,7 +7,6 @@ import {
   getCacheDir,
   cleanupCachedTempFiles,
 } from '../data/ffmpeg/ffmpegUtils';
-import { Paths } from 'expo-file-system';
 
 // Mock ffmpeg-kit-react-native
 jest.mock('ffmpeg-kit-react-native', () => ({
@@ -19,14 +20,21 @@ jest.mock('expo-file-system', () => {
   class MockFile {
     exists: boolean;
     size: number;
-    constructor(uri: string) { this.exists = true; this.size = 1024; }
+    constructor(uri: string) {
+      this.exists = true;
+      this.size = 1024;
+    }
     delete() {}
     move(dest: any) {}
   }
   class MockDirectory {
     exists: boolean;
-    constructor(uri: string) { this.exists = true; }
-    list() { return []; }
+    constructor(uri: string) {
+      this.exists = true;
+    }
+    list() {
+      return [];
+    }
   }
   return {
     Paths: {
@@ -48,7 +56,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 jest.mock('../data/history/conversionHistory', () => ({
   getConversionHistory: jest.fn().mockResolvedValue([]),
 }));
-('generateUniqueFileSuffix', () => {
+describe('generateUniqueFileSuffix', () => {
   it('returns a non-empty string', () => {
     const suffix = generateUniqueFileSuffix();
     expect(typeof suffix).toBe('string');
@@ -131,12 +139,16 @@ describe('getCacheDir', () => {
   });
 
   it('Paths.cache.uri が末尾スラッシュなしでも末尾スラッシュを付与する', () => {
-    jest.spyOn(Paths, 'cache', 'get').mockReturnValue({ uri: 'file:///cache' } as any);
+    jest
+      .spyOn(Paths, 'cache', 'get')
+      .mockReturnValue({ uri: 'file:///cache' } as any);
     expect(getCacheDir()).toBe('file:///cache/');
   });
 
   it('Paths.cache.uri が既に末尾スラッシュ付きなら重複しない', () => {
-    jest.spyOn(Paths, 'cache', 'get').mockReturnValue({ uri: 'file:///cache/' } as any);
+    jest
+      .spyOn(Paths, 'cache', 'get')
+      .mockReturnValue({ uri: 'file:///cache/' } as any);
     expect(getCacheDir()).toBe('file:///cache/');
   });
 });
@@ -155,14 +167,23 @@ describe('cleanupCachedTempFiles', () => {
     // Override MockDirectory and MockFile for each test
     fs.Directory = class {
       exists: boolean;
-      constructor() { this.exists = mockDirectoryExists; }
-      list() { return mockFileList.map(name => ({ name })); }
+      constructor() {
+        this.exists = mockDirectoryExists;
+      }
+      list() {
+        return mockFileList.map(name => ({ name }));
+      }
     };
     fs.File = class {
       exists: boolean;
       size: number;
-      constructor() { this.exists = true; this.size = 1024; }
-      delete() { mockFileDelete(); }
+      constructor() {
+        this.exists = true;
+        this.size = 1024;
+      }
+      delete() {
+        mockFileDelete();
+      }
       move() {}
     };
     jest.clearAllMocks();
@@ -174,7 +195,9 @@ describe('cleanupCachedTempFiles', () => {
     mockDirectoryExists = false;
     fs.Directory = class {
       exists = false;
-      list() { return []; }
+      list() {
+        return [];
+      }
     };
     const listSpy = jest.spyOn(fs.Directory.prototype, 'list');
     await cleanupCachedTempFiles();
@@ -199,8 +222,12 @@ describe('cleanupCachedTempFiles', () => {
       uri: string;
       exists = true;
       size = 1024;
-      constructor(uri: string) { this.uri = uri; }
-      delete() { deletedFiles.push(this.uri); }
+      constructor(uri: string) {
+        this.uri = uri;
+      }
+      delete() {
+        deletedFiles.push(this.uri);
+      }
       move() {}
     };
     await cleanupCachedTempFiles();
@@ -213,19 +240,21 @@ describe('cleanupCachedTempFiles', () => {
     fs.Directory = class {
       exists = true;
       list() {
-        return [
-          'photo.jpg',
-          'document.pdf',
-          'video_compressed_123.mp4',
-        ].map(name => ({ name }));
+        return ['photo.jpg', 'document.pdf', 'video_compressed_123.mp4'].map(
+          name => ({ name }),
+        );
       }
     };
     fs.File = class {
       uri: string;
       exists = true;
       size = 1024;
-      constructor(uri: string) { this.uri = uri; }
-      delete() { deletedFiles.push(this.uri); }
+      constructor(uri: string) {
+        this.uri = uri;
+      }
+      delete() {
+        deletedFiles.push(this.uri);
+      }
       move() {}
     };
     await cleanupCachedTempFiles();
@@ -237,13 +266,16 @@ describe('cleanupCachedTempFiles', () => {
     const fs = require('expo-file-system');
     fs.Directory = class {
       exists = true;
-      list() { return [{ name: 'video_gabigabi_123.mp4' }]; }
+      list() {
+        return [{ name: 'video_gabigabi_123.mp4' }];
+      }
     };
     fs.File = class {
       exists = true;
       size = 1024;
-      constructor() {}
-      delete() { throw new Error('delete failed'); }
+      delete() {
+        throw new Error('delete failed');
+      }
       move() {}
     };
     await expect(cleanupCachedTempFiles()).resolves.toBeUndefined();
@@ -254,14 +286,20 @@ describe('cleanupCachedTempFiles', () => {
     const deletedFiles: string[] = [];
     fs.Directory = class {
       exists = true;
-      list() { return []; }
+      list() {
+        return [];
+      }
     };
     fs.File = class {
       exists = true;
       size = 1024;
       uri: string;
-      constructor(uri: string) { this.uri = uri; }
-      delete() { deletedFiles.push(this.uri); }
+      constructor(uri: string) {
+        this.uri = uri;
+      }
+      delete() {
+        deletedFiles.push(this.uri);
+      }
       move() {}
     };
     await cleanupCachedTempFiles();

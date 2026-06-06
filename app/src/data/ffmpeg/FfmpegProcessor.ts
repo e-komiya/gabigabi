@@ -1,6 +1,12 @@
-import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
 import { File } from 'expo-file-system';
-import { generateUniqueFileSuffix, extractErrorFromLogs, getCacheDir, getFileSizeBytes } from './ffmpegUtils';
+import { FFmpegKit, ReturnCode } from 'ffmpeg-kit-react-native';
+
+import {
+  generateUniqueFileSuffix,
+  extractErrorFromLogs,
+  getCacheDir,
+  getFileSizeBytes,
+} from './ffmpegUtils';
 import { VideoFormat } from '../../state/store';
 
 export interface FfmpegProcessResult {
@@ -8,14 +14,13 @@ export interface FfmpegProcessResult {
   outputBytes: number;
 }
 
-
 /**
  * ガビガビレベルに対応するJPEG品質値（FFmpeg -q:v, 1=最高品質, 31=最低品質）
  * compressionRateをqv = round(1 + 30 * (compressionRate/100)^2.5)で変換した値。
  * (#167) 圧縮率表示に合わせて非線形マッピングに更新。
  */
 const GABIGABI_QUALITY: Record<number, number> = {
-  0: 1,  // 圧縮率 0% → q:v=1（ほぼ劣化なし）
+  0: 1, // 圧縮率 0% → q:v=1（ほぼ劣化なし）
   1: 12, // 圧縮率72% → q:v=12
   2: 18, // 圧縮率84% → q:v=18
   3: 24, // 圧縮率94% → q:v=24
@@ -57,7 +62,6 @@ const GABIGABI_CRF_VP9: Record<number, number> = {
   5: 63, // 最低品質
 };
 
-
 /**
  * FFmpegを使って動画をガビガビ化する。
  * スケール縮小 + 低品質H.264エンコードでガビガビ効果を出す。
@@ -70,9 +74,9 @@ const GABIGABI_CRF_VP9: Record<number, number> = {
  * 動画フォーマットに対応するFFmpegコーデック設定
  */
 const VIDEO_FORMAT_CODECS: Record<VideoFormat, string[]> = {
-  mp4:  ['-c:v', 'libx264', '-c:a', 'aac'],
-  mov:  ['-c:v', 'libx264', '-c:a', 'aac'],
-  mkv:  ['-c:v', 'libx264', '-c:a', 'aac'],
+  mp4: ['-c:v', 'libx264', '-c:a', 'aac'],
+  mov: ['-c:v', 'libx264', '-c:a', 'aac'],
+  mkv: ['-c:v', 'libx264', '-c:a', 'aac'],
   webm: ['-c:v', 'libvpx-vp9', '-c:a', 'libvorbis'],
 };
 
@@ -89,7 +93,10 @@ export async function processVideoWithFfmpeg(
   if (gabigabiLevel < 0 || gabigabiLevel > 5) {
     throw new Error('gabigabiLevel must be 0-5');
   }
-  if (compressionRate !== undefined && (compressionRate < 0 || compressionRate > 99)) {
+  if (
+    compressionRate !== undefined &&
+    (compressionRate < 0 || compressionRate > 99)
+  ) {
     throw new Error('compressionRate must be 0-99');
   }
 
@@ -101,7 +108,6 @@ export async function processVideoWithFfmpeg(
   if (inputBytesV === 0) {
     throw new Error('入力ファイルが空（0バイト）です');
   }
-
 
   const inputPath = inputUri.replace('file://', '');
   const fileName = inputPath.split('/').pop() ?? 'video.mp4';
@@ -116,8 +122,8 @@ export async function processVideoWithFfmpeg(
   const crf = (() => {
     if (compressionRate === undefined) {
       return outputFormat === 'webm'
-        ? (GABIGABI_CRF_VP9[gabigabiLevel] ?? 50)
-        : (GABIGABI_CRF_H264[gabigabiLevel] ?? 40);
+        ? GABIGABI_CRF_VP9[gabigabiLevel] ?? 50
+        : GABIGABI_CRF_H264[gabigabiLevel] ?? 40;
     }
 
     // 圧縮率 0〜99 を CRF 範囲へ線形マッピング
@@ -130,7 +136,8 @@ export async function processVideoWithFfmpeg(
   })();
   const scale = scalePct / 100;
 
-  const codecArgs = VIDEO_FORMAT_CODECS[outputFormat] ?? VIDEO_FORMAT_CODECS.mp4;
+  const codecArgs =
+    VIDEO_FORMAT_CODECS[outputFormat] ?? VIDEO_FORMAT_CODECS.mp4;
 
   // フォーマットに応じた品質パラメータを選択する
   // - libvpx-vp9 (webm): -crf + -b:v 0 (constrained quality mode)
@@ -146,8 +153,10 @@ export async function processVideoWithFfmpeg(
   // scale の値を偶数に丸める（H.264 の要件）
   const cmd = [
     '-y',
-    '-i', `"${inputPath}"`,
-    '-vf', `"scale=trunc(iw*${scale}/2)*2:trunc(ih*${scale}/2)*2"`,
+    '-i',
+    `"${inputPath}"`,
+    '-vf',
+    `"scale=trunc(iw*${scale}/2)*2:trunc(ih*${scale}/2)*2"`,
     ...codecArgs,
     ...qualityArgs,
     `"${outputPath}"`,
@@ -162,7 +171,9 @@ export async function processVideoWithFfmpeg(
       throw new Error(`FFmpeg処理に失敗しました: ${logs}`);
     }
   } catch (err) {
-    try { new File(outputUri).delete(); } catch {}
+    try {
+      new File(outputUri).delete();
+    } catch {}
     throw err;
   }
 
@@ -239,21 +250,31 @@ export async function processWithFfmpeg(
   if (shrinkExpandEnabled) {
     const shrinkRate = Math.max(10, Math.min(90, shrinkExpandRate)) / 100;
     // リサイズ後サイズからさらに shrinkRate% に縮小し、元のリサイズ後サイズに拡大
-    vfFilters.push(`scale=trunc(iw*${shrinkRate}/2)*2:trunc(ih*${shrinkRate}/2)*2`);
-    vfFilters.push(`scale=trunc(iw/${shrinkRate}/2)*2:trunc(ih/${shrinkRate}/2)*2`);
+    vfFilters.push(
+      `scale=trunc(iw*${shrinkRate}/2)*2:trunc(ih*${shrinkRate}/2)*2`,
+    );
+    vfFilters.push(
+      `scale=trunc(iw/${shrinkRate}/2)*2:trunc(ih/${shrinkRate}/2)*2`,
+    );
   }
   const vfChain = vfFilters.join(',');
 
   // 1回目の変換
-  const buildCmd = (inPath: string, outPath: string) => [
-    '-y',
-    '-i', `"${inPath}"`,
-    '-vf', `"${vfChain}"`,
-    '-q:v', String(quality),
-    '-update', '1',
-    '-frames:v', '1',
-    `"${outPath}"`,
-  ].join(' ');
+  const buildCmd = (inPath: string, outPath: string) =>
+    [
+      '-y',
+      '-i',
+      `"${inPath}"`,
+      '-vf',
+      `"${vfChain}"`,
+      '-q:v',
+      String(quality),
+      '-update',
+      '1',
+      '-frames:v',
+      '1',
+      `"${outPath}"`,
+    ].join(' ');
 
   try {
     const session = await FFmpegKit.execute(buildCmd(inputPath, outputPath));
@@ -264,7 +285,9 @@ export async function processWithFfmpeg(
       throw new Error(`FFmpeg処理に失敗しました: ${logs}`);
     }
   } catch (err) {
-    try { new File(outputUri).delete(); } catch {}
+    try {
+      new File(outputUri).delete();
+    } catch {}
     throw err;
   }
 
@@ -284,10 +307,14 @@ export async function processWithFfmpeg(
         // 多重圧縮では vf フィルターなしで再圧縮のみ
         const passCmd = [
           '-y',
-          '-i', `"${passInputPath}"`,
-          '-q:v', String(quality),
-          '-update', '1',
-          '-frames:v', '1',
+          '-i',
+          `"${passInputPath}"`,
+          '-q:v',
+          String(quality),
+          '-update',
+          '1',
+          '-frames:v',
+          '1',
           `"${passOutputPath}"`,
         ].join(' ');
 
@@ -296,7 +323,9 @@ export async function processWithFfmpeg(
 
         if (!ReturnCode.isSuccess(passRc)) {
           const logs = await extractErrorFromLogs(passSession);
-          throw new Error(`FFmpeg多重圧縮(pass ${pass})に失敗しました: ${logs}`);
+          throw new Error(
+            `FFmpeg多重圧縮(pass ${pass})に失敗しました: ${logs}`,
+          );
         }
 
         // 前の一時ファイルを削除
@@ -304,7 +333,9 @@ export async function processWithFfmpeg(
         // moveAsync 完了前に outputUri を削除すると moveAsync 失敗時にデータが消失する
         // リスクがある（Issue #195, #201）。
         if (currentInput !== outputUri) {
-          try { new File(currentInput).delete(); } catch {}
+          try {
+            new File(currentInput).delete();
+          } catch {}
         }
         currentInput = passUri;
         finalTempUri = passUri;
@@ -314,14 +345,18 @@ export async function processWithFfmpeg(
       // moveAsync の前に outputUri を削除しておくことで上書きを保証する。
       // この時点で currentInput !== outputUri が保証されているため安全に削除できる。
       if (finalTempUri) {
-        try { new File(outputUri).delete(); } catch {}
+        try {
+          new File(outputUri).delete();
+        } catch {}
         new File(finalTempUri).move(new File(outputUri));
         finalTempUri = null; // move 成功
       }
     } finally {
       // エラー発生時、または move 失敗時に残存した一時ファイルをクリーンアップする
       if (finalTempUri && finalTempUri !== outputUri) {
-        try { new File(finalTempUri).delete(); } catch {}
+        try {
+          new File(finalTempUri).delete();
+        } catch {}
       }
     }
   }

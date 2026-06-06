@@ -6,12 +6,24 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 
+// ---- インポート ----
+
+import AboutModal from '../screens/components/AboutModal';
+import {
+  BeforeInfoBlock,
+  AfterInfoBlock,
+} from '../screens/components/ImageInfoBlock';
+import PreviewCard from '../screens/components/PreviewCard';
+import SettingsPanel from '../screens/components/SettingsPanel';
+import TargetSizePanel from '../screens/components/TargetSizePanel';
+
 // ---- モック ----
 
 jest.mock('react-native-svg', () => {
   const React = require('react');
   return {
-    Svg: ({children}: {children: React.ReactNode}) => React.createElement('Svg', null, children),
+    Svg: ({ children }: { children: React.ReactNode }) =>
+      React.createElement('Svg', null, children),
     Path: () => null,
     Rect: () => null,
     G: () => null,
@@ -19,17 +31,11 @@ jest.mock('react-native-svg', () => {
 });
 
 jest.mock('expo-image-picker', () => ({
-  requestMediaLibraryPermissionsAsync: jest.fn().mockResolvedValue({status: 'granted'}),
-  launchImageLibraryAsync: jest.fn().mockResolvedValue({canceled: true}),
+  requestMediaLibraryPermissionsAsync: jest
+    .fn()
+    .mockResolvedValue({ status: 'granted' }),
+  launchImageLibraryAsync: jest.fn().mockResolvedValue({ canceled: true }),
 }));
-
-// ---- インポート ----
-
-import AboutModal from '../screens/components/AboutModal';
-import PreviewCard from '../screens/components/PreviewCard';
-import {BeforeInfoBlock, AfterInfoBlock} from '../screens/components/ImageInfoBlock';
-import SettingsPanel from '../screens/components/SettingsPanel';
-import TargetSizePanel from '../screens/components/TargetSizePanel';
 
 // ---- AboutModal ----
 
@@ -38,7 +44,7 @@ describe('AboutModal', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <AboutModal visible={true} onClose={jest.fn()} />,
+        <AboutModal visible onClose={jest.fn()} />,
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
@@ -58,19 +64,19 @@ describe('AboutModal', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <AboutModal visible={true} onClose={jest.fn()} />,
+        <AboutModal visible onClose={jest.fn()} />,
       );
     });
-    const texts = renderer!.root.findAll(el => el.props.children === 'GabiGabi');
+    const texts = renderer!.root.findAll(
+      el => el.props.children === 'GabiGabi',
+    );
     expect(texts.length).toBeGreaterThan(0);
   });
 
   it('onClose は閉じるボタン用に渡される', async () => {
     const onClose = jest.fn();
     await ReactTestRenderer.act(() => {
-      ReactTestRenderer.create(
-        <AboutModal visible={true} onClose={onClose} />,
-      );
+      ReactTestRenderer.create(<AboutModal visible onClose={onClose} />);
     });
     // クラッシュなし確認
     expect(onClose).not.toHaveBeenCalled();
@@ -192,11 +198,12 @@ describe('ImageInfoBlock', () => {
       // children が配列の場合（['📄 ', 'sample.jpg']）も考慮してフラット検索する
       const containsText = (children: unknown, keyword: string): boolean => {
         if (typeof children === 'string') return children.includes(keyword);
-        if (Array.isArray(children)) return children.some(c => containsText(c, keyword));
+        if (Array.isArray(children))
+          return children.some(c => containsText(c, keyword));
         return false;
       };
-      const nameTexts = renderer!.root.findAll(
-        el => containsText(el.props.children, 'sample.jpg'),
+      const nameTexts = renderer!.root.findAll(el =>
+        containsText(el.props.children, 'sample.jpg'),
       );
       expect(nameTexts.length).toBeGreaterThan(0);
     });
@@ -205,12 +212,16 @@ describe('ImageInfoBlock', () => {
       let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
       await ReactTestRenderer.act(() => {
         renderer = ReactTestRenderer.create(
-          <BeforeInfoBlock fileInfo={{...sampleFileInfo, width: 0, height: 0}} />,
+          <BeforeInfoBlock
+            fileInfo={{ ...sampleFileInfo, width: 0, height: 0 }}
+          />,
         );
       });
       // "0 × 0 px" が含まれないことを確認
       const sizeTexts = renderer!.root.findAll(
-        el => typeof el.props.children === 'string' && (el.props.children as string).includes('0 × 0 px'),
+        el =>
+          typeof el.props.children === 'string' &&
+          (el.props.children as string).includes('0 × 0 px'),
       );
       expect(sizeTexts.length).toBe(0);
     });
@@ -250,11 +261,12 @@ describe('ImageInfoBlock', () => {
       });
       const containsText2 = (children: unknown, keyword: string): boolean => {
         if (typeof children === 'string') return children.includes(keyword);
-        if (Array.isArray(children)) return children.some(c => containsText2(c, keyword));
+        if (Array.isArray(children))
+          return children.some(c => containsText2(c, keyword));
         return false;
       };
-      const nameTexts = renderer!.root.findAll(
-        el => containsText2(el.props.children, 'output.webp'),
+      const nameTexts = renderer!.root.findAll(el =>
+        containsText2(el.props.children, 'output.webp'),
       );
       expect(nameTexts.length).toBeGreaterThan(0);
     });
@@ -276,12 +288,14 @@ describe('ImageInfoBlock', () => {
       // 1920 * 50 / 100 = 960, 1080 * 50 / 100 = 540
       const containsText3 = (children: unknown, keyword: string): boolean => {
         if (typeof children === 'string') return children.includes(keyword);
-        if (typeof children === 'number') return String(children).includes(keyword);
-        if (Array.isArray(children)) return children.some(c => containsText3(c, keyword));
+        if (typeof children === 'number')
+          return String(children).includes(keyword);
+        if (Array.isArray(children))
+          return children.some(c => containsText3(c, keyword));
         return false;
       };
-      const sizeTexts = renderer!.root.findAll(
-        el => containsText3(el.props.children, '960'),
+      const sizeTexts = renderer!.root.findAll(el =>
+        containsText3(el.props.children, '960'),
       );
       expect(sizeTexts.length).toBeGreaterThan(0);
     });
@@ -318,9 +332,7 @@ describe('SettingsPanel', () => {
   it('デフォルト props で正常にレンダリングされる', async () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
-      renderer = ReactTestRenderer.create(
-        <SettingsPanel {...defaultProps} />,
-      );
+      renderer = ReactTestRenderer.create(<SettingsPanel {...defaultProps} />);
     });
     expect(renderer!.toJSON()).not.toBeNull();
   });
@@ -333,7 +345,9 @@ describe('SettingsPanel', () => {
       );
     });
     // JPEG ボタンが表示される
-    const jpegButtons = renderer!.root.findAll(el => el.props.children === 'JPEG');
+    const jpegButtons = renderer!.root.findAll(
+      el => el.props.children === 'JPEG',
+    );
     expect(jpegButtons.length).toBeGreaterThan(0);
   });
 
@@ -345,7 +359,9 @@ describe('SettingsPanel', () => {
       );
     });
     // MP4 ボタンが表示される
-    const mp4Buttons = renderer!.root.findAll(el => el.props.children === 'MP4');
+    const mp4Buttons = renderer!.root.findAll(
+      el => el.props.children === 'MP4',
+    );
     expect(mp4Buttons.length).toBeGreaterThan(0);
   });
 
@@ -353,7 +369,7 @@ describe('SettingsPanel', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <SettingsPanel {...defaultProps} shrinkExpandEnabled={true} />,
+        <SettingsPanel {...defaultProps} shrinkExpandEnabled />,
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
@@ -363,7 +379,7 @@ describe('SettingsPanel', () => {
     let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
     await ReactTestRenderer.act(() => {
       renderer = ReactTestRenderer.create(
-        <SettingsPanel {...defaultProps} multiCompressEnabled={true} />,
+        <SettingsPanel {...defaultProps} multiCompressEnabled />,
       );
     });
     expect(renderer!.toJSON()).not.toBeNull();
@@ -433,7 +449,9 @@ describe('TargetSizePanel', () => {
         <TargetSizePanel {...defaultProps} />,
       );
     });
-    const templates = renderer!.root.findAll(el => el.props.children === 'Discord 10MB');
+    const templates = renderer!.root.findAll(
+      el => el.props.children === 'Discord 10MB',
+    );
     expect(templates.length).toBeGreaterThan(0);
   });
 

@@ -1,6 +1,7 @@
-import { FFmpegSession } from 'ffmpeg-kit-react-native';
 import { Paths, File, Directory } from 'expo-file-system';
-import {getConversionHistory} from '../history/conversionHistory';
+import { FFmpegSession } from 'ffmpeg-kit-react-native';
+
+import { getConversionHistory } from '../history/conversionHistory';
 
 /**
  * ユニークなファイル名サフィックスを生成する。
@@ -19,7 +20,9 @@ export function generateUniqueFileSuffix(): string {
  * @param session FFmpegKit セッション
  * @returns ログ文字列
  */
-export async function extractErrorFromLogs(session: FFmpegSession): Promise<string> {
+export async function extractErrorFromLogs(
+  session: FFmpegSession,
+): Promise<string> {
   return session.getAllLogsAsString();
 }
 
@@ -53,7 +56,10 @@ export function getCacheDir(): string {
  * @param suffix ユニークなサフィックス
  * @returns { uri: string, path: string }
  */
-export function getPasslogConfig(stem: string, suffix: string): { uri: string, path: string } {
+export function getPasslogConfig(
+  stem: string,
+  suffix: string,
+): { uri: string; path: string } {
   const cacheDir = getCacheDir();
   const uri = `${cacheDir}${stem}_passlog_${suffix}`;
   const path = uri.replace('file://', '');
@@ -77,16 +83,25 @@ export async function cleanupCachedTempFiles(): Promise<void> {
     // 変換履歴のoutputPathに含まれるファイルはスキップ（案C: #155）
     const history = await getConversionHistory();
     const historyFileNames = new Set(
-      history.map(item => {
-        const p = item.outputPath.startsWith('file://') ? item.outputPath.slice(7) : item.outputPath;
-        return p.split('/').pop() ?? '';
-      }).filter(Boolean),
+      history
+        .map(item => {
+          const p = item.outputPath.startsWith('file://')
+            ? item.outputPath.slice(7)
+            : item.outputPath;
+          return p.split('/').pop() ?? '';
+        })
+        .filter(Boolean),
     );
 
     await Promise.all(
       result
         .filter(name => tempPattern.test(name) && !historyFileNames.has(name))
-        .map(name => { try { new File(cacheDir + name).delete(); } catch {} return Promise.resolve(); }),
+        .map(name => {
+          try {
+            new File(cacheDir + name).delete();
+          } catch {}
+          return Promise.resolve();
+        }),
     );
   } catch {
     // クリーンアップ失敗は無視して処理を続行する
@@ -102,14 +117,18 @@ export function getFileSizeBytes(uri: string): number {
   return f.exists ? f.size : 0;
 }
 
-
 /**
  * FFmpeg コマンド配列を安全に連結する。
  * null/undefined/空文字は除外して 1 つの文字列コマンドを返す。
  */
-export function buildFfmpegCommand(parts: Array<string | number | null | undefined>): string {
+export function buildFfmpegCommand(
+  parts: (string | number | null | undefined)[],
+): string {
   return parts
-    .filter((part): part is string | number => part !== null && part !== undefined && String(part).trim() !== '')
+    .filter(
+      (part): part is string | number =>
+        part !== null && part !== undefined && String(part).trim() !== '',
+    )
     .map(part => String(part))
     .join(' ');
 }

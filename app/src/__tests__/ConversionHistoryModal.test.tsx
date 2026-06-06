@@ -4,12 +4,21 @@
  */
 
 import React from 'react';
+import { Alert } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
-import {Alert} from 'react-native';
+
+// ---- インポート ----
+
+import {
+  getConversionHistory,
+  clearConversionHistory,
+  ConversionHistoryItem,
+} from '../data/history/conversionHistory';
+import ConversionHistoryModal from '../screens/components/ConversionHistoryModal';
 
 jest.mock('react-native/Libraries/Lists/FlatList', () => {
   const React = require('react');
-  const {View} = require('react-native');
+  const { View } = require('react-native');
 
   const MockFlatList = ({
     data,
@@ -18,25 +27,28 @@ jest.mock('react-native/Libraries/Lists/FlatList', () => {
     ListEmptyComponent,
     contentContainerStyle,
     ...props
-  }: any) => React.createElement(
-    View,
-    {...props, style: contentContainerStyle},
-    Array.isArray(data) && data.length > 0
-      ? data.map((item, index) => React.createElement(
-        React.Fragment,
-        {key: keyExtractor ? keyExtractor(item, index) : String(index)},
-        renderItem({
-          item,
-          index,
-          separators: {
-            highlight: jest.fn(),
-            unhighlight: jest.fn(),
-            updateProps: jest.fn(),
-          },
-        }),
-      ))
-      : ListEmptyComponent ?? null,
-  );
+  }: any) =>
+    React.createElement(
+      View,
+      { ...props, style: contentContainerStyle },
+      Array.isArray(data) && data.length > 0
+        ? data.map((item, index) =>
+            React.createElement(
+              React.Fragment,
+              { key: keyExtractor ? keyExtractor(item, index) : String(index) },
+              renderItem({
+                item,
+                index,
+                separators: {
+                  highlight: jest.fn(),
+                  unhighlight: jest.fn(),
+                  updateProps: jest.fn(),
+                },
+              }),
+            ),
+          )
+        : ListEmptyComponent ?? null,
+    );
 
   return {
     __esModule: true,
@@ -57,17 +69,24 @@ jest.mock('expo-file-system', () => {
     exists: boolean = true;
     size: number = 1024;
     uri: string;
-    constructor(uri: string) { this.uri = uri; this.exists = true; }
+    constructor(uri: string) {
+      this.uri = uri;
+      this.exists = true;
+    }
     delete() {}
     move(dest: any) {}
   }
   return {
-    Paths: { cache: { uri: 'file:///cache/' }, join: (...args: string[]) => args.join('/') },
+    Paths: {
+      cache: { uri: 'file:///cache/' },
+      join: (...args: string[]) => args.join('/'),
+    },
     File: MockFile,
     Directory: class {
       exists = true;
-      constructor() {}
-      list() { return []; }
+      list() {
+        return [];
+      }
     },
   };
 });
@@ -78,27 +97,18 @@ jest.mock('expo-sharing', () => ({
 }));
 
 jest.mock('expo-video-thumbnails', () => ({
-  getThumbnailAsync: jest.fn().mockResolvedValue({uri: 'file:///thumb.jpg'}),
+  getThumbnailAsync: jest.fn().mockResolvedValue({ uri: 'file:///thumb.jpg' }),
 }));
 
 jest.mock('react-native-safe-area-context', () => ({
-  useSafeAreaInsets: () => ({top: 0, bottom: 0, left: 0, right: 0}),
-  SafeAreaProvider: ({children}: {children: React.ReactNode}) => children,
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+  SafeAreaProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 jest.mock('../data/history/conversionHistory', () => ({
   getConversionHistory: jest.fn(),
   clearConversionHistory: jest.fn(),
 }));
-
-// ---- インポート ----
-
-import ConversionHistoryModal from '../screens/components/ConversionHistoryModal';
-import {
-  getConversionHistory,
-  clearConversionHistory,
-  ConversionHistoryItem,
-} from '../data/history/conversionHistory';
 
 const mockedGetHistory = getConversionHistory as jest.Mock;
 const mockedClearHistory = clearConversionHistory as jest.Mock;
@@ -113,7 +123,7 @@ const sampleItem: ConversionHistoryItem = {
   inputBytes: 2048 * 1024,
   outputBytes: 512 * 1024,
   mediaType: 'image',
-  params: {action: 'gabigabi'},
+  params: { action: 'gabigabi' },
 };
 
 /** clearButton を見つけるヘルパー（accessibilityRole=button + clearHistoryTitle の値） */
@@ -121,17 +131,15 @@ function findClearButton(renderer: ReactTestRenderer.ReactTestRenderer) {
   return renderer.root.findAll(
     (node: ReactTestRenderer.ReactTestInstance) =>
       node.props.accessibilityRole === 'button' &&
-      (
-        node.props.accessibilityLabel === 'Clear all history' ||
-        node.props.accessibilityLabel === '履歴を全削除'
-      ),
+      (node.props.accessibilityLabel === 'Clear all history' ||
+        node.props.accessibilityLabel === '履歴を全削除'),
   );
 }
 
 /** コンポーネントを作成してデータ読み込みまで待つ */
 async function createWithData(
   items: ConversionHistoryItem[],
-  props?: {onClose?: jest.Mock; visible?: boolean},
+  props?: { onClose?: jest.Mock; visible?: boolean },
 ): Promise<ReactTestRenderer.ReactTestRenderer> {
   mockedGetHistory.mockResolvedValue(items);
   const onClose = props?.onClose ?? jest.fn();
@@ -176,8 +184,9 @@ describe('ConversionHistoryModal', () => {
   });
 
   it('visible=false のとき Modal が閉じた状態でレンダリングされる', async () => {
-    const renderer = await createWithData([], {visible: false});
-    const json = renderer.toJSON() as ReactTestRenderer.ReactTestRendererJSON | null;
+    const renderer = await createWithData([], { visible: false });
+    const json =
+      renderer.toJSON() as ReactTestRenderer.ReactTestRendererJSON | null;
     expect(json).toBeNull();
   });
 
@@ -219,28 +228,31 @@ describe('ConversionHistoryModal', () => {
 
   it('閉じるボタン押下で onClose が呼ばれる', async () => {
     const onClose = jest.fn();
-    const renderer = await createWithData([], {onClose});
+    const renderer = await createWithData([], { onClose });
     // onClose を onPress に持つ TouchableOpacity を探す
     const allTouchable = renderer.root.findAll(
       (node: ReactTestRenderer.ReactTestInstance) =>
         typeof node.props.onPress === 'function',
     );
     // children に "Close" / "閉じる" テキストを持つ Text が兄弟か子孫にあるものを探す
-    const closeBtn = allTouchable.find((node: ReactTestRenderer.ReactTestInstance) => {
-      // クリアボタンは除外
-      if (
-        node.props.accessibilityLabel === 'Clear all history' ||
-        node.props.accessibilityLabel === '履歴を全削除'
-      ) return false;
-      // テキスト子孫に "Close" か "閉じる" があるか確認
-      const descendants = node.findAll(
-        (n: ReactTestRenderer.ReactTestInstance) =>
-          n.type === 'Text' &&
-          (n.props.children === 'Close' || n.props.children === '閉じる'),
-        {deep: true},
-      );
-      return descendants.length > 0;
-    });
+    const closeBtn = allTouchable.find(
+      (node: ReactTestRenderer.ReactTestInstance) => {
+        // クリアボタンは除外
+        if (
+          node.props.accessibilityLabel === 'Clear all history' ||
+          node.props.accessibilityLabel === '履歴を全削除'
+        )
+          return false;
+        // テキスト子孫に "Close" か "閉じる" があるか確認
+        const descendants = node.findAll(
+          (n: ReactTestRenderer.ReactTestInstance) =>
+            n.type === 'Text' &&
+            (n.props.children === 'Close' || n.props.children === '閉じる'),
+          { deep: true },
+        );
+        return descendants.length > 0;
+      },
+    );
     expect(closeBtn).toBeDefined();
     await ReactTestRenderer.act(async () => {
       closeBtn!.props.onPress?.();
@@ -283,7 +295,8 @@ describe('ConversionHistoryModal', () => {
 describe('ビデオサムネイル', () => {
   it('mediaType=videoのアイテムで getThumbnailAsync が呼ばれる', async () => {
     const VideoThumbnails = require('expo-video-thumbnails');
-    const mockedGetHistory = require('../data/history/conversionHistory').getConversionHistory as jest.Mock;
+    const mockedGetHistory = require('../data/history/conversionHistory')
+      .getConversionHistory as jest.Mock;
     const videoItem: ConversionHistoryItem = {
       id: 'vid-1',
       createdAt: new Date().toISOString(),
@@ -291,7 +304,7 @@ describe('ビデオサムネイル', () => {
       outputBytes: 3000,
       outputPath: '/cache/out.mp4',
       mediaType: 'video',
-      params: {action: 'convert'},
+      params: { action: 'convert' },
     };
     mockedGetHistory.mockResolvedValueOnce([videoItem]);
     await createWithData([videoItem]);
@@ -299,11 +312,10 @@ describe('ビデオサムネイル', () => {
     await ReactTestRenderer.act(async () => {});
     expect(VideoThumbnails.getThumbnailAsync).toHaveBeenCalledWith(
       expect.stringContaining('out.mp4'),
-      {time: 0},
+      { time: 0 },
     );
   });
 });
-
 
 describe('formatParams 表示ロジック (Issue #166)', () => {
   it('gabigabi: level + resizePercent + outputFormat がすべて揃うと "Lv.X / Y% / format" で表示される', async () => {
@@ -315,7 +327,12 @@ describe('formatParams 表示ロジック (Issue #166)', () => {
       inputBytes: 1024,
       outputBytes: 512,
       mediaType: 'image',
-      params: {action: 'gabigabi', gabigabiLevel: 4, resizePercent: 50, outputFormat: 'jpeg'},
+      params: {
+        action: 'gabigabi',
+        gabigabiLevel: 4,
+        resizePercent: 50,
+        outputFormat: 'jpeg',
+      },
     };
     const renderer = await createWithData([item]);
     const json = JSON.stringify(renderer.toJSON());
@@ -333,7 +350,7 @@ describe('formatParams 表示ロジック (Issue #166)', () => {
       inputBytes: 2048,
       outputBytes: 1024,
       mediaType: 'image',
-      params: {action: 'convert', outputFormat: 'webp'},
+      params: { action: 'convert', outputFormat: 'webp' },
     };
     const renderer = await createWithData([item]);
     const json = JSON.stringify(renderer.toJSON());
@@ -349,7 +366,7 @@ describe('formatParams 表示ロジック (Issue #166)', () => {
       inputBytes: 4096,
       outputBytes: 102400,
       mediaType: 'image',
-      params: {action: 'targetSize', targetBytes: 204800},
+      params: { action: 'targetSize', targetBytes: 204800 },
     };
     const renderer = await createWithData([item]);
     const json = JSON.stringify(renderer.toJSON());
@@ -367,7 +384,7 @@ describe('フィルタータブ機能', () => {
     inputBytes: 1024,
     outputBytes: 512,
     mediaType: 'image',
-    params: {action: 'gabigabi'},
+    params: { action: 'gabigabi' },
   };
   const convertItem: ConversionHistoryItem = {
     id: 'conv-1',
@@ -377,7 +394,7 @@ describe('フィルタータブ機能', () => {
     inputBytes: 2048,
     outputBytes: 1024,
     mediaType: 'image',
-    params: {action: 'convert'},
+    params: { action: 'convert' },
   };
   const targetSizeItem: ConversionHistoryItem = {
     id: 'target-1',
@@ -387,7 +404,7 @@ describe('フィルタータブ機能', () => {
     inputBytes: 4096,
     outputBytes: 2048,
     mediaType: 'image',
-    params: {action: 'targetSize'},
+    params: { action: 'targetSize' },
   };
   const allItems = [gabiItem, convertItem, targetSizeItem];
 
@@ -402,7 +419,7 @@ describe('フィルタータブ機能', () => {
         node.findAll(
           (child: ReactTestRenderer.ReactTestInstance) =>
             child.type === 'Text' && child.props.children === label,
-          {deep: true},
+          { deep: true },
         ).length > 0,
     )[0];
   }
@@ -418,7 +435,9 @@ describe('フィルタータブ機能', () => {
     const renderer = await createWithData(allItems);
     const gabiTab = findFilterTab(renderer, 'Blocky');
     expect(gabiTab).toBeDefined();
-    await ReactTestRenderer.act(async () => { gabiTab!.props.onPress?.(); });
+    await ReactTestRenderer.act(async () => {
+      gabiTab!.props.onPress?.();
+    });
 
     const allTab2 = findFilterTab(renderer, 'All');
     const gabiTab2 = findFilterTab(renderer, 'Blocky');
@@ -430,7 +449,9 @@ describe('フィルタータブ機能', () => {
     const renderer = await createWithData(allItems);
     const convertTab = findFilterTab(renderer, 'Convert');
     expect(convertTab).toBeDefined();
-    await ReactTestRenderer.act(async () => { convertTab!.props.onPress?.(); });
+    await ReactTestRenderer.act(async () => {
+      convertTab!.props.onPress?.();
+    });
 
     const convertTab2 = findFilterTab(renderer, 'Convert');
     const allTab2 = findFilterTab(renderer, 'All');
@@ -442,7 +463,9 @@ describe('フィルタータブ機能', () => {
     const renderer = await createWithData(allItems);
     const targetTab = findFilterTab(renderer, 'Target size');
     expect(targetTab).toBeDefined();
-    await ReactTestRenderer.act(async () => { targetTab!.props.onPress?.(); });
+    await ReactTestRenderer.act(async () => {
+      targetTab!.props.onPress?.();
+    });
 
     const targetTab2 = findFilterTab(renderer, 'Target size');
     const allTab2 = findFilterTab(renderer, 'All');
@@ -454,8 +477,12 @@ describe('フィルタータブ機能', () => {
     const renderer = await createWithData(allItems);
     const gabiTab = findFilterTab(renderer, 'Blocky');
     const allTab = findFilterTab(renderer, 'All');
-    await ReactTestRenderer.act(async () => { gabiTab!.props.onPress?.(); });
-    await ReactTestRenderer.act(async () => { allTab!.props.onPress?.(); });
+    await ReactTestRenderer.act(async () => {
+      gabiTab!.props.onPress?.();
+    });
+    await ReactTestRenderer.act(async () => {
+      allTab!.props.onPress?.();
+    });
 
     const allTab2 = findFilterTab(renderer, 'All');
     const gabiTab2 = findFilterTab(renderer, 'Blocky');
@@ -473,46 +500,85 @@ describe('共有機能 (Issue #165)', () => {
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     Sharing.isAvailableAsync.mockResolvedValue(true);
     Sharing.shareAsync.mockResolvedValue(undefined);
-    FileSystemMock.File = class { exists = true; size = 1024; uri: string; constructor(uri: string) { this.uri = uri; } delete() {} move() {} };
+    FileSystemMock.File = class {
+      exists = true;
+      size = 1024;
+      uri: string;
+      constructor(uri: string) {
+        this.uri = uri;
+      }
+      delete() {}
+      move() {}
+    };
   });
 
   it('ファイルが存在する場合、共有ボタンが有効である', async () => {
-    FileSystemMock.File = class { exists = true; size = 1024; uri: string; constructor(uri: string) { this.uri = uri; } delete() {} move() {} };
+    FileSystemMock.File = class {
+      exists = true;
+      size = 1024;
+      uri: string;
+      constructor(uri: string) {
+        this.uri = uri;
+      }
+      delete() {}
+      move() {}
+    };
     const renderer = await createWithData([sampleItem]);
     await ReactTestRenderer.act(async () => {});
 
     const shareBtns = renderer.root.findAll(
       (node: ReactTestRenderer.ReactTestInstance) =>
         node.props.accessibilityRole === 'button' &&
-        (node.props.accessibilityLabel === 'Share file' || node.props.accessibilityLabel === 'ファイルを共有'),
+        (node.props.accessibilityLabel === 'Share file' ||
+          node.props.accessibilityLabel === 'ファイルを共有'),
     );
     expect(shareBtns.length).toBeGreaterThan(0);
     expect(shareBtns[0].props.accessibilityState?.disabled).toBe(false);
   });
 
   it('ファイルが存在しない場合、共有ボタンが無効である', async () => {
-    FileSystemMock.File = class { exists = false; size = 0; uri: string; constructor(uri: string) { this.uri = uri; } delete() {} move() {} };
+    FileSystemMock.File = class {
+      exists = false;
+      size = 0;
+      uri: string;
+      constructor(uri: string) {
+        this.uri = uri;
+      }
+      delete() {}
+      move() {}
+    };
     const renderer = await createWithData([sampleItem]);
     await ReactTestRenderer.act(async () => {});
 
     const shareBtns = renderer.root.findAll(
       (node: ReactTestRenderer.ReactTestInstance) =>
         node.props.accessibilityRole === 'button' &&
-        (node.props.accessibilityLabel === 'Share file' || node.props.accessibilityLabel === 'ファイルを共有'),
+        (node.props.accessibilityLabel === 'Share file' ||
+          node.props.accessibilityLabel === 'ファイルを共有'),
     );
     expect(shareBtns.length).toBeGreaterThan(0);
     expect(shareBtns[0].props.accessibilityState?.disabled).toBe(true);
   });
 
   it('共有ボタンを押すと Sharing.shareAsync が呼ばれる', async () => {
-    FileSystemMock.File = class { exists = true; size = 1024; uri: string; constructor(uri: string) { this.uri = uri; } delete() {} move() {} };
+    FileSystemMock.File = class {
+      exists = true;
+      size = 1024;
+      uri: string;
+      constructor(uri: string) {
+        this.uri = uri;
+      }
+      delete() {}
+      move() {}
+    };
     const renderer = await createWithData([sampleItem]);
     await ReactTestRenderer.act(async () => {});
 
     const shareBtns = renderer.root.findAll(
       (node: ReactTestRenderer.ReactTestInstance) =>
         node.props.accessibilityRole === 'button' &&
-        (node.props.accessibilityLabel === 'Share file' || node.props.accessibilityLabel === 'ファイルを共有'),
+        (node.props.accessibilityLabel === 'Share file' ||
+          node.props.accessibilityLabel === 'ファイルを共有'),
     );
     expect(shareBtns.length).toBeGreaterThan(0);
 

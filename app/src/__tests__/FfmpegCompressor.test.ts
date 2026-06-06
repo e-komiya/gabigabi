@@ -1,4 +1,8 @@
-import { compressForDiscord, compressToTargetSize, resetH264CodecCache } from '../data/ffmpeg/FfmpegCompressor';
+import {
+  compressForDiscord,
+  compressToTargetSize,
+  resetH264CodecCache,
+} from '../data/ffmpeg/FfmpegCompressor';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -27,17 +31,29 @@ const mockFileInfoMap = new Map<string, { exists: boolean; size: number }>();
 jest.mock('expo-file-system', () => {
   class MockFile {
     _uri: string;
-    constructor(uri: string) { this._uri = uri; }
-    get exists() { return mockFileInfoMap.get(this._uri)?.exists ?? true; }
-    get size() { return mockFileInfoMap.get(this._uri)?.size ?? 0; }
+    constructor(uri: string) {
+      this._uri = uri;
+    }
+    get exists() {
+      return mockFileInfoMap.get(this._uri)?.exists ?? true;
+    }
+    get size() {
+      return mockFileInfoMap.get(this._uri)?.size ?? 0;
+    }
     delete() {}
     move(_dest: unknown) {}
   }
   class MockDirectory {
     _uri: string;
-    constructor(uri: string) { this._uri = uri; }
-    get exists() { return mockFileInfoMap.get(this._uri)?.exists ?? true; }
-    list() { return []; }
+    constructor(uri: string) {
+      this._uri = uri;
+    }
+    get exists() {
+      return mockFileInfoMap.get(this._uri)?.exists ?? true;
+    }
+    list() {
+      return [];
+    }
   }
   return {
     Paths: { cache: { uri: 'file:///cache/' } },
@@ -52,14 +68,18 @@ jest.mock('../data/ffmpeg/ffmpegUtils', () => ({
   generateUniqueFileSuffix: jest.fn().mockReturnValue('12345_abc'),
   extractErrorFromLogs: jest.fn().mockResolvedValue(''),
   getCacheDir: jest.fn().mockReturnValue('file:///cache/'),
-  getPasslogConfig: jest.fn().mockImplementation((stem: string, suffix: string) => ({
-    uri: `file:///cache/${stem}_${suffix}`,
-    path: `/cache/${stem}_${suffix}`,
-  })),
+  getPasslogConfig: jest
+    .fn()
+    .mockImplementation((stem: string, suffix: string) => ({
+      uri: `file:///cache/${stem}_${suffix}`,
+      path: `/cache/${stem}_${suffix}`,
+    })),
   getFileSizeBytes: (...args: unknown[]) => mockGetFileSizeBytes(...args),
-  buildFfmpegCommand: jest.fn().mockImplementation((parts: Array<string | number | null | undefined>) =>
-    parts.filter((p) => p != null).join(' ')
-  ),
+  buildFfmpegCommand: jest
+    .fn()
+    .mockImplementation((parts: (string | number | null | undefined)[]) =>
+      parts.filter(p => p != null).join(' '),
+    ),
 }));
 
 // ---------------------------------------------------------------------------
@@ -78,12 +98,15 @@ function setupSuccessSession() {
   ffmpegUtils.generateUniqueFileSuffix.mockReturnValue('12345_abc');
   ffmpegUtils.extractErrorFromLogs.mockResolvedValue('');
   ffmpegUtils.getCacheDir.mockReturnValue('file:///cache/');
-  ffmpegUtils.getPasslogConfig.mockImplementation((stem: string, suffix: string) => ({
-    uri: `file:///cache/${stem}_${suffix}`,
-    path: `/cache/${stem}_${suffix}`,
-  }));
-  ffmpegUtils.buildFfmpegCommand.mockImplementation((parts: Array<string | number | null | undefined>) =>
-    parts.filter((p) => p != null).join(' ')
+  ffmpegUtils.getPasslogConfig.mockImplementation(
+    (stem: string, suffix: string) => ({
+      uri: `file:///cache/${stem}_${suffix}`,
+      path: `/cache/${stem}_${suffix}`,
+    }),
+  );
+  ffmpegUtils.buildFfmpegCommand.mockImplementation(
+    (parts: (string | number | null | undefined)[]) =>
+      parts.filter(p => p != null).join(' '),
   );
   ReturnCode.isSuccess.mockReturnValue(true);
   mockGetReturnCode.mockResolvedValue({});
@@ -167,13 +190,17 @@ describe('compressForDiscord (image)', () => {
 
   it('throws when input does not exist', async () => {
     mockFileInfoMap.set('file:///photos/img.jpg', { exists: false, size: 0 });
-    await expect(compressForDiscord('file:///photos/img.jpg')).rejects.toThrow('入力ファイルが存在しません');
+    await expect(compressForDiscord('file:///photos/img.jpg')).rejects.toThrow(
+      '入力ファイルが存在しません',
+    );
   });
 
   it('throws when input file is empty', async () => {
     // exists=true (default from mock), getFileSizeBytes returns 0
     mockGetFileSizeBytes.mockReturnValue(0);
-    await expect(compressForDiscord('file:///photos/img.jpg')).rejects.toThrow('入力ファイルが空（0バイト）です');
+    await expect(compressForDiscord('file:///photos/img.jpg')).rejects.toThrow(
+      '入力ファイルが空（0バイト）です',
+    );
   });
 
   it('outputs jpeg for forceJpeg (png input → .jpg output)', async () => {
@@ -237,7 +264,9 @@ describe('compressForDiscord (video)', () => {
   it('throws when video is too long to compress under target', async () => {
     // very long duration → very low bitrate → throws
     setupVideoFileInfo({ inputSize: 20 * 1024 * 1024, durationSec: 100000 });
-    await expect(compressForDiscord('file:///videos/clip.mp4')).rejects.toThrow('圧縮できません');
+    await expect(compressForDiscord('file:///videos/clip.mp4')).rejects.toThrow(
+      '圧縮できません',
+    );
   });
 
   it('includes _compressed_ in output filename', async () => {
@@ -263,7 +292,10 @@ describe('compressForDiscord (video)', () => {
       .mockReturnValueOnce(15 * 1024 * 1024)
       .mockReturnValueOnce(8 * 1024 * 1024);
 
-    const result = await compressToTargetSize('file:///videos/clip.mp4', target);
+    const result = await compressToTargetSize(
+      'file:///videos/clip.mp4',
+      target,
+    );
 
     const executed = mockExecute.mock.calls.map(c => c[0] as string).join('\n');
     expect(executed).toContain('scale=iw*0.75:ih*0.75');
@@ -279,10 +311,10 @@ describe('compressForDiscord (video)', () => {
     });
 
     mockGetFileSizeBytes
-      .mockReturnValueOnce(50 * 1024 * 1024)  // input
-      .mockReturnValueOnce(20 * 1024 * 1024)  // CRF出力（目標超過→2パスへ）
-      .mockReturnValueOnce(18 * 1024 * 1024)  // 2パス後出力（目標超過→リトライ）
-      .mockReturnValueOnce(9 * 1024 * 1024);  // リトライ後出力（目標以下）
+      .mockReturnValueOnce(50 * 1024 * 1024) // input
+      .mockReturnValueOnce(20 * 1024 * 1024) // CRF出力（目標超過→2パスへ）
+      .mockReturnValueOnce(18 * 1024 * 1024) // 2パス後出力（目標超過→リトライ）
+      .mockReturnValueOnce(9 * 1024 * 1024); // リトライ後出力（目標以下）
 
     await compressToTargetSize('file:///videos/clip.mp4', target);
 
@@ -292,7 +324,9 @@ describe('compressForDiscord (video)', () => {
 
   it('throws when input does not exist', async () => {
     mockFileInfoMap.set('file:///videos/clip.mp4', { exists: false, size: 0 });
-    await expect(compressForDiscord('file:///videos/clip.mp4')).rejects.toThrow('入力ファイルが存在しません');
+    await expect(compressForDiscord('file:///videos/clip.mp4')).rejects.toThrow(
+      '入力ファイルが存在しません',
+    );
   });
 });
 
@@ -331,7 +365,9 @@ describe('compressToTargetSize', () => {
 
   it('throws when input file does not exist', async () => {
     mockFileInfoMap.set('file:///photos/img.jpg', { exists: false, size: 0 });
-    await expect(compressToTargetSize('file:///photos/img.jpg', 5 * 1024 * 1024)).rejects.toThrow('入力ファイルが存在しません');
+    await expect(
+      compressToTargetSize('file:///photos/img.jpg', 5 * 1024 * 1024),
+    ).rejects.toThrow('入力ファイルが存在しません');
   });
 
   it('falls back to scale-down when quality-only compression is insufficient', async () => {
@@ -339,9 +375,11 @@ describe('compressToTargetSize', () => {
     const target = 5 * 1024 * 1024;
     mockGetFileSizeBytes
       .mockReturnValueOnce(20 * 1024 * 1024) // input
-      .mockReturnValue(hugeOutput);           // all output iterations
+      .mockReturnValue(hugeOutput); // all output iterations
 
-    await expect(compressToTargetSize('file:///photos/img.jpg', target)).rejects.toThrow('圧縮できませんでした');
+    await expect(
+      compressToTargetSize('file:///photos/img.jpg', target),
+    ).rejects.toThrow('圧縮できませんでした');
     const lastCmd = capturedCmd();
     expect(lastCmd).toContain('scale=iw*0.5:ih*0.5');
     expect(lastCmd).toContain('-q:v 31');

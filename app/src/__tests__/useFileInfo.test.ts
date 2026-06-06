@@ -1,26 +1,29 @@
-import {renderHook, act} from '@testing-library/react-native';
-import {Image} from 'react-native';
-import { File } from 'expo-file-system';
-import {FFprobeKit} from 'ffmpeg-kit-react-native';
-import {useFileInfo} from '../hooks/useFileInfo';
+import { renderHook, act } from '@testing-library/react-native';
+import { FFprobeKit } from 'ffmpeg-kit-react-native';
+import { Image } from 'react-native';
+
 import * as ffmpegUtils from '../data/ffmpeg/ffmpegUtils';
+import { useFileInfo } from '../hooks/useFileInfo';
 
 // モック設定
 jest.mock('expo-file-system', () => {
   class MockFile {
     exists: boolean = true;
     size: number = 1024;
-    constructor(uri: string) {}
     delete() {}
     move(dest: any) {}
   }
   return {
-    Paths: { cache: { uri: 'file:///cache/' }, join: (...args: string[]) => args.join('/') },
+    Paths: {
+      cache: { uri: 'file:///cache/' },
+      join: (...args: string[]) => args.join('/'),
+    },
     File: MockFile,
     Directory: class {
       exists = true;
-      constructor() {}
-      list() { return []; }
+      list() {
+        return [];
+      }
     },
   };
 });
@@ -51,7 +54,7 @@ describe('useFileInfo', () => {
   });
 
   it('selectedImage が null のとき fileInfo が null であること', () => {
-    const {result} = renderHook(() => useFileInfo(null, null));
+    const { result } = renderHook(() => useFileInfo(null, null));
     expect(result.current.fileInfo).toBeNull();
   });
 
@@ -63,7 +66,7 @@ describe('useFileInfo', () => {
       },
     );
 
-    const {result} = renderHook(() =>
+    const { result } = renderHook(() =>
       useFileInfo('file:///test/photo.jpg', 'image'),
     );
 
@@ -89,13 +92,13 @@ describe('useFileInfo', () => {
     const mockSession = {
       getOutput: jest.fn().mockResolvedValue(
         JSON.stringify({
-          streams: [{codec_type: 'video', width: 1920, height: 1080}],
+          streams: [{ codec_type: 'video', width: 1920, height: 1080 }],
         }),
       ),
     };
     mockedFFprobeKit.mockResolvedValue(mockSession);
 
-    const {result} = renderHook(() =>
+    const { result } = renderHook(() =>
       useFileInfo('file:///test/video.mp4', 'video'),
     );
 
@@ -123,7 +126,7 @@ describe('useFileInfo', () => {
       },
     );
 
-    const {result} = renderHook(() =>
+    const { result } = renderHook(() =>
       useFileInfo('file:///test/large.jpg', 'image'),
     );
 
@@ -143,7 +146,7 @@ describe('useFileInfo', () => {
       },
     );
 
-    const {result} = renderHook(() =>
+    const { result } = renderHook(() =>
       useFileInfo('file:///test/small.jpg', 'image'),
     );
 
@@ -163,7 +166,7 @@ describe('useFileInfo', () => {
       },
     );
 
-    const {result, unmount} = renderHook(() =>
+    const { result, unmount } = renderHook(() =>
       useFileInfo('file:///test/cancel.jpg', 'image'),
     );
 

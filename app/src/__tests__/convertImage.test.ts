@@ -1,5 +1,5 @@
-import { convertImage, formatBytes } from '../domain/convertImage';
 import { convertImage as ffmpegConvertImage } from '../data/ffmpeg/FfmpegConverter';
+import { convertImage, formatBytes } from '../domain/convertImage';
 
 // Mock the FfmpegConverter module
 jest.mock('../data/ffmpeg/FfmpegConverter', () => ({
@@ -26,7 +26,9 @@ jest.mock('expo-file-system', () => ({
   },
 }));
 
-const mockFfmpegConvertImage = ffmpegConvertImage as jest.MockedFunction<typeof ffmpegConvertImage>;
+const mockFfmpegConvertImage = ffmpegConvertImage as jest.MockedFunction<
+  typeof ffmpegConvertImage
+>;
 
 describe('convertImage', () => {
   beforeEach(() => {
@@ -39,7 +41,10 @@ describe('convertImage', () => {
       outputBytes: 12345,
     });
 
-    const result = await convertImage('file:///input.png', { outputFormat: 'jpeg', quality: 80 });
+    const result = await convertImage('file:///input.png', {
+      outputFormat: 'jpeg',
+      quality: 80,
+    });
 
     expect(result).toEqual({
       outputUri: 'file:///cache/output.jpg',
@@ -57,7 +62,10 @@ describe('convertImage', () => {
     const options = { outputFormat: 'png' as const };
     await convertImage('file:///test.jpg', options);
 
-    expect(mockFfmpegConvertImage).toHaveBeenCalledWith('file:///test.jpg', options);
+    expect(mockFfmpegConvertImage).toHaveBeenCalledWith(
+      'file:///test.jpg',
+      options,
+    );
   });
 
   it('propagates errors from ffmpegConvertImage', async () => {

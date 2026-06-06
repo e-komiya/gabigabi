@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef} from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
   Animated,
   Dimensions,
@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {t} from '../i18n';
+
+import { t } from '../i18n';
 
 interface ImageModalProps {
   uri: string | null;
@@ -17,9 +18,9 @@ interface ImageModalProps {
   onClose: () => void;
 }
 
-const {width: SCREEN_WIDTH, height: SCREEN_HEIGHT} = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-const ImageModal: React.FC<ImageModalProps> = ({uri, visible, onClose}) => {
+const ImageModal: React.FC<ImageModalProps> = ({ uri, visible, onClose }) => {
   const scale = useRef(new Animated.Value(1)).current;
   const lastScale = useRef(1);
   const translateX = useRef(new Animated.Value(0)).current;
@@ -33,13 +34,13 @@ const ImageModal: React.FC<ImageModalProps> = ({uri, visible, onClose}) => {
   const initialDistanceRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const scaleId = scale.addListener(({value}) => {
+    const scaleId = scale.addListener(({ value }) => {
       scaleValueRef.current = value;
     });
-    const txId = translateX.addListener(({value}) => {
+    const txId = translateX.addListener(({ value }) => {
       translateXValueRef.current = value;
     });
-    const tyId = translateY.addListener(({value}) => {
+    const tyId = translateY.addListener(({ value }) => {
       translateYValueRef.current = value;
     });
     return () => {
@@ -84,7 +85,10 @@ const ImageModal: React.FC<ImageModalProps> = ({uri, visible, onClose}) => {
           }
           const newScale = Math.max(
             0.5,
-            Math.min(5, lastScale.current * (distance / initialDistanceRef.current)),
+            Math.min(
+              5,
+              lastScale.current * (distance / initialDistanceRef.current),
+            ),
           );
           scale.setValue(newScale);
         } else {
@@ -108,30 +112,42 @@ const ImageModal: React.FC<ImageModalProps> = ({uri, visible, onClose}) => {
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose} accessibilityViewIsModal={true}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={handleClose}
+      accessibilityViewIsModal
+    >
       <View style={styles.overlay}>
-        <TouchableOpacity style={styles.closeBtn} onPress={handleClose}
+        <TouchableOpacity
+          style={styles.closeBtn}
+          onPress={handleClose}
           accessibilityRole="button"
-          accessibilityLabel={t('close')}>
+          accessibilityLabel={t('close')}
+        >
           <Text style={styles.closeBtnText}>✕</Text>
         </TouchableOpacity>
         <Animated.Image
-          source={{uri}}
+          source={{ uri }}
           style={[
             styles.image,
             {
-              transform: [{scale}, {translateX}, {translateY}],
+              transform: [{ scale }, { translateX }, { translateY }],
             },
           ]}
           resizeMode="contain"
-          accessible={true}
+          accessible
           accessibilityRole="image"
           accessibilityLabel={t('previewImage')}
           {...panResponder.panHandlers}
         />
-        <TouchableOpacity style={styles.resetBtn} onPress={reset}
+        <TouchableOpacity
+          style={styles.resetBtn}
+          onPress={reset}
           accessibilityRole="button"
-          accessibilityLabel={t('reset')}>
+          accessibilityLabel={t('reset')}
+        >
           <Text style={styles.resetBtnText}>{t('reset')}</Text>
         </TouchableOpacity>
       </View>

@@ -1,4 +1,4 @@
-import {formatBytes} from '../utils/formatBytes';
+import { formatBytes } from '../utils/formatBytes';
 
 describe('formatBytes', () => {
   it('ゼロバイトを正しく表示する', () => {

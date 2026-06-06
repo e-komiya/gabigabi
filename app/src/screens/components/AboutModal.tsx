@@ -1,40 +1,55 @@
 import React from 'react';
-import {View, Text, TouchableOpacity, Modal, Linking, StyleSheet} from 'react-native';
-import {t} from '../../i18n';
-import {ACCENT, BORDER} from './sharedStyles';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  Linking,
+  StyleSheet,
+} from 'react-native';
+
+import { ACCENT, BORDER } from './sharedStyles';
+import { t } from '../../i18n';
 
 interface AboutModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-const AboutModal: React.FC<AboutModalProps> = ({visible, onClose}) => (
+const AboutModal: React.FC<AboutModalProps> = ({ visible, onClose }) => (
   <Modal
     visible={visible}
     transparent
     animationType="fade"
     onRequestClose={onClose}
     accessibilityViewIsModal
-    accessibilityLabel={t('appDescription')}>
+    accessibilityLabel={t('appDescription')}
+  >
     <View style={styles.overlay} accessible={false}>
       <View style={styles.dialog} accessibilityRole="summary" accessible>
-        <Text style={styles.title} accessibilityRole="header">GabiGabi</Text>
+        <Text style={styles.title} accessibilityRole="header">
+          GabiGabi
+        </Text>
         <Text style={styles.subtitle}>{t('appSubtitle')}</Text>
         <Text style={styles.bodyText}>{t('appDescription')}</Text>
         <Text style={styles.bodyText}>{t('license')}</Text>
         <Text style={styles.bodyText}>{t('ffmpegUsage')}</Text>
         <TouchableOpacity
-          onPress={() => { Linking.openURL('https://github.com/e-komiya/gabigabi'); }}
+          onPress={() => {
+            Linking.openURL('https://github.com/e-komiya/gabigabi');
+          }}
           accessibilityRole="link"
           accessibilityLabel={t('viewSourceOnGitHub')}
-          accessibilityHint="GitHubのリポジトリページをブラウザで開きます">
+          accessibilityHint="GitHubのリポジトリページをブラウザで開きます"
+        >
           <Text style={styles.link}>{t('viewSourceOnGitHub')}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={onClose}
           style={styles.closeButton}
           accessibilityRole="button"
-          accessibilityLabel={t('close')}>
+          accessibilityLabel={t('close')}
+        >
           <Text style={styles.closeButtonText}>{t('close')}</Text>
         </TouchableOpacity>
       </View>

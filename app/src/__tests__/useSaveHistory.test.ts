@@ -1,6 +1,7 @@
-import {renderHook, act} from '@testing-library/react-native';
-import {useSaveHistory} from '../hooks/useSaveHistory';
-import {saveConversionHistoryItem} from '../data/history/conversionHistory';
+import { renderHook, act } from '@testing-library/react-native';
+
+import { saveConversionHistoryItem } from '../data/history/conversionHistory';
+import { useSaveHistory } from '../hooks/useSaveHistory';
 
 jest.mock('../data/history/conversionHistory', () => ({
   saveConversionHistoryItem: jest.fn(),
@@ -32,7 +33,7 @@ describe('useSaveHistory', () => {
   });
 
   it('saveHistory を呼び出すと saveConversionHistoryItem が正しい引数で呼ばれること', async () => {
-    const {result} = renderHook(() => useSaveHistory(defaultOptions));
+    const { result } = renderHook(() => useSaveHistory(defaultOptions));
     await act(async () => {
       await result.current.saveHistory(
         'convert',
@@ -55,8 +56,8 @@ describe('useSaveHistory', () => {
   });
 
   it('selectedMediaType が null の場合は "image" にフォールバックされること', async () => {
-    const {result} = renderHook(() =>
-      useSaveHistory({...defaultOptions, selectedMediaType: null}),
+    const { result } = renderHook(() =>
+      useSaveHistory({ ...defaultOptions, selectedMediaType: null }),
     );
     await act(async () => {
       await result.current.saveHistory(
@@ -71,7 +72,7 @@ describe('useSaveHistory', () => {
   });
 
   it('targetBytes が省略可能であること（undefined でも動作すること）', async () => {
-    const {result} = renderHook(() => useSaveHistory(defaultOptions));
+    const { result } = renderHook(() => useSaveHistory(defaultOptions));
     await act(async () => {
       await result.current.saveHistory(
         'convert',
@@ -85,7 +86,7 @@ describe('useSaveHistory', () => {
   });
 
   it('targetBytes が指定されたとき params に含まれること', async () => {
-    const {result} = renderHook(() => useSaveHistory(defaultOptions));
+    const { result } = renderHook(() => useSaveHistory(defaultOptions));
     await act(async () => {
       await result.current.saveHistory(
         'compress',
@@ -100,7 +101,7 @@ describe('useSaveHistory', () => {
   });
 
   it('id に Date.now と Math.random が使われること', async () => {
-    const {result} = renderHook(() => useSaveHistory(defaultOptions));
+    const { result } = renderHook(() => useSaveHistory(defaultOptions));
     await act(async () => {
       await result.current.saveHistory(
         'convert',
