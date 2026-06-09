@@ -8,7 +8,7 @@ fn main() {
     }
     
     // Generate cbindgen headers for C++ bridge
-    if let Ok(_) = cbindgen::generate("./") {
+    if cbindgen::generate("./").is_ok() {
         // cbindgen will generate header files
     }
 } 
