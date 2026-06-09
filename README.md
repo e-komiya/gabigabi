@@ -42,7 +42,7 @@ cd app
 eas build --profile preview --platform android
 ```
 
-> CI は手動トリガー (`workflow_dispatch`) のみ。PR や push では自動実行されません。
+> CI は手動トリガー (`workflow_dispatch`) のみです。PR や push では自動実行されず、PR への APK コメント自動投稿も行いません。
 
 ---
 
