@@ -35,8 +35,8 @@
 - **cbindgen / cargo-ndk**：Rust ライブラリのビルド支援
 
 ## ビルド
-- **Yarn (npm) + Gradle (Android), Xcode (iOS)**
-- EAS Build / GitHub Actions で CI
+- **npm + package-lock.json + Gradle (Android), Xcode (iOS)**
+- CI は `npm ci` を前提に GitHub Actions / EAS Build を実行
 
 ## テスト
 - **JUnit 5**（ユニット）

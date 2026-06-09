@@ -46,7 +46,9 @@ applyTo: '**'
   - Android APK 自動ビルド
 
 ## 依存管理
-- JS: Yarn v3 plug'n'play
+- JS: **npm / package-lock.json を唯一の正**とする
+- 依存インストールは `npm ci`（CI）または `npm install`（ローカル更新時）を使う
+- `yarn.lock` など npm 以外の lockfile はコミットしない
 - Rust: cargo
 - Dependabot で依存監視
 
