@@ -148,8 +148,13 @@ fn encode_gabigabi_jpeg_quality(img: &image::RgbImage, output: &mut Vec<u8>, qua
 }
 
 /// C-compatible resize function for FFI
+///
+/// # Safety
+/// `data` must point to a readable buffer of `len` bytes.
+/// `out_len` must be a valid writable pointer.
+/// The returned pointer must be released with `rust_free_buffer`.
 #[no_mangle]
-pub extern "C" fn rust_resize(
+pub unsafe extern "C" fn rust_resize(
     data: *const u8,
     len: usize,
     scale_pct: f32,
@@ -158,9 +163,9 @@ pub extern "C" fn rust_resize(
     if data.is_null() || out_len.is_null() {
         return std::ptr::null_mut();
     }
-    
+
     let input_slice = unsafe { slice::from_raw_parts(data, len) };
-    
+
     match resize(input_slice, scale_pct) {
         Ok(result) => {
             let result_len = result.len();
@@ -173,8 +178,11 @@ pub extern "C" fn rust_resize(
 }
 
 /// Free memory allocated by rust_resize
+///
+/// # Safety
+/// `ptr` must be a pointer returned by `rust_resize`, and it must not be freed twice.
 #[no_mangle]
-pub extern "C" fn rust_free_buffer(ptr: *mut u8) {
+pub unsafe extern "C" fn rust_free_buffer(ptr: *mut u8) {
     if !ptr.is_null() {
         unsafe {
             let _ = Box::from_raw(ptr);
