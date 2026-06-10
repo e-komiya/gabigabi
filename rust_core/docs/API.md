@@ -66,7 +66,7 @@ Android JNI や他言語バインディング用の C 互換関数。
 **シグネチャ**:
 ```rust
 #[no_mangle]
-pub extern "C" fn rust_resize(
+pub unsafe extern "C" fn rust_resize(
     data_ptr: *const u8,
     data_len: usize,
     scale_pct: f32,
@@ -88,6 +88,7 @@ C言語から呼び出し可能な画像リサイズ関数。
 - 失敗時: `null`
 
 **注意**:
+- unsafe FFI 関数のため、`data_ptr` は `data_len` バイト以上読み取り可能で、`output_len` は書き込み可能であること
 - 戻り値のポインタは必ず`rust_free_buffer`で解放すること
 - C側でのメモリ管理が必要
 
@@ -98,7 +99,7 @@ C言語から呼び出し可能な画像リサイズ関数。
 **シグネチャ**:
 ```rust
 #[no_mangle]
-pub extern "C" fn rust_free_buffer(ptr: *mut u8, len: usize)
+pub unsafe extern "C" fn rust_free_buffer(ptr: *mut u8)
 ```
 
 **説明**:  
@@ -106,10 +107,9 @@ pub extern "C" fn rust_free_buffer(ptr: *mut u8, len: usize)
 
 **パラメータ**:
 - `ptr: *mut u8` - 解放するメモリのポインタ
-- `len: usize` - メモリサイズ
 
 **注意**:
-- `rust_resize`で取得したポインタのみ解放可能
+- unsafe FFI 関数のため、`rust_resize`で取得したポインタのみ解放可能
 - 二重解放禁止
 
 ---

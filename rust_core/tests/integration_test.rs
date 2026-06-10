@@ -22,19 +22,21 @@ fn test_resize_invalid_scale() {
 
 #[test]
 fn test_resize_ffi_functions() {
-    use rust_core::{rust_resize, rust_free_buffer};
-    
+    use rust_core::{rust_free_buffer, rust_resize};
+
     let mut out_len: usize = 0;
-    let result_ptr = rust_resize(
-        SAMPLE_PNG.as_ptr(),
-        SAMPLE_PNG.len(),
-        75.0,
-        &mut out_len as *mut usize,
-    );
-    
+    let result_ptr = unsafe {
+        rust_resize(
+            SAMPLE_PNG.as_ptr(),
+            SAMPLE_PNG.len(),
+            75.0,
+            &mut out_len as *mut usize,
+        )
+    };
+
     assert!(!result_ptr.is_null(), "FFI resize should return valid pointer");
     assert!(out_len > 0, "Output length should be positive");
-    
+
     // Free the allocated memory
-    rust_free_buffer(result_ptr);
+    unsafe { rust_free_buffer(result_ptr) };
 } 
