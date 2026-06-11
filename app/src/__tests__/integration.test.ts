@@ -7,8 +7,8 @@
 
 import { execSync } from 'child_process';
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
+import * as os from 'os';
 
 const FIXTURES_DIR = path.join(__dirname, '..', '..', 'fixtures');
 const INPUT_MP4 = path.join(FIXTURES_DIR, 'test.mp4');
@@ -23,9 +23,9 @@ function hasFfmpeg(): boolean {
   }
 }
 
-const describeWithFfmpeg = hasFfmpeg() ? describe : describe.skip;
+const describeIfFfmpeg = hasFfmpeg() ? describe : describe.skip;
 
-describeWithFfmpeg('ffmpeg integration tests', () => {
+describeIfFfmpeg('ffmpeg integration tests', () => {
   let tmpDir: string = '';
 
   beforeAll(() => {
@@ -48,9 +48,7 @@ describeWithFfmpeg('ffmpeg integration tests', () => {
     const outputFile = path.join(tmpDir, `output.${outputExt}`);
     // mpg (MPEG-1) requires standard frame rates (e.g. 25fps); upsample if needed
     const extraArgs = outputExt === 'mpg' ? '-r 25' : '';
-    execSync(`ffmpeg -i "${inputFile}" ${extraArgs} "${outputFile}" -y`, {
-      stdio: 'pipe',
-    });
+    execSync(`ffmpeg -i "${inputFile}" ${extraArgs} "${outputFile}" -y`, { stdio: 'pipe' });
 
     // ファイルが存在すること
     expect(fs.existsSync(outputFile)).toBe(true);
