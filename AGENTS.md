@@ -152,7 +152,7 @@ cd app && npx react-native start
 - [ ] `domain/` → `data/` の依存方向になっているか（逆は NG）
 - [ ] `expo-file-system` を使っているか（`react-native-fs` ではなく）
 - [ ] 新しいネイティブパッケージを追加した場合、ドキュメントに記載したか
-- [ ] `docs/tasklist.md` に変更を反映したか
+- [ ] 関連ドキュメント（README、docs配下、運用ガイド）に必要な更新を反映したか
 - [ ] コミットメッセージに `fix:`, `feat:`, `docs:`, `chore:` 等のプレフィックスをつけたか
 
 ---
