@@ -75,7 +75,7 @@ convert2gabigabi/
 │   ├── architecture.md           # 設計思想
 │   ├── stack.md                  # 技術スタック詳細
 │   └── ffmpeg_license.md         # FFmpegライセンス情報
-└── GEMINI.md                     # AIエージェント向け開発ルール
+└── AGENTS.md                     # AIエージェント向け開発ルール
 ```
 
 ---
@@ -118,4 +118,4 @@ data/ffmpeg    data/native
 
 ## 開発参加
 
-コードベースの詳細・開発ルールは [`GEMINI.md`](GEMINI.md) を参照してください。
+コードベースの詳細・開発ルールは [`AGENTS.md`](AGENTS.md) を参照してください。
