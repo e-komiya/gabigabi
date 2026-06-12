@@ -163,4 +163,3 @@ cd app && npx react-native start
 - [`docs/architecture.md`](docs/architecture.md) — 設計思想・構成概要
 - [`docs/stack.md`](docs/stack.md) — 技術スタック詳細
 - [`docs/ffmpeg_license.md`](docs/ffmpeg_license.md) — FFmpegライセンス情報
-- [`GEMINI.md`](GEMINI.md) — 追加の開発ルール（コーディング規約・環境設定等）
