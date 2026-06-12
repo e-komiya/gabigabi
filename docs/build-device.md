@@ -36,7 +36,7 @@ cd android
 
 ```bash
 adb -s 192.168.0.173:5555 install -r app/build/outputs/apk/debug/app-debug.apk
-adb -s 192.168.0.173:5555 shell am start -n com.eiseikomiya.convert2gabigabi/.MainActivity
+adb -s 192.168.0.173:5555 shell am start -n com.convert2gabigabi/.MainActivity
 ```
 
 ---
@@ -69,15 +69,15 @@ npx expo start --port 8081 --clear
 adb -s 192.168.0.173:5555 reverse tcp:8081 tcp:8081
 
 # アプリ再起動
-adb -s 192.168.0.173:5555 shell am force-stop com.eiseikomiya.convert2gabigabi
-adb -s 192.168.0.173:5555 shell am start -n com.eiseikomiya.convert2gabigabi/.MainActivity
+adb -s 192.168.0.173:5555 shell am force-stop com.convert2gabigabi
+adb -s 192.168.0.173:5555 shell am start -n com.convert2gabigabi/.MainActivity
 ```
 
 ### Metro経由で反映されない場合のチェックポイント
 
 1. **バンドルモジュール数を確認**: `Bundled Xms (986 modules)` と出ているか。`(1 module)` なら反映されていない
 2. **Metroキャッシュ削除**: `rm -rf node_modules/.cache/ /tmp/metro-*`
-3. **アプリデータクリア**: `adb shell pm clear com.eiseikomiya.convert2gabigabi`
+3. **アプリデータクリア**: `adb shell pm clear com.convert2gabigabi`
 4. 上記でもダメなら → APK埋め込み手順を使う
 
 ---
