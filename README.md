@@ -1,4 +1,4 @@
-# convert2gabigabi
+# gabigabi
 
 画像を「ガビガビ」に劣化させる Android アプリ — React Native + Expo + Rust
 
@@ -19,8 +19,8 @@
 
 ```bash
 # 1. リポジトリクローン
-git clone https://github.com/eisei-komiya/convert2gabigabi.git
-cd convert2gabigabi/app
+git clone https://github.com/e-komiya/gabigabi.git
+cd gabigabi/app
 
 # 2. 依存インストール
 npm install
@@ -49,7 +49,7 @@ eas build --profile preview --platform android
 ## プロジェクト構成
 
 ```
-convert2gabigabi/
+gabigabi/
 ├── app/                          # React Native / Expo アプリ
 │   ├── src/
 │   │   ├── data/
