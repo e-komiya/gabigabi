@@ -1,6 +1,6 @@
 # app 依存の脆弱性棚卸しと Expo 系アップデート計画
 
-最終更新: 2026-06-09 (Asia/Tokyo)
+最終更新: 2026-06-14 (Asia/Tokyo)
 対象: `app/package-lock.json`
 
 ## 実施した確認
@@ -129,6 +129,38 @@ npm outdated --json
 2. その結果の `npm audit` 差分を記録する
 3. critical が残る React Native CLI 系だけ別 PR で評価する
 4. 最後に Expo SDK 56 への移行を検討する
+
+## 2026-06-14 実施結果
+
+### 実施した更新
+- `expo` を `55.0.26` へ更新
+- `expo-dev-client`, `expo-file-system`, `expo-notifications`, `expo-sharing`, `expo-video-thumbnails` を 55 系 / 0.32 系の最新パッチへ更新
+- `@babel/core`, `@babel/preset-env`, `@babel/runtime`, `eslint-config-universe` を更新
+- `zustand`, `react-native-share`, `react-native-svg`, `@types/react` を更新
+- `react-test-renderer` は `@testing-library/react-native` との整合性を優先し、`19.2.0` を維持
+
+### 脆弱性件数の差分
+- 更新前: `critical 4 / high 6 / moderate 27 / low 2 / total 39`
+- 更新後: `critical 4 / high 4 / moderate 24 / low 2 / total 34`
+
+### 確認コマンド
+```bash
+cd app
+npm test -- --runInBand
+npm run lint
+cd ../rust_core
+cargo test
+```
+
+確認結果:
+- `npm test`: 成功
+- `npm run lint`: 成功
+- `cargo test`: 成功
+
+### 残課題
+- critical 4 件は React Native CLI 系に集中しており、同一メジャー更新だけでは解消できなかった
+- 次段階として issue #270 で CLI 系を `19.1.2` へ上げる単独 PR を切る価値がある
+- Expo 設定系の moderate は issue #271 の SDK 56 評価と合わせて継続判断する
 
 ## 完了条件の具体化
 
