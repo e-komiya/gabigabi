@@ -162,6 +162,9 @@ cargo test
 - 次段階として issue #270 で CLI 系を `19.1.2` へ上げる単独 PR を切る価値がある
 - Expo 設定系の moderate は issue #271 の SDK 56 評価と合わせて継続判断する
 
+関連文書:
+- `docs/expo-sdk-56-migration-plan.md` — issue #282 向けの SDK 56 移行方針
+
 ## 完了条件の具体化
 
 この issue は以下が揃えば完了とみなせます。
