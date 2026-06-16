@@ -36,7 +36,9 @@
       "android",
       "web"
     ],
-    "plugins": [],
+    "plugins": [
+      "expo-sharing"
+    ],
     "extra": {
       "eas": {
         "projectId": "4deaf693-bafb-4633-bc03-57c3235fb8fb"
