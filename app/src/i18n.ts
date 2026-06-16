@@ -45,6 +45,10 @@ const DICT: Dict = {
   saveSuccess: { ja: '保存完了', en: 'Saved' },
   saveFailed: { ja: '保存に失敗しました', en: 'Failed to save' },
   shareFailed: { ja: '共有に失敗しました', en: 'Failed to share' },
+  shareUnavailable: {
+    ja: 'この端末では共有機能を利用できません',
+    en: 'Sharing is not available on this device',
+  },
   invalidTargetSize: {
     ja: '有効な目標サイズを入力してください',
     en: 'Please enter a valid target size.',

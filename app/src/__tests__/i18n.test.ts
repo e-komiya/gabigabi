@@ -32,6 +32,7 @@ describe('i18n', () => {
         'saveSuccess',
         'saveFailed',
         'shareFailed',
+        'shareUnavailable',
         'invalidTargetSize',
         'targetCompressionFailed',
         'appSubtitle',
@@ -112,7 +113,7 @@ describe('i18n', () => {
         'targetSizeNotReachedSuffix',
       ];
 
-      expect(keys).toHaveLength(103);
+      expect(keys).toHaveLength(104);
 
       for (const key of keys) {
         const result = t(key);
