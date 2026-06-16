@@ -590,4 +590,51 @@ describe('共有機能 (Issue #165)', () => {
       expect.stringContaining('sample_out.jpg'),
     );
   });
+
+  it('共有機能が利用できない場合はエラーを表示する', async () => {
+    Sharing.isAvailableAsync.mockResolvedValue(false);
+    const renderer = await createWithData([sampleItem]);
+    await ReactTestRenderer.act(async () => {});
+
+    const shareBtn = renderer.root.findAll(
+      (node: ReactTestRenderer.ReactTestInstance) =>
+        node.props.accessibilityRole === 'button' &&
+        (node.props.accessibilityLabel === 'Share file' ||
+          node.props.accessibilityLabel === 'ファイルを共有'),
+    )[0];
+
+    await ReactTestRenderer.act(async () => {
+      shareBtn.props.onPress?.();
+    });
+
+    expect(Sharing.shareAsync).not.toHaveBeenCalled();
+    expect(Alert.alert).toHaveBeenCalledWith(
+      expect.stringMatching(/Error|エラー/),
+      expect.stringMatching(
+        /Sharing is not available on this device|この端末では共有機能を利用できません/,
+      ),
+    );
+  });
+
+  it('共有時にキャンセル以外のエラーが起きた場合は詳細を表示する', async () => {
+    Sharing.shareAsync.mockRejectedValue(new Error('boom'));
+    const renderer = await createWithData([sampleItem]);
+    await ReactTestRenderer.act(async () => {});
+
+    const shareBtn = renderer.root.findAll(
+      (node: ReactTestRenderer.ReactTestInstance) =>
+        node.props.accessibilityRole === 'button' &&
+        (node.props.accessibilityLabel === 'Share file' ||
+          node.props.accessibilityLabel === 'ファイルを共有'),
+    )[0];
+
+    await ReactTestRenderer.act(async () => {
+      shareBtn.props.onPress?.();
+    });
+
+    expect(Alert.alert).toHaveBeenCalledWith(
+      expect.stringMatching(/Error|エラー/),
+      expect.stringMatching(/Failed to share|共有に失敗しました/),
+    );
+  });
 });

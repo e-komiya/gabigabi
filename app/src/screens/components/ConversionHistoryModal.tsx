@@ -183,10 +183,15 @@ const HistoryItem: React.FC<{
       : `file://${item.outputPath}`;
     try {
       const isAvailable = await Sharing.isAvailableAsync();
-      if (!isAvailable) return;
+      if (!isAvailable) {
+        Alert.alert(t('error'), t('shareUnavailable'));
+        return;
+      }
       await Sharing.shareAsync(path);
-    } catch {
-      // 共有に失敗した場合は無視
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('cancel')) return;
+      Alert.alert(t('error'), `${t('shareFailed')}: ${message}`);
     }
   }, [item.outputPath]);
 
