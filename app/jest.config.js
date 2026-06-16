@@ -4,7 +4,7 @@ module.exports = {
   projects: [
     {
       displayName: 'unit',
-      preset: 'react-native',
+      preset: '@react-native/jest-preset',
       transformIgnorePatterns: [
         'node_modules/(?!(react-native|@react-native|expo(-[a-z-]+)?|@expo|expo-modules-core|@testing-library|@react-navigation|ffmpeg-kit-react-native|react-native-svg|react-native-share|react-native-safe-area-context)/)',
       ],
