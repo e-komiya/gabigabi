@@ -4,11 +4,13 @@
 端末内およびクリップボードの JPEG/PNG 画像を、ユーザーが指定した縮小率で低解像度へ変換する Android アプリ。
 
 ## 言語
-- **TypeScript 5.x + React Native 0.73**  
+- **TypeScript 5.x + React Native 0.83.2 (Expo SDK 55)**  
   型安全な JS 環境。クロスプラットフォーム UI を実装。
 
+> 現在の依存バージョンの正本は `app/package.json` とし、この文書はそれに合わせて更新する。
+
 ## UI
-- **React Native + React Navigation 7 + Material 3 Design**  
+- **React Native 0.83 系 + React Navigation 7 + Material 3 Design**  
   宣言的 UI。Expo Vector Icons でシンプルな白基調デザイン。
 
 ## 画像処理

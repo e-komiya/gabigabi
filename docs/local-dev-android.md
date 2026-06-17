@@ -100,7 +100,9 @@ npx expo run:android
 このプロジェクトは `expo-dev-client` を使っているため、**Expo Goアプリでは動作しません**。
 必ず `npx expo run:android` でカスタムdev clientをビルドしてください。
 
-### RN 0.80 + Hermesの既知バグ（`require` エラー）
+### RN 0.80 系で確認した Hermes既知バグ（`require` エラー）
+
+> 補足: 現在の `app/package.json` は React Native 0.83.2 です。この節は 0.80 系で遭遇した事象のメモとして残しています。
 
 **症状：** アプリ起動時に赤いエラー画面で以下が表示される
 ```
@@ -108,7 +110,7 @@ Property 'require' doesn't exist
 ReferenceError: Property 'require' doesn't exist
 ```
 
-**原因：** React Native 0.80のデフォルト設定（`lazy=true` + New Architecture）との組み合わせ問題
+**原因：** React Native 0.80 系のデフォルト設定（`lazy=true` + New Architecture）との組み合わせで起きやすい問題
 
 **対処法1: `gradle.properties` の修正**
 ```bash

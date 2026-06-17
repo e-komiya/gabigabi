@@ -103,9 +103,11 @@ data/ffmpeg    data/native
 
 ## 技術スタック
 
+> 依存バージョンの正本は `app/package.json` です。README 内の技術スタック表もそれに追従します。
+
 | カテゴリ | 採用技術 |
 |---|---|
-| UI フレームワーク | React Native 0.83 + Expo SDK 55 |
+| UI フレームワーク | React Native 0.83.2 + Expo SDK 55 |
 | 言語 | TypeScript 5.x |
 | 画像処理 | FFmpegKit (`ffmpeg-kit-react-native`) |
 | 補助処理 | Rust (`image` crate) + JNI ブリッジ |
