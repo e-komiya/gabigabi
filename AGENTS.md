@@ -34,9 +34,11 @@ app/src/
 
 ## 🛠️ 技術スタック
 
+> バージョン表記の正本は `app/package.json` とし、このガイドの記述もそれに合わせて保守する。
+
 | 項目 | 内容 |
 |---|---|
-| フレームワーク | React Native 0.83 + Expo SDK 55 |
+| フレームワーク | React Native 0.83.2 + Expo SDK 55 |
 | 言語 | TypeScript 5.x |
 | 画像処理 | FFmpegKit (`ffmpeg-kit-react-native`) |
 | 補助処理 | Rust (`rust_core/`) + JNI |
