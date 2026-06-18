@@ -44,30 +44,31 @@ npm ls expo expo-sharing @expo/config-plugins xcode uuid --all
 - `ajv`
 - `brace-expansion`
 - `compression`
-- `js-yaml`
 - `on-headers`
+- `js-yaml`
 - `yaml`
 
 観測:
-- これらは audit 上は moderate だが、今回の high 対応後は優先度が一段下がる
-- 一部は開発サーバーや ESLint 周辺のトランジティブ依存で、別 PR で override 適用を検証できる
+- `brace-expansion`, `js-yaml`, `yaml` は override だけで更新でき、2026-06-18 の issue #297 対応で実際に解消できた
+- `compression` / `on-headers` は low で、React Native CLI 側の追従を待っても優先度は低い
+- `ajv` は `eslint -> @eslint/eslintrc` 配下の v6 依存で、fixAvailable が v8 系を指すため互換性確認なしの override は避けたい
 
 判断:
-- Expo 連鎖とは分離して扱えるため、次の実装 PR は「non-Expo moderate を overrides でどこまで減らせるか」に切るのが現実的
+- Expo 連鎖とは分離して扱えるもののうち、まず `brace-expansion`, `js-yaml`, `yaml` を先行で減らすのが安全
+- `ajv` は ESLint 系の更新や upstream 追従とセットで扱う方が無難
 
 ## 追加更新で減らせるもの / 据え置くもの
 
 ### 追加更新で減らせる可能性が高いもの
 
 - `ajv`
-- `brace-expansion`
 - `compression`
-- `js-yaml`
 - `on-headers`
-- `yaml`
 
 理由:
-- いずれも Expo SDK 自体の更新を前提にせず、lockfile / overrides の検証で完結する見込みがある
+- `brace-expansion`, `js-yaml`, `yaml` は issue #297 で解消済み
+- 残る `ajv` は技術的には候補だが、ESLint 系の互換性確認が前提
+- `compression` / `on-headers` は low のため、優先度は一段低い
 
 ### 現状据え置くもの
 
@@ -94,5 +95,5 @@ npm ls expo expo-sharing @expo/config-plugins xcode uuid --all
 ## 結論
 
 - Expo 56 反映後も残る moderate の主因は `@expo/config-plugins -> xcode -> uuid` 連鎖
-- high は別 PR で解消可能だったが、残る moderate は Expo 側の追従待ちと、アプリ側で先に減らせる non-Expo 群に分けて扱うのが安全
-- 次に着手するべき実装単位は「non-Expo moderate の override 検証 PR」
+- non-Expo moderate のうち `brace-expansion`, `js-yaml`, `yaml` は issue #297 で先行解消できた
+- 次に着手するべき実装単位は「Expo upstream 追従待ちの残件整理」と「ajv を ESLint 系更新込みで扱うかの判断」

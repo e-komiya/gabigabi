@@ -90,9 +90,30 @@ npm outdated --json
 - high 5 件は Expo SDK のメジャー更新なしでも `overrides` で安全に吸収できた
 - まだ残る moderate は Expo 設定系とその周辺依存に集中しており、次段階は Expo 系の据え置き可否を整理する作業に寄せる
 
+## 2026-06-18 issue #297 対応結果
+
+実施内容:
+- `package.json` の `overrides` に `brace-expansion@1.1.15`, `js-yaml@4.2.0`, `yaml@2.9.0` を追加
+- `package-lock.json` を再生成し、non-Expo moderate のうち override で安全に吸収できる範囲を先行解消
+- `npm test -- --runInBand` と `npm run lint` を再実行して回帰がないことを確認
+
+件数差分:
+- 対応前: `high 0 / moderate 15 / low 2 / total 17`
+- 対応後: `high 0 / moderate 12 / low 2 / total 14`
+
+依存元の整理:
+- `brace-expansion`: `eslint`, `jest`, `expo` / `expo-sharing` が共有する `minimatch` / `glob` 系のトランジティブ依存
+- `js-yaml`: `eslint` と `@react-native-community/cli`、および `babel-plugin-istanbul` 配下の設定読込依存
+- `yaml`: `@react-native-community/cli-doctor` と `expo -> @expo/metro -> metro-config` 配下の依存
+- `ajv`: `eslint -> @eslint/eslintrc` 由来で、現行系列では v6 から v8 への差し替え影響が読みにくいため今回は据え置き
+
+据え置き理由:
+- Expo 系の moderate は引き続き `@expo/config-plugins -> xcode -> uuid` 連鎖に集中しており、アプリ側 override だけで安全に片付ける根拠が薄い
+- `ajv` は fix が v8 系前提で、`eslint@8` 周辺の互換性確認なしに override するのはリスクが高い
+
 ## 今回の結論
 
-- critical はすでに解消済みで、残件は Expo 55 系にぶら下がる moderate と開発系 high が中心
+- critical はすでに解消済みで、残件は Expo 系 moderate と一部の開発系 moderate に絞られた
 - Expo 系の残存脆弱性は、SDK 55 のまま小手先で消すより SDK 56 移行計画とセットで扱う方が安全
 - 残件は「すぐ全部直す」ではなく、次の 2 系統に分割して進める
 
