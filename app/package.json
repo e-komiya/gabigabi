@@ -53,5 +53,12 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "overrides": {
+    "flatted": "3.4.2",
+    "minimatch": "3.1.4",
+    "picomatch": "4.0.4",
+    "ws": "7.5.11",
+    "@xmldom/xmldom": "0.8.13"
   }
 }
