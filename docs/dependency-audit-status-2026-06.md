@@ -1,6 +1,6 @@
 # app 依存の監査状況メモ (2026-06)
 
-最終更新: 2026-06-17 (Asia/Tokyo)
+最終更新: 2026-06-18 (Asia/Tokyo)
 対象: `app/package.json`, `app/package-lock.json`
 
 ## 背景
@@ -67,6 +67,28 @@ npm outdated --json
 - `@xmldom/xmldom`, `ws`, `minimatch`, `flatted`, `picomatch` が high を構成している
 - 多くは Expo CLI / Metro / ESLint 周辺のトランジティブ依存
 - Expo SDK 56 移行と同時に依存木が大きく変わるため、先に Expo 側の方針を固めた方が差分を二重に追わずに済む
+
+## 2026-06-18 issue #293 対応結果
+
+実施内容:
+- `package.json` に `overrides` を追加し、`@xmldom/xmldom`, `flatted`, `minimatch`, `picomatch`, `ws` を脆弱性修正版へ固定
+- `package-lock.json` を更新し、開発系ツールチェーン配下の high を解消
+- `npm test -- --runInBand` と `npm run lint` を再実行して回帰がないことを確認
+
+依存元の切り分け:
+- `@xmldom/xmldom`: `expo-sharing -> @expo/config-plugins -> xcode -> simple-plist -> plist`
+- `flatted`: `eslint -> file-entry-cache -> flat-cache`
+- `minimatch`: `eslint`, `jest`, `@react-native/jest-preset` 周辺のトランジティブ依存
+- `picomatch`: `jest`, `react-native`, `eslint-config-universe` 周辺のトランジティブ依存
+- `ws`: `react-native`, `@react-native-community/cli`, `expo` CLI / Metro 周辺のトランジティブ依存
+
+`npm audit` 件数差分:
+- 対応前: `high 5 / moderate 15 / low 2 / total 22`
+- 対応後: `high 0 / moderate 15 / low 2 / total 17`
+
+判断:
+- high 5 件は Expo SDK のメジャー更新なしでも `overrides` で安全に吸収できた
+- まだ残る moderate は Expo 設定系とその周辺依存に集中しており、次段階は Expo 系の据え置き可否を整理する作業に寄せる
 
 ## 今回の結論
 
