@@ -1,30 +1,28 @@
 # app 依存の監査状況メモ (2026-06)
 
-最終更新: 2026-06-18 (Asia/Tokyo)
+最終更新: 2026-06-19 (Asia/Tokyo)
 対象: `app/package.json`, `app/package-lock.json`
 
 ## 背景
 
-同一メジャー更新と React Native CLI の緊急更新を取り込んだ後でも、`npm audit` では Expo 系を中心に moderate 以上の脆弱性が残っています。
-このメモは、現時点で残っているものを「今の SDK 55 系で消せるもの」と「SDK 56 移行前提のもの」に分けて、次の着手単位を固定するためのものです。
+Expo SDK 56 反映と React Native CLI の緊急更新を取り込んだ後でも、`npm audit` では Expo 系を中心に moderate 以上の脆弱性が残っています。
+このメモは、現時点で残っているものを「アプリ側ですぐ消せる可能性があるもの」と「upstream 追従待ちのもの」に分けて、次の着手単位を固定するためのものです。
 
 ## 実施コマンド
 
 ```bash
 cd app
+npm audit --omit=dev --json
 npm audit --json
 npm outdated --json
 ```
 
 ## 現在のサマリ
 
-2026-06-17 時点の `npm audit` 件数:
+2026-06-19 時点の `npm audit` 件数:
 
-- critical: 0
-- high: 5
-- moderate: 15
-- low: 2
-- total: 22
+- `npm audit --omit=dev --json`: critical 0 / high 0 / moderate 11 / low 2 / total 13
+- `npm audit --json`: critical 0 / high 0 / moderate 12 / low 2 / total 14
 
 ## 既に反映済みの改善
 
@@ -111,25 +109,46 @@ npm outdated --json
 - Expo 系の moderate は引き続き `@expo/config-plugins -> xcode -> uuid` 連鎖に集中しており、アプリ側 override だけで安全に片付ける根拠が薄い
 - `ajv` は fix が v8 系前提で、`eslint@8` 周辺の互換性確認なしに override するのはリスクが高い
 
+## 2026-06-19 issue #299 対応結果
+
+実施内容:
+- `npm audit --omit=dev --json` と `npm audit --json` を再実行し、prod と dev を分けて残件を再棚卸し
+- `package-lock.json` から `ajv`, `compression`, `on-headers`, `@expo/config-plugins`, `xcode`, `uuid` の依存元を再確認
+- 残件を 3 つの次アクション, つまり `ajv` 検証, `compression` / `on-headers` 追跡, Expo upstream 追跡に分解
+
+依存元の再整理:
+- `ajv@6.12.6`: `eslint@8.57.1`, `@eslint/eslintrc@2.1.4`
+- `compression@1.8.0`: `@expo/cli@56.1.16`, `@react-native-community/cli-server-api@20.1.3`
+- `on-headers@1.0.2`: `compression@1.8.0`
+- `@expo/config-plugins@56.0.9`: `expo@56.0.12`, `expo-sharing@56.0.18` など
+- `xcode@3.0.1`: `@expo/config-plugins@56.0.9`
+- `uuid@7.0.3`: `xcode@3.0.1`
+
+判断:
+- prod 残件は依然として Expo 設定系が中心で、アプリコード単体の修正だけで減らせる余地は小さい
+- `ajv` は dev 限定なので、lint 系の更新検証を独立作業として扱うのが安全
+- `compression` / `on-headers` は low かつ CLI 系の共通依存なので、upstream 更新可否の監視を優先する
+
 ## 今回の結論
 
-- critical はすでに解消済みで、残件は Expo 系 moderate と一部の開発系 moderate に絞られた
-- Expo 系の残存脆弱性は、SDK 55 のまま小手先で消すより SDK 56 移行計画とセットで扱う方が安全
-- 残件は「すぐ全部直す」ではなく、次の 2 系統に分割して進める
+- critical / high は解消済みで、残件は Expo 系 moderate と少数の dev / low 依存に絞られた
+- prod 観点の残件は `@expo/config-plugins -> xcode -> uuid` を含む Expo 設定系連鎖が主因
+- 残件は「一括修正」ではなく、次の 3 系統に分割して進める
 
-1. Expo SDK 56 移行の前提整理と段階分割
-2. 開発系ツールチェーン更新の切り分け
+1. `ajv` を含む ESLint 系更新可否の確認
+2. `compression` / `on-headers` の CLI 依存更新可否の確認
+3. Expo / `expo-sharing` / `config-plugins` / `xcode` / `uuid` の upstream 追跡
 
 ## 次に切る PR 単位
 
-1. Expo SDK 56 に上げるための依存更新 PR
-2. `expo-notifications` / `expo-sharing` の追従確認 PR
-3. `@xmldom/xmldom` / `ws` を引いている開発系依存の更新可否を検証する PR
+1. `ajv` を含む ESLint 系更新可否を検証する PR
+2. `compression` / `on-headers` の CLI 依存更新可否を確認する PR
+3. Expo upstream 追跡メモを更新する PR
 
 ## 完了条件
 
 この issue は以下を満たしたら完了とする。
 
-- 2026-06-17 時点の残存監査項目が文書化されている
-- critical 解消後に残った群が整理されている
+- 2026-06-19 時点の残存監査項目が prod / dev 別に文書化されている
+- アプリ側で先に触れる候補と upstream 追従待ちの候補が分離されている
 - 次に作る PR 単位が明文化されている
