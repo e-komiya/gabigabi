@@ -30,6 +30,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Web server running at http://localhost:${PORT}`);
+  console.log('🚀 Web server running at http://localhost:' + PORT);
   console.log('📱 convert2gabigabi UI is ready!');
 });
