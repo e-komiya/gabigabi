@@ -102,7 +102,7 @@ npx expo run:android
 
 ### RN 0.80 系で確認した Hermes既知バグ（`require` エラー）
 
-> 補足: 現在の `app/package.json` は React Native 0.83.2 です。この節は 0.80 系で遭遇した事象のメモとして残しています。
+> 補足: 現在の `app/package.json` は React Native 0.85.3 / Expo SDK 56 です。この節は 0.80 系で遭遇した事象のメモとして残しています。
 
 **症状：** アプリ起動時に赤いエラー画面で以下が表示される
 ```

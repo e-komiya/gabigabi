@@ -107,8 +107,8 @@ data/ffmpeg    data/native
 
 | カテゴリ | 採用技術 |
 |---|---|
-| UI フレームワーク | React Native 0.83.2 + Expo SDK 55 |
-| 言語 | TypeScript 5.x |
+| UI フレームワーク | React Native 0.85.3 + Expo SDK 56 |
+| 言語 | TypeScript 6.x |
 | 画像処理 | FFmpegKit (`ffmpeg-kit-react-native`) |
 | 補助処理 | Rust (`image` crate) + JNI ブリッジ |
 | 状態管理 | Zustand |
